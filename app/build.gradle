@@ -37,8 +37,10 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.game.App'
+    mainClass = 'com.tankWar.lobby.Main'
+//    mainClass = 'com.tankWar.game.Main'
 }
+
 
 // 导入javafx
 javafx {
