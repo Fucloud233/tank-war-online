@@ -8,6 +8,7 @@ public class LobbyPane extends Pane{
         this.setMinWidth(400);
         this.setMinHeight(300);
 
+            //
 
         // 测试代码 (可以删除)
         Label label = new Label("hello world!");
