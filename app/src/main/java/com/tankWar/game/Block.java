@@ -1,5 +1,10 @@
 package com.tankWar.game;
 
 public class Block {
-    public final static int size = 48;
+    final static int size = 32;
+
+
+    public static int getSize() {
+        return size;
+    }
 }

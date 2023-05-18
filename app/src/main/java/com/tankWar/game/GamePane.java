@@ -3,38 +3,58 @@ package com.tankWar.game;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 import java.util.Vector;
 
-public class GamePane extends Pane {
-
+public class GamePane extends BorderPane {
+    // 用于绘制的组件
     Canvas canvas = new Canvas();
+    GraphicsContext context = canvas.getGraphicsContext2D();
+
+    // 设置地图大小（格数）
+    int nWidth = 32, nHeight = 32;
+
+    // 游戏元素
+    Tank[] tanks;
+    Vector<Bullet> bullets;
 
     GamePane() {
-        this.setWidth(400);
-        this.setMinWidth(400);
-        this.setHeight(300);
-        this.setMinHeight(300);
-
-//        this.setPadding(new Insets(10));
-        canvas.setWidth(this.getWidth());
-        canvas.setHeight(this.getHeight());
-
-
-        canvas.getGraphicsContext2D().strokeText("hello", 150, 100);
-
-//        this.drawMap();
-        this.getChildren().add(canvas);
-
+        this.init();
+        this.drawMap();
     }
 
-    int nWidth = 10;
-    int nWeight = 10;
+    void init() {
+        int padding = 32;
+        int w = nWidth*Block.getSize();
+        int h = nHeight*Block.getSize();
 
-//    void drawMap() {
-//        context.setFill(Color.BLACK);
-//        context.fillRect(0, 0, this.getWidth(), this.getHeight());
-//    }
+        this.setWidth(w);
+        this.setMinWidth(w);
+        this.setHeight(h);
+        this.setMinHeight(h);
+        this.setStyle("-fx-background-color: Black");
+        this.setPadding(new Insets(padding));
+        this.setCenter(canvas);
+
+        canvas.setWidth(this.getWidth());
+        canvas.setHeight(this.getHeight());
+    }
+
+    void drawMap() {
+        // 设置背景
+        context.setFill(Color.BLACK);
+        context.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+        // 绘制网格
+        int size = Block.size;
+        context.setStroke(Color.WHITE);
+        for(int i=0; i<nWidth+1; i++)
+            context.strokeLine(i*size, 0,  i*size, nHeight*size);
+
+        for(int i=0; i<nWidth+1; i++)
+            context.strokeLine(0,  i*size, nHeight*size, i*size);
+    }
 }
