@@ -10,18 +10,18 @@ public class Main extends Application{
     public static void main(String[] args) {
         Application.launch(args);
     }
-//    GamePane gamePane = new GamePane();
 
     @Override
     public void start(Stage primaryStage) {
-        CirclePane circlePane = new CirclePane();
+//        CirclePane circlePane = new CirclePane();
+        GamePane gamePane = new GamePane();
 
-        Scene scene = new Scene(circlePane);
+        Scene scene = new Scene(gamePane);
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("坦克大战联机版");
         primaryStage.show();
 
-        circlePane.requestFocus();
+//        circlePane.requestFocus();
     }
 }

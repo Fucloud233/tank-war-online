@@ -1,10 +1,13 @@
 package com.tankWar.game;
 
+import com.tankWar.game.entity.Building;
+import com.tankWar.game.entity.Bullet;
+import com.tankWar.game.entity.Config;
+import com.tankWar.game.entity.Tank;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 import java.util.Vector;
@@ -20,16 +23,16 @@ public class GamePane extends BorderPane {
     // 游戏元素
     Tank[] tanks;
     Vector<Bullet> bullets;
+    Vector<Building> buildings;
 
     GamePane() {
         this.init();
-        this.drawMap();
     }
 
     void init() {
         int padding = 32;
-        int w = nWidth*Block.getSize();
-        int h = nHeight*Block.getSize();
+        int w = nWidth* Config.BlockSize;
+        int h = nHeight* Config.BlockSize;
 
         this.setWidth(w);
         this.setMinWidth(w);
@@ -41,15 +44,18 @@ public class GamePane extends BorderPane {
 
         canvas.setWidth(this.getWidth());
         canvas.setHeight(this.getHeight());
+
+        this.drawBackground();
     }
 
-    void drawMap() {
+    // 绘制网格
+    void drawBackground() {
         // 设置背景
         context.setFill(Color.BLACK);
         context.fillRect(0, 0, this.getWidth(), this.getHeight());
 
         // 绘制网格
-        int size = Block.size;
+        int size = Config.BlockSize;
         context.setStroke(Color.WHITE);
         for(int i=0; i<nWidth+1; i++)
             context.strokeLine(i*size, 0,  i*size, nHeight*size);
