@@ -37,8 +37,9 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.tankWar.lobby.Main'
-//    mainClass = 'com.tankWar.game.Main'
+    mainClass = 'com.tankWar.lobby.Client'
+
+//    mainClass = 'com.tankWar.game.Main'\
 }
 
 
@@ -46,4 +47,7 @@ application {
 javafx {
     version = "20"
     modules = [ 'javafx.controls' ]
+}
+tasks.withType(JavaCompile){
+    options.encoding="UTF-8"
 }
