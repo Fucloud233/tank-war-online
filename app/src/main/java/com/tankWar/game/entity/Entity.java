@@ -1,25 +1,30 @@
 package com.tankWar.game.entity;
 
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+
 public abstract class Entity {
-    protected int width, height;
-    protected int x, y;
-    int speed = 0;
-    Direction dir = Direction.CENTER;
+    protected double width, height;
+    protected double x, y;
+    protected Image image;
+    protected int speed = 0;
+    protected boolean alive;
+    protected Direction dir = Direction.CENTER;
 
     // 构造函数
-    Entity(int width, int height) {
+    Entity(double width, double height) {
         this(width, height, 0, 0);
     }
-    Entity(int width, int height, int x, int y) {
+    Entity(double width, double height, double x, double y) {
         this.width = width;
         this.height = height;
         this.x = x;
         this.y = y;
-
+        this.alive=true;
     }
 
     // 用于处理实体之间的碰撞
-    boolean isCollidingWith(Entity entity) {
+    public boolean isCollidingWith(Entity entity) {
         return false;
     }
 
@@ -32,5 +37,40 @@ public abstract class Entity {
     public void setDirection(Direction dir){
 
     }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+    public void draw(GraphicsContext graphic){
+        if(alive){
+            graphic.drawImage(image, x, y);
+        }
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
 }
 

@@ -31,7 +31,6 @@ dependencies {
     implementation 'com.alibaba:fastjson:2.0.28'
 }
 
-
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
@@ -52,3 +51,10 @@ javafx {
     modules = [ 'javafx.controls' ]
 }
 
+// 设置尝试将多个文件复制到同一目的地时使用的策略
+DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
+
+// 修改为使用'UTF-8'来构建
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}

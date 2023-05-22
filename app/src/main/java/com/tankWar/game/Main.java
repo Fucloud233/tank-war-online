@@ -20,7 +20,10 @@ public class Main extends Application{
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("坦克大战联机版");
+        primaryStage.setResizable(false);
         primaryStage.show();
+
+//        gamePane.requestFocus();
 
 //        circlePane.requestFocus();
     }
