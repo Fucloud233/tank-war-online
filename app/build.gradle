@@ -58,3 +58,18 @@ DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
+
+
+////////////////////////////////////////////////////
+
+// 定义客户端应用程序的JavaExec任务
+task runClientApp(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.tankWar.game.client.ClientAppUDP' // 客户端应用程序的主类
+}
+
+// 定义服务端应用程序的JavaExec任务
+task runServerApp(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.tankWar.game.server.ServerAppUDP' // 服务端应用程序的主类
+}

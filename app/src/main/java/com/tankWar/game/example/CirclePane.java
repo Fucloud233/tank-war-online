@@ -25,7 +25,6 @@ public class CirclePane extends HBox {
 
     Set<KeyCode> keyCodes = new HashSet<KeyCode>();
 
-    // JavaFX中使用Task来处理擦长时间多线程任务（还在调研中）
     Task<Void> task = new Task<Void>() {
         @Override
         protected Void call() throws Exception {
@@ -58,6 +57,8 @@ public class CirclePane extends HBox {
         // 线程相关
         Thread thread = new Thread(task);
         thread.start();
+
+
 
         // 按下时间监听
         this.setOnKeyPressed(e->{
