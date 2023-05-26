@@ -44,7 +44,7 @@ public abstract class Entity {
 
     public void draw(GraphicsContext graphic){
         if(alive){
-            graphic.drawImage(image, x, y);
+            graphic.drawImage(image, x-this.width/2, y-this.height/2);
         }
     }
 

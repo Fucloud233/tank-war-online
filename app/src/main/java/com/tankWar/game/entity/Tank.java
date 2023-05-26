@@ -5,67 +5,191 @@ package com.tankWar.game.entity;
  */
 
 import javafx.scene.image.Image;
+import javafx.scene.shape.Rectangle;
 
-public class Tank extends Entity{
+import javax.swing.*;
+
+public class Tank extends Entity {
     // id 玩家编号
-    private int id;
+    public int id;
+    // 坦克是否可以移动
+    public boolean canMove = true;
+    // 坦克速度
+    private int speed = Config.TankSpeed;
     // 坦克不同方向照片
-    private Image imageUp = new Image("/image/tankUp.png");
-    private Image imageDown = new Image("/image/tankDown.png");
-    private Image imageLeft = new Image("/image/tankLeft.png");
-    private Image imageRight = new Image("/image/tankRight.png");
+    private final Image tankImageUp = new Image("/image/tankUp.png");
+    private final Image tankImageDown = new Image("/image/tankDown.png");
+    private final Image tankImageLeft = new Image("/image/tankLeft.png");
+    private final Image tankImageRight = new Image("/image/tankRight.png");
 
     // tank构造函数(随机方向)
-    public Tank(double x, double y) {
+    public Tank(double x, double y, int id) {
         super(Config.TankWidth, Config.TankHeight, x, y);
+        this.id = id;
         // 随机坦克方向
         double random = Math.random();
-        if(random<=0.25){
-            setImage(imageLeft);
-            dir = Direction.LEFT;
+        if (random <= 0.25) {
+            setDirection(Direction.UP);
         } else if (random <= 0.5) {
-            setImage(imageRight);
-            dir = Direction.RIGHT;
+            setDirection(Direction.DOWN);
         } else if (random <= 0.75) {
-            setImage(imageUp);
-            dir = Direction.UP;
+            setDirection(Direction.LEFT);
         } else {
-            setImage(imageDown);
-            dir = Direction.DOWN;
+            setDirection(Direction.RIGHT);
         }
     }
 
     // tank构造函数(带方向)
-    public Tank(double x, double y, Direction dir) {
+    public Tank(double x, double y, Direction dir, int id) {
         super(Config.TankWidth, Config.TankHeight, x, y);
-        switch (dir){
-            case UP: setImage(imageUp); dir = Direction.UP; break;
-            case DOWN: setImage(imageDown); dir = Direction.DOWN; break;
-            case LEFT: setImage(imageLeft); dir = Direction.LEFT; break;
-            case RIGHT: setImage(imageRight); dir = Direction.RIGHT; break;
+        this.id = id;
+//        this.dir=dir;
+        switch (dir) {
+            case UP:
+                setDirection(Direction.UP);
+                break;
+            case DOWN:
+                setDirection(Direction.DOWN);
+                break;
+            case LEFT:
+                setDirection(Direction.LEFT);
+                break;
+            case RIGHT:
+                setDirection(Direction.RIGHT);
+                break;
             default:
                 System.out.println("Direction error");
         }
     }
 
-    // 坦克移动函数
-    public void move(Direction dir, int speed) {
-        if(dir == Direction.LEFT){
-            this.dir = Direction.LEFT;
-            setImage(imageLeft);
-            x = x - speed;
-        } else if(dir == Direction.RIGHT){
-            this.dir = Direction.RIGHT;
-            setImage(imageRight);
-            x = x + speed;
-        } else if(dir == Direction.UP){
-            this.dir = Direction.UP;
-            setImage(imageUp);
-            y = y - speed;
-        } else if(dir == Direction.DOWN){
-            this.dir = Direction.DOWN;
-            setImage(imageDown);
-            y = y + speed;
+    // 设置方向
+    public void setDirection(Direction dir) {
+
+        switch (dir) {
+            case LEFT:
+                this.dir = Direction.LEFT;
+                setImage(tankImageLeft);
+                this.width = Config.TankWidth;
+                this.height = Config.TankHeight;
+//                this.x=midX-Config.TankWidth/2;
+//                this.y=midY-Config.TankHeight/2;
+                break;
+            case RIGHT:
+                this.dir = Direction.RIGHT;
+                setImage(tankImageRight);
+                this.width = Config.TankWidth;
+                this.height = Config.TankHeight;
+//                this.x=midX-Config.TankWidth/2;
+//                this.y=midY-Config.TankHeight/2;
+                break;
+            case UP:
+                this.dir = Direction.UP;
+                setImage(tankImageUp);
+                this.width = Config.TankHeight;
+                this.height = Config.TankWidth;
+//                this.x=midX-Config.TankHeight/2;
+//                this.y=midY-Config.TankWidth/2;
+                break;
+            case DOWN:
+                this.dir = Direction.DOWN;
+                setImage(tankImageDown);
+                this.width = Config.TankHeight;
+                this.height = Config.TankWidth;
+//                this.x=midX-Config.TankHeight/2;
+//                this.y=midY-Config.TankWidth/2;
+                break;
+            default:
+                System.out.println("Direction error");
         }
+
+    }
+
+    // 坦克移动函数
+    public void move(Direction dir) {
+        if(dir!=this.dir){ // 方向不同，则转向
+            switch (dir) {
+                case LEFT:
+                    setDirection(Direction.LEFT);
+                    break;
+                case RIGHT:
+                    setDirection(Direction.RIGHT);
+                    break;
+                case UP:
+                    setDirection(Direction.UP);
+                    break;
+                case DOWN:
+                    setDirection(Direction.DOWN);
+                    break;
+                default:
+                    System.out.println("Direction error");
+            }
+        } else if (this.canMove) { // 方向相同，则移动
+            switch (dir) {
+                case LEFT:
+                    if (x - this.width/2 - speed>= 0) {
+                        x = x - speed;
+                    }
+                    break;
+                case RIGHT:
+                    if (x + this.width/2 + speed<= Config.MapWidth) {
+                        x = x + speed;
+                    }
+                    break;
+                case UP:
+                    if (y - this.height/2 - speed>= 0) {
+                        y = y - speed;
+                    }
+                    break;
+                case DOWN:
+                    if (y + this.height/2 + speed<= Config.MapHeight) {
+                        y = y + speed;
+                    }
+                    break;
+                default:
+                    System.out.println("Direction error");
+            }
+        }
+
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    // 发射子弹
+    public Bullet fire() {
+//        System.out.println("fire!");
+        Bullet bullet = null;
+        switch (this.dir) {
+            case UP:
+                bullet = new Bullet(this, this.dir, this.x, this.y - Config.TankHeight / 2 - Config.BulletSize / 2);
+                break;
+            case DOWN:
+                bullet = new Bullet(this, this.dir, this.x, this.y + Config.TankHeight / 2 + Config.BulletSize / 2);
+                break;
+            case LEFT:
+                bullet = new Bullet(this, this.dir, this.x - Config.TankHeight / 2 - Config.BulletSize / 2, this.y);
+                break;
+            case RIGHT:
+                bullet = new Bullet(this, this.dir, this.x + Config.TankHeight / 2 + Config.BulletSize / 2, this.y);
+                break;
+            default:
+                System.out.println("Direction error");
+        }
+
+        return bullet;
+    }
+
+    // 碰撞检测
+    public boolean collideWith(Entity entity){
+        if(entity.isAlive()){
+            Rectangle boundBox = new Rectangle(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            if(boundBox.intersects(entity.x - entity.width/2, entity.y - entity.height/2, entity.width, entity.height)) {
+//                System.out.println("collide!");
+                return true;
+            }
+            return false;
+        }
+        return false;
     }
 }

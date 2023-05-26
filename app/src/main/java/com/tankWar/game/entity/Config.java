@@ -8,12 +8,12 @@ public class Config {
     // 坦克相关配置
     public final static int TankWidth = 60;
     public final static int TankHeight = 48;
-    public final static int TankSpeed = 5;
+    public final static int TankSpeed = 3;
 
 
     // 子弹相关配置
     public final static int BulletSize = 16;
-    public final static int BulletSpeed = 50;
+    public final static int BulletSpeed = 6;
 
     // 地图相关设定
     public final static int BlockXNumber = 30;
