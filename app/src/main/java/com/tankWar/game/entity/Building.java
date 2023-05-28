@@ -14,13 +14,20 @@ import javafx.scene.image.Image;
 public class Building extends Entity{
     Block block;
 
+    // 子弹是否能穿过建筑方块
     public boolean canGoThough(){
         if(block.name=="empty"||block.name=="grass") return true;
         return false;
     }
 
-    public Building(int x, int y, char id) {
+    // 子弹是否可击碎
+    public boolean isFragile() {
+        return block.isFragile;
+    }
+
+    public Building(float x, float y, char id) {
         super(Config.BlockSize, Config.BlockSize, x, y);
+        // 根据读入文件字符类型设置方块类型
         switch (id) {
             case ' ': block = Block.Empty; break;
             case 'S': block = Block.Stone; break;
@@ -29,6 +36,7 @@ public class Building extends Entity{
             default:
                 System.out.println("ID is illegal!");
         }
+        // 设置贴图
         setImage(block.getImg());
     }
 
@@ -54,11 +62,6 @@ enum Block {
         this.id = id;
         this.name = name;
         this.isFragile = isFragile;
-//        this.color = color;
-    }
-
-    public boolean isFragile() {
-        return isFragile;
     }
 
     // todo 获得对应方块的贴图
@@ -72,5 +75,4 @@ enum Block {
         }
         return null;
     }
-
 }

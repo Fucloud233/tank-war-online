@@ -6,13 +6,15 @@ package com.tankWar.game.entity;
  */
 
 import javafx.scene.image.Image;
+import javafx.scene.shape.Rectangle;
 
 public class Bullet extends Entity {
     // 坦克id
     public int id;
-    int maxDistance;
+    double maxDistance;
+    double startX,startY;
 
-    private int speed = Config.BulletSpeed;
+    private final int speed = Config.BulletSpeed;
 
     // 坦克不同方向照片
     private final Image bulletImageUp = new Image("/image/bulletUp.png");
@@ -27,23 +29,16 @@ public class Bullet extends Entity {
         this.dir = dir;
         this.x = x;
         this.y = y;
+        this.startX = x;
+        this.startY = y;
+        this.maxDistance = Config.bulletMaxDistance;
         switch (dir) {
-            case UP:
-                setImage(bulletImageUp);
-                break;
-            case DOWN:
-                setImage(bulletImageDown);
-                break;
-            case RIGHT:
-                setImage(bulletImageRight);
-                break;
-            case LEFT:
-                setImage(bulletImageLeft);
-                break;
-            default:
-                System.out.println("Direction error");
+            case UP -> setImage(bulletImageUp);
+            case DOWN -> setImage(bulletImageDown);
+            case RIGHT -> setImage(bulletImageRight);
+            case LEFT -> setImage(bulletImageLeft);
+            default -> System.out.println("Direction error");
         }
-//        System.out.println(this.x + " " + this.y);
     }
 
     // 子弹移动
@@ -58,13 +53,19 @@ public class Bullet extends Entity {
         } else if (dir == Direction.DOWN) {
             y = y + speed;
         }
-        if (this.x + this.width / 2 <= 0 || this.x - this.width / 2 >= Config.MapWidth || this.y + this.height / 2 <= 0 || this.y - this.height / 2 >= Config.MapHeight)
+        // 若超越地图边界或超过最大距离，子弹死亡
+        double delta = Math.sqrt((x-startX)*(x-startX)+(y-startY)*(y-startY));
+        if (this.x + this.width / 2 <= 0 || this.x - this.width / 2 >= Config.MapWidth || this.y + this.height / 2 <= 0 || this.y - this.height / 2 >= Config.MapHeight || delta >= maxDistance)
             this.alive = false;
     }
 
     // 检测子弹是否碰撞地图方块
     @Override
     public boolean isCollidingWith(Entity entity) {
+        if (entity.isAlive()) {
+            Rectangle boundBox = new Rectangle(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            return boundBox.intersects(entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
+        }
         return false;
     }
 }
