@@ -43,7 +43,7 @@ public class Tank extends Entity {
     public Tank(double x, double y, Direction dir, int id) {
         super(Config.TankWidth, Config.TankHeight, x, y);
         this.id = id;
-//        this.dir=dir;
+
         switch (dir) {
             case UP:
                 setDirection(Direction.UP);
@@ -71,32 +71,24 @@ public class Tank extends Entity {
                 setImage(tankImageLeft);
                 this.width = Config.TankWidth;
                 this.height = Config.TankHeight;
-//                this.x=midX-Config.TankWidth/2;
-//                this.y=midY-Config.TankHeight/2;
                 break;
             case RIGHT:
                 this.dir = Direction.RIGHT;
                 setImage(tankImageRight);
                 this.width = Config.TankWidth;
                 this.height = Config.TankHeight;
-//                this.x=midX-Config.TankWidth/2;
-//                this.y=midY-Config.TankHeight/2;
                 break;
             case UP:
                 this.dir = Direction.UP;
                 setImage(tankImageUp);
                 this.width = Config.TankHeight;
                 this.height = Config.TankWidth;
-//                this.x=midX-Config.TankHeight/2;
-//                this.y=midY-Config.TankWidth/2;
                 break;
             case DOWN:
                 this.dir = Direction.DOWN;
                 setImage(tankImageDown);
                 this.width = Config.TankHeight;
                 this.height = Config.TankWidth;
-//                this.x=midX-Config.TankHeight/2;
-//                this.y=midY-Config.TankWidth/2;
                 break;
             default:
                 System.out.println("Direction error");
@@ -106,7 +98,7 @@ public class Tank extends Entity {
 
     // 坦克移动函数
     public void move(Direction dir) {
-        if(dir!=this.dir){ // 方向不同，则转向
+        if (dir != this.dir) { // 方向不同，则转向
             switch (dir) {
                 case LEFT:
                     setDirection(Direction.LEFT);
@@ -126,22 +118,22 @@ public class Tank extends Entity {
         } else if (this.canMove) { // 方向相同，则移动
             switch (dir) {
                 case LEFT:
-                    if (x - this.width/2 - speed>= 0) {
+                    if (x - this.width / 2 - speed >= 0) {
                         x = x - speed;
                     }
                     break;
                 case RIGHT:
-                    if (x + this.width/2 + speed<= Config.MapWidth) {
+                    if (x + this.width / 2 + speed <= Config.MapWidth) {
                         x = x + speed;
                     }
                     break;
                 case UP:
-                    if (y - this.height/2 - speed>= 0) {
+                    if (y - this.height / 2 - speed >= 0) {
                         y = y - speed;
                     }
                     break;
                 case DOWN:
-                    if (y + this.height/2 + speed<= Config.MapHeight) {
+                    if (y + this.height / 2 + speed <= Config.MapHeight) {
                         y = y + speed;
                     }
                     break;
@@ -181,10 +173,25 @@ public class Tank extends Entity {
     }
 
     // 碰撞检测
-    public boolean collideWith(Entity entity){
-        if(entity.isAlive()){
-            Rectangle boundBox = new Rectangle(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
-            if(boundBox.intersects(entity.x - entity.width/2, entity.y - entity.height/2, entity.width, entity.height)) {
+    public boolean collideWith(Entity entity) {
+        if (entity.isAlive()) {
+            Rectangle boundBox = null;
+            float delta = (Config.TankWidth - Config.TankHeight) / 2;
+            switch (this.dir) {
+                case UP:
+                    boundBox = new Rectangle(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height - delta);
+                    break;
+                case DOWN:
+                    boundBox = new Rectangle(this.x - this.width / 2, this.y - this.height / 2 + delta, this.width, this.height - delta);
+                    break;
+                case LEFT:
+                    boundBox = new Rectangle(this.x - this.width / 2, this.y - this.height / 2, this.width - delta, this.height);
+                    break;
+                case RIGHT:
+                    boundBox = new Rectangle(this.x - this.width / 2 + delta, this.y - this.height / 2, this.width - delta, this.height);
+                    break;
+            }
+            if (boundBox.intersects(entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height)) {
 //                System.out.println("collide!");
                 return true;
             }

@@ -8,32 +8,53 @@ package com.tankWar.game.entity;
     存储不同类型的方块，记录其相关属性
  */
 
-import javafx.scene.paint.Color;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 
 public class Building extends Entity{
     Block block;
 
-    Building(int x, int y) {
+    public boolean canGoThough(){
+        if(block.name=="empty"||block.name=="grass") return true;
+        return false;
+    }
+
+    public Building(int x, int y, char id) {
         super(Config.BlockSize, Config.BlockSize, x, y);
+        switch (id) {
+            case ' ': block = Block.Empty; break;
+            case 'S': block = Block.Stone; break;
+            case 'W': block = Block.Wood; break;
+            case 'G': block = Block.Grass; break;
+            default:
+                System.out.println("ID is illegal!");
+        }
+        setImage(block.getImg());
+    }
+
+    @Override
+    public void draw(GraphicsContext graphic) {
+        if(block.name=="empty") return;
+        super.draw(graphic);
     }
 }
 
 // 使用枚举类型来记录不同类型的建筑方块
 enum Block {
-    Null(0, "空", false, Color.WHITE),
-    Stone(1, "石头", false, Color.GRAY),
-    Wood(2, "木头", true, Color.BROWN);
+    Empty(' ', "empty", false),
+    Stone('S', "stone", false),
+    Wood('W', "wood", true),
+    Grass('G', "grass", false);
 
-    final int id;
+    final char id;
     final String name;
     final boolean isFragile;
-    final Color color;
 
-    Block(int id, String name, boolean isFragile, Color color) {
+    Block(char id, String name, boolean isFragile) {
         this.id = id;
         this.name = name;
         this.isFragile = isFragile;
-        this.color = color;
+//        this.color = color;
     }
 
     public boolean isFragile() {
@@ -41,12 +62,15 @@ enum Block {
     }
 
     // todo 获得对应方块的贴图
-    public void getImg() {
-
+    public Image getImg() {
+        if(name=="stone"){
+            return new Image("/image/stone.png");
+        } else if (name == "wood") {
+            return new Image("/image/wood.png");
+        } else if (name == "grass") {
+            return new Image("/image/grass.png");
+        }
+        return null;
     }
 
-    // 由于暂时没有考虑相关贴图 因此这里用不同颜色代替
-    public Color getColor() {
-        return this.color;
-    }
 }

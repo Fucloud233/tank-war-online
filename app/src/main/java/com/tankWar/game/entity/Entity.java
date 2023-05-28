@@ -11,6 +11,10 @@ public abstract class Entity {
     protected boolean alive;
     protected Direction dir = Direction.CENTER;
 
+    public Direction getDir() {
+        return dir;
+    }
+
     // 构造函数
     Entity(double width, double height) {
         this(width, height, 0, 0);

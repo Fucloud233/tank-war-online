@@ -16,11 +16,11 @@ public class Config {
     public final static int BulletSpeed = 6;
 
     // 地图相关设定
-    public final static int BlockXNumber = 30;
-    public final static int BlockYNumber = 15;
+    public static int BlockXNumber;
+    public static int BlockYNumber;
     public final static int MapPaddingSize = 10;
-    public final static int MapWidth = BlockXNumber * BlockSize;
-    public final static int MapHeight = BlockYNumber * BlockSize;
+    public static int MapWidth = BlockXNumber * BlockSize;
+    public static int MapHeight = BlockYNumber * BlockSize;
 
 
 }

@@ -10,10 +10,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Vector;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.net.URL;
+import java.util.*;
 
 public class GamePane extends BorderPane {
     // 用于绘制的组件
@@ -64,8 +65,10 @@ public class GamePane extends BorderPane {
                     hasFired = true;
                 }
 
+
                 // 处理移动按键输入
                 for (KeyCode code : keyCodes) {
+
                     switch (code) {
                         case UP:
                             myTank.move(Direction.UP);
@@ -84,9 +87,9 @@ public class GamePane extends BorderPane {
                     }
                     break;
                 }
-
                 // 处理碰撞
                 processCollide();
+
             }
         }
     };
@@ -104,6 +107,12 @@ public class GamePane extends BorderPane {
                         bullet.setAlive(false);
                     }
                 }
+                for(int j = buildings.size()-1; j>=0; j--){
+                    Building building = buildings.get(j);
+                    if(!building.canGoThough()&&tank.collideWith(building)){
+                        isCollide = true;
+                    }
+                }
                 for (int k = tanks.size() - 1; k >= 0; k--) {
                     if (k == i) continue;
                     Tank tankCollide = tanks.get(k);
@@ -119,8 +128,43 @@ public class GamePane extends BorderPane {
 
     }
 
+    void loadMap(String MapFilePath) {
+        int row = 0;
+        int column = 0;
+        try {
+            String projectPath = System.getProperty("user.dir")+"\\src\\main\\resources";
+            File file = new File(projectPath,MapFilePath);
+            Scanner scanner = new Scanner(file);
+            row = 0;
+            // 逐行读取地图文件内容
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                // 处理每行的字符
+                int i;
+                for (i = 0; i < line.length(); i++) {
+                    char c = line.charAt(i);
+                    // 根据字符映射到地图元素
+                    buildings.add(new Building(i * Config.BlockSize + Config.BlockSize / 2, row * Config.BlockSize + Config.BlockSize / 2, c));
+                }
+                if (column < i) column = i;
+                row++;
+            }
+            scanner.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        // 设置地图大小
+        Config.BlockXNumber = column;
+        Config.BlockYNumber = row;
+        Config.MapWidth = Config.BlockXNumber * Config.BlockSize;
+        Config.MapHeight = Config.BlockYNumber * Config.BlockSize;
+    }
+
     // GamePane初始化函数
     void init() {
+        // 载入地图
+        loadMap("/map/map.txt");
+
         // 设置GamePane
         this.setWidth(Config.MapWidth);
         this.setHeight(Config.MapHeight);
@@ -135,7 +179,7 @@ public class GamePane extends BorderPane {
         canvas.setHeight(Config.MapHeight);
 
         // 初始化坦克
-        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2, 1);
+        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2-15, 1);
         testTank = new Tank(Config.MapWidth / 2, Config.MapHeight - 50, 2);
         tanks.add(myTank);
         tanks.add(testTank);
@@ -174,7 +218,7 @@ public class GamePane extends BorderPane {
     // 显示游戏画面
     private void showGame() {
         this.context.clearRect(0, 0, Config.MapWidth, Config.MapHeight);
-        drawBackground();
+//        drawBackground();
         for (int i = tanks.size() - 1; i >= 0; i--) {
             Tank tank = tanks.get(i);
             tank.draw(context);
@@ -186,6 +230,10 @@ public class GamePane extends BorderPane {
             if (!bullet.isAlive()) {
                 bullets.remove(i);
             }
+        }
+        for(int i = buildings.size()-1; i>=0; i--){
+            Building building = buildings.get(i);
+            building.draw(context);
         }
     }
 
