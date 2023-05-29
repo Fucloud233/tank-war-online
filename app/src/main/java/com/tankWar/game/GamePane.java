@@ -12,6 +12,7 @@ import javafx.scene.paint.Color;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.*;
 
 public class GamePane extends BorderPane {
@@ -99,28 +100,23 @@ public class GamePane extends BorderPane {
     void loadMap(String MapFilePath) {
         int row = 0;
         int column = 0;
-        try {
-            String projectPath = System.getProperty("user.dir") + "\\src\\main\\resources";
-            File file = new File(projectPath, MapFilePath);
-            Scanner scanner = new Scanner(file);
-            row = 0;
-            // 逐行读取地图文件内容
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                // 处理每行的字符
-                int i;
-                for (i = 0; i < line.length(); i++) {
-                    char c = line.charAt(i);
-                    // 根据字符映射到地图元素
-                    buildings.add(new Building(i * Config.BlockSize + Config.BlockSize / 2, row * Config.BlockSize + Config.BlockSize / 2, c));
-                }
-                if (column < i) column = i;
-                row++;
+        InputStream inputStream = getClass().getResourceAsStream(MapFilePath);
+        Scanner scanner = new Scanner(inputStream);
+        row = 0;
+        // 逐行读取地图文件内容
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            // 处理每行的字符
+            int i;
+            for (i = 0; i < line.length(); i++) {
+                char c = line.charAt(i);
+                // 根据字符映射到地图元素
+                buildings.add(new Building(i * Config.BlockSize + Config.BlockSize / 2, row * Config.BlockSize + Config.BlockSize / 2, c));
             }
-            scanner.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            if (column < i) column = i;
+            row++;
         }
+        scanner.close();
         // 设置地图大小
         Config.BlockXNumber = column;
         Config.BlockYNumber = row;
