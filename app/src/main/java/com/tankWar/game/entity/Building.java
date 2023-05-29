@@ -41,9 +41,13 @@ public class Building extends Entity{
     }
 
     @Override
-    public void draw(GraphicsContext graphic) {
-        if(block.name=="empty") return;
-        super.draw(graphic);
+    public boolean isCollidingWith(Entity entity) {
+        return false;
+    }
+
+    @Override
+    public void move() {
+
     }
 }
 
@@ -66,7 +70,7 @@ enum Block {
 
     // todo 获得对应方块的贴图
     public Image getImg() {
-        if(name=="stone"){
+        if(name =="stone"){
             return new Image("/image/stone.png");
         } else if (name == "wood") {
             return new Image("/image/wood.png");

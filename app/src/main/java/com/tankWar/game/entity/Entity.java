@@ -7,13 +7,8 @@ public abstract class Entity {
     protected double width, height;
     protected double x, y;
     protected Image image;
-    protected int speed = 0;
     protected boolean alive;
     protected Direction dir = Direction.CENTER;
-
-    public Direction getDir() {
-        return dir;
-    }
 
     // 构造函数
     Entity(double width, double height) {
@@ -28,28 +23,33 @@ public abstract class Entity {
     }
 
     // 用于处理实体之间的碰撞
-    public boolean isCollidingWith(Entity entity) {
-        return false;
-    }
+    public abstract boolean isCollidingWith(Entity entity);
 
     // 移动
-    public void move() {
-
-    }
+    public abstract  void move();
 
     // 修改方向
     public void setDirection(Direction dir){
-
+        switch (dir) {
+            case LEFT -> setDirection(Direction.LEFT);
+            case RIGHT -> setDirection(Direction.RIGHT);
+            case UP -> setDirection(Direction.UP);
+            case DOWN -> setDirection(Direction.DOWN);
+            default -> System.out.println("Direction error");
+        }
     }
+
+    public Direction getDir() {
+        return dir;
+    }
+
 
     public void setImage(Image image) {
         this.image = image;
     }
 
-    public void draw(GraphicsContext graphic){
-        if(alive){
-            graphic.drawImage(image, x-this.width/2, y-this.height/2);
-        }
+    public Image getImage() {
+        return this.image;
     }
 
     public boolean isAlive() {
@@ -74,6 +74,14 @@ public abstract class Entity {
 
     public void setY(double y) {
         this.y = y;
+    }
+
+    public double getImageX() {
+        return x - width/2;
+    }
+
+    public double getImageY() {
+        return y - height/2;
     }
 
 }
