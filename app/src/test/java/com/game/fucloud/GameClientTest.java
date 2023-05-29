@@ -14,18 +14,6 @@ import org.junit.Test;
 public class GameClientTest {
     static Random ra = new Random();
 
-    static void runGameSever(int size) {
-        Thread t = new Thread(()->{
-            GameServer server = new GameServer(size);
-            try {
-                server.start();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        t.start();
-    }
 
     // 运行的那个客户端测试
     @Test
@@ -53,7 +41,7 @@ public class GameClientTest {
     @Test
     public void testRunClients() {
         int size = 4;
-        runGameSever(size);
+        Utils.runGameSever(size);
 
         GameClient[] clients = new GameClient[size];
         for(int i=0; i<size; i++)
@@ -85,7 +73,7 @@ public class GameClientTest {
     @Test
     public void runRecvClients() {
         // 启动服务端
-        runGameSever(2);
+        Utils.runGameSever(2);
 
         GameClient clientA = new GameClient(0), clientB = new GameClient(1);
 
