@@ -1,5 +1,6 @@
 package com.tankWar.game;
 
+import com.tankWar.game.client.GameClient;
 import com.tankWar.game.entity.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -8,13 +9,17 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 public class GamePane extends BorderPane {
+    // 游戏部分客户端
+    GameClient client;
+
     // 用于绘制的组件
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
@@ -26,14 +31,34 @@ public class GamePane extends BorderPane {
     List<Bullet> bullets = new ArrayList<>(); // 子弹列表
     List<Building> buildings = new ArrayList<>(); // 建筑方块列表
 
+
+    // 记录已经发生碰撞的方向
+    Direction collideDir = Direction.INVALID;
+
     // 游戏逻辑控制参数
     boolean keyJPressed = false; // 是否按下发射键
     boolean hasFired = true; // 是否已处理开火
-    LinkedHashSet<KeyCode> keyCodes = new LinkedHashSet<KeyCode>(); // 存储按下的方向键
 
     // 构造函数
-    GamePane() {
+    public GamePane() {
         this.init();
+
+        this.connectServer();
+    }
+
+    // 连接服务器
+    void connectServer() {
+        client = new GameClient(0);
+
+        try {
+            client.connect();
+        }
+        catch (TimeoutException e) {
+            System.out.println("[Error] 连接超时!");
+        }
+        catch (IOException e) {
+            System.out.println("[Error] 连接失败!");
+        }
     }
 
     // GamePane初始化函数
@@ -55,14 +80,14 @@ public class GamePane extends BorderPane {
         canvas.setHeight(Config.MapHeight);
 
         // 初始化玩家坦克
-        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2 - 15, 1);
-        testTank = new Tank(Config.MapWidth / 2, Config.MapHeight - 50, 2);
+        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2 - 75, 1);
+//        testTank = new Tank(Config.MapWidth / 2, Config.MapHeight - 50, 2);
         /*
         初始化在线玩家坦克
         ...
         */
         tanks.add(myTank);
-        tanks.add(testTank);
+//        tanks.add(testTank);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
@@ -77,8 +102,17 @@ public class GamePane extends BorderPane {
             // 将按下的按键加入按键集合
             KeyCode code = e.getCode();
             // 若为方向键，则假如方向处理列表
-            if ((code == KeyCode.UP || code == KeyCode.DOWN || code == KeyCode.LEFT || code == KeyCode.RIGHT)) {
-                keyCodes.add(code);
+            if (Utils.CheckCodeIsMove(code)) {
+                Direction dir = Utils.DirMap.get(code);
+
+                // 不同方向 || 已暂停: 则不再发送
+                if((myTank.getDir() != dir || myTank.getIsStop() )&& dir != collideDir) {
+                    // 向服务端发送移动消息
+                    client.sendMove(dir);
+                }
+
+                myTank.setDirection(dir);
+                myTank.setIsStop(false);
             }
             // 若为发射键，则修改状态为J键已按下未处理开火
             else if (code == KeyCode.J && !keyJPressed) {
@@ -86,10 +120,19 @@ public class GamePane extends BorderPane {
                 keyJPressed = true;
             }
         });
+
         // 松开事件监听: 将松开的按键从集合中删除
         this.setOnKeyReleased(e -> {
-            keyCodes.remove(e.getCode());
-            if (e.getCode() == KeyCode.J && keyJPressed) {
+            KeyCode code = e.getCode();
+
+            if (Utils.CheckCodeIsMove(code)) {
+                // 如果松开的按键是当前的移动的方向 则停止
+                if (myTank.getDir() == Utils.DirMap.get(code) && !myTank.getIsStop()) {
+                    client.sendMove(Direction.CENTER);
+                    myTank.setIsStop(true);
+                }
+            }
+            else if (code == KeyCode.J && keyJPressed) {
                 keyJPressed = false;
             }
         });
@@ -128,6 +171,37 @@ public class GamePane extends BorderPane {
         Config.MapHeight = Config.BlockYNumber * Config.BlockSize;
     }
 
+    // 显示游戏画面
+    private void showGame() {
+        // 每次显示都擦除整个界面，防止残影
+        this.context.clearRect(0, 0, Config.MapWidth, Config.MapHeight);
+
+        // 绘制坦克
+        for (Tank tank: tanks) {
+            context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
+        }
+
+        // 绘制子弹
+        for (int i = bullets.size() - 1; i >= 0; i--) {
+            Bullet bullet = bullets.get(i);
+            bullet.move();
+            context.drawImage(bullet.getImage(), bullet.getImageX(), bullet.getImageY());
+            // 若子弹已死亡，则移除列表
+            if (!bullet.isAlive()) {
+                bullets.remove(i);
+            }
+        }
+        // 绘制建筑方块
+        for (int i = buildings.size() - 1; i >= 0; i--) {
+            Building building = buildings.get(i);
+            context.drawImage(building.getImage(), building.getImageX(), building.getImageY());
+            // 若建筑方块已死亡，则移除列表
+            if (!building.isAlive()) {
+                buildings.remove(i);
+            }
+        }
+    }
+
     // 显示游戏界面Task
     Task<Void> showTask = new Task<Void>() {
         @Override
@@ -140,36 +214,6 @@ public class GamePane extends BorderPane {
             }
         }
     };
-
-    // 显示游戏画面
-    private void showGame() {
-        // 每次显示都擦除整个界面，防止残影
-        this.context.clearRect(0, 0, Config.MapWidth, Config.MapHeight);
-        // 绘制坦克
-        for (int i = tanks.size() - 1; i >= 0; i--) {
-            Tank tank = tanks.get(i);
-            tank.draw(context);
-        }
-        // 绘制子弹
-        for (int i = bullets.size() - 1; i >= 0; i--) {
-            Bullet bullet = bullets.get(i);
-            bullet.move();
-            bullet.draw(context);
-            // 若子弹已死亡，则移除列表
-            if (!bullet.isAlive()) {
-                bullets.remove(i);
-            }
-        }
-        // 绘制建筑方块
-        for (int i = buildings.size() - 1; i >= 0; i--) {
-            Building building = buildings.get(i);
-            building.draw(context);
-            // 若建筑方块已死亡，则移除列表
-            if (!building.isAlive()) {
-                buildings.remove(i);
-            }
-        }
-    }
 
     // 游戏逻辑处理Task
     Task<Void> logicTask = new Task<Void>() {
@@ -187,34 +231,61 @@ public class GamePane extends BorderPane {
                 }
 
                 // 处理移动按键输入
-                for (KeyCode code : keyCodes) {
-                    switch (code) {
-                        case UP:
-                            myTank.move(Direction.UP);
-                            break;
-                        case DOWN:
-                            myTank.move(Direction.DOWN);
-                            break;
-                        case LEFT:
-                            myTank.move(Direction.LEFT);
-                            break;
-                        case RIGHT:
-                            myTank.move(Direction.RIGHT);
-                            break;
-                        default:
-                            System.out.println("Input error");
+                for(Tank tank: tanks) {
+                    // 如果不再移动 则不做处理
+                    if (tank.getIsStop())
+                        continue;
+
+                    double x = tank.getX(), y = tank.getY();
+                    tank.move();
+
+                    // 如果发生碰撞 则归位并暂停
+                    if(processTankCollide(tank)) {
+                        tank.setX(x); tank.setY(y);
+                        tank.setIsStop(true);
+
+                        // 当该方向发生碰撞时 则记录之
+                        if(tank == myTank) {
+                            collideDir = myTank.getDir();
+                        }
                     }
-                    break;
+                    else
+                        // 不再喷桩时则不喷桩
+                        collideDir = Direction.INVALID;
                 }
-
-                // 处理碰撞
-                processCollide();
-
             }
         }
     };
 
     // 处理碰撞函数
+    boolean processTankCollide(Tank tank) {
+        // 获得坦克
+        // 坦克死亡则无需判断
+        if (tank == null || !tank.isAlive() )
+            return false;
+
+        // 处理坦克与子弹/建筑方块的碰撞
+        boolean isCollide = false;
+
+        // 处理坦克与建筑方块的碰撞
+        for (int j = buildings.size() - 1; j >= 0; j--) {
+            Building building = buildings.get(j);
+            if (!building.canGoThough() && tank.isCollidingWith(building)) {
+                isCollide = true;
+            }
+        }
+
+        // 处理坦克与坦克的碰撞
+        for (Tank tankCollide: tanks) {
+            if (tank == tankCollide) continue;
+            if (tank.isCollidingWith(tankCollide)) {
+                isCollide = true;
+            }
+        }
+
+        return isCollide;
+    }
+
     void processCollide() {
         // 处理子弹与建筑方块的碰撞
         for (int i = bullets.size() - 1; i >= 0; i--) {
@@ -229,39 +300,14 @@ public class GamePane extends BorderPane {
                         building.setAlive(false);
                     }
                 }
-            }
-        }
-        // 处理坦克与子弹/建筑方块的碰撞
-        for (int i = tanks.size() - 1; i >= 0; i--) {
-            Tank tank = tanks.get(i);
-            boolean isCollide = false;
-            if (tank.isAlive()) {
+
                 // 处理坦克与子弹的碰撞
-                for (int j = bullets.size() - 1; j >= 0; j--) {
-                    Bullet bullet = bullets.get(j);
-                    if (bullet.id != tank.id && tank.isCollidingWith(bullet)) {
-                        bullet.setAlive(false);
-                    }
-                }
-                // 处理坦克与建筑方块的碰撞
-                for (int j = buildings.size() - 1; j >= 0; j--) {
-                    Building building = buildings.get(j);
-                    if (!building.canGoThough() && tank.isCollidingWith(building)) {
-                        isCollide = true;
-                    }
-                }
-                // 处理坦克与坦克的碰撞
-                for (int k = tanks.size() - 1; k >= 0; k--) {
-                    if (k == i) continue;
-                    Tank tankCollide = tanks.get(k);
-                    if (tank.isCollidingWith(tankCollide)) {
-                        isCollide = true;
-                    }
-                }
-                // 若坦克有碰撞，则设置坦克不能移动
-                if (isCollide) {
-                    tank.canMove = false;
-                } else tank.canMove = true;
+//                for (int j = bullets.size() - 1; j >= 0; j--) {
+//                    Bullet bullet = bullets.get(j);
+//                    if (bullet.id != tank.getID() && tank.isCollidingWith(bullet)) {
+//                        bullet.setAlive(false);
+//                    }
+//                }
             }
         }
     }
