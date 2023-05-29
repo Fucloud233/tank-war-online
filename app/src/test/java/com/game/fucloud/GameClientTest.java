@@ -6,18 +6,15 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
+import com.tankWar.game.client.msg.Message;
+import com.tankWar.game.entity.Direction;
 import com.tankWar.game.server.GameServer;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class GameClientTest {
-    static int size = 4;
-
     static Random ra = new Random();
 
-    // 启动服务端
-    @BeforeClass
-    public static void runServer() throws IOException {
+    static void runGameSever(int size) {
         Thread t = new Thread(()->{
             GameServer server = new GameServer(size);
             try {
@@ -28,13 +25,12 @@ public class GameClientTest {
         });
 
         t.start();
-
     }
 
     // 运行的那个客户端测试
-//    @Test
-    public void runClient() throws IOException {
-        GameClient client = new GameClient();
+    @Test
+    public void runClient() {
+        GameClient client = new GameClient(0);
 
         // 建立连接
         try {
@@ -50,16 +46,18 @@ public class GameClientTest {
         }
 
         // 客户端向服务端发送消息
-//        client.send();
+        client.sendMove(Direction.LEFT);
     }
-
 
     // 多个客户端测试
     @Test
-    public void runClients() throws IOException {
+    public void testRunClients() {
+        int size = 4;
+        runGameSever(size);
+
         GameClient[] clients = new GameClient[size];
         for(int i=0; i<size; i++)
-            clients[i] = new GameClient();
+            clients[i] = new GameClient(i);
 
         // 建立连接
         try {
@@ -80,7 +78,38 @@ public class GameClientTest {
         // 测试内容：随机选择客户端想服务端发送消息
         for(int i=0; i<10; i++) {
             int id = ra.nextInt(0, 4);
-//            clients[id].send(new Message(id, Command.CENTER));
+            clients[id].sendMove(Direction.LEFT);
+        }
+    }
+
+    @Test
+    public void runRecvClients() {
+        // 启动服务端
+        runGameSever(2);
+
+        GameClient clientA = new GameClient(0), clientB = new GameClient(1);
+
+        // 建立连接
+        try {
+            System.out.println("正在连接");
+            clientA.connect();
+            clientB.connect();
+            System.out.println("Connection Success!");
+        }
+        catch(TimeoutException e) {
+            System.out.println("连接超时");
+        }
+        catch(IOException e) {
+            System.out.println("Connection failed!");
+            e.printStackTrace();
+            return;
+        }
+        // 测试内容：随机选择客户端想服务端发送消息
+        clientA.sendMove(Direction.LEFT);
+
+        Message msg = clientB.receiveMessage();
+        if (msg != null) {
+            System.out.println("客户端B接收: " + msg.getType());
         }
     }
 }
