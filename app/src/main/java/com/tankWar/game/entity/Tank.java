@@ -7,18 +7,25 @@ package com.tankWar.game.entity;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
+import java.util.HashMap;
+
 public class Tank extends Entity {
     // id 玩家编号
-    public int id;
+    private int id;
     // 坦克是否可以移动
-    public boolean canMove = true;
+    private boolean isStop = true;
     // 坦克速度
     private final int speed = Config.TankSpeed;
+
     // 坦克不同方向照片
-    private final Image tankImageUp = new Image("/image/tankUp.png");
-    private final Image tankImageDown = new Image("/image/tankDown.png");
-    private final Image tankImageLeft = new Image("/image/tankLeft.png");
-    private final Image tankImageRight = new Image("/image/tankRight.png");
+    static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
+
+    static {
+        ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
+        ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
+        ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
+        ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
+    }
 
     // tank构造函数(随机方向)
     public Tank(double x, double y, int id) {
@@ -57,29 +64,16 @@ public class Tank extends Entity {
 
     // 设置方向
     public void setDirection(Direction dir) {
+        this.dir = dir;
+
         // 设置渲染图片方向的同时，重新设置长与宽
+        // 图片由Map映射 不需要单独设置
         switch (dir) {
-            case LEFT -> {
-                this.dir = Direction.LEFT;
-                setImage(tankImageLeft);
+            case LEFT, RIGHT -> {
                 this.width = Config.TankWidth;
                 this.height = Config.TankHeight;
             }
-            case RIGHT -> {
-                this.dir = Direction.RIGHT;
-                setImage(tankImageRight);
-                this.width = Config.TankWidth;
-                this.height = Config.TankHeight;
-            }
-            case UP -> {
-                this.dir = Direction.UP;
-                setImage(tankImageUp);
-                this.width = Config.TankHeight;
-                this.height = Config.TankWidth;
-            }
-            case DOWN -> {
-                this.dir = Direction.DOWN;
-                setImage(tankImageDown);
+            case UP, DOWN -> {
                 this.width = Config.TankHeight;
                 this.height = Config.TankWidth;
             }
@@ -88,39 +82,33 @@ public class Tank extends Entity {
     }
 
     // 坦克移动函数
-    public void move(Direction dir) {
-        if (dir != this.dir) { // 方向不同，则转向
-            switch (dir) {
-                case LEFT -> setDirection(Direction.LEFT);
-                case RIGHT -> setDirection(Direction.RIGHT);
-                case UP -> setDirection(Direction.UP);
-                case DOWN -> setDirection(Direction.DOWN);
-                default -> System.out.println("Direction error");
+    public void move() {
+        if(this.isStop)
+            return;
+
+        // 根据当前方向移动
+        switch (dir) {
+            case LEFT -> {
+                if (x - this.width / 2 - speed >= 0) {
+                    x = x - speed;
+                }
             }
-        } else if (this.canMove) { // 若可移动且方向相同，则移动
-            switch (dir) {
-                case LEFT -> {
-                    if (x - this.width / 2 - speed >= 0) {
-                        x = x - speed;
-                    }
+            case RIGHT -> {
+                if (x + this.width / 2 + speed <= Config.MapWidth) {
+                    x = x + speed;
                 }
-                case RIGHT -> {
-                    if (x + this.width / 2 + speed <= Config.MapWidth) {
-                        x = x + speed;
-                    }
-                }
-                case UP -> {
-                    if (y - this.height / 2 - speed >= 0) {
-                        y = y - speed;
-                    }
-                }
-                case DOWN -> {
-                    if (y + this.height / 2 + speed <= Config.MapHeight) {
-                        y = y + speed;
-                    }
-                }
-                default -> System.out.println("Direction error");
             }
+            case UP -> {
+                if (y - this.height / 2 - speed >= 0) {
+                    y = y - speed;
+                }
+            }
+            case DOWN -> {
+                if (y + this.height / 2 + speed <= Config.MapHeight) {
+                    y = y + speed;
+                }
+            }
+            default -> System.out.println("Direction error");
         }
     }
 
@@ -161,5 +149,22 @@ public class Tank extends Entity {
             return boundBox.intersects(entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         }
         return false;
+    }
+
+    @Override
+    public Image getImage() {
+        return ImageMap.get(this.dir);
+    }
+
+    public int getID() {
+        return id;
+    }
+
+    public boolean getIsStop() {
+        return isStop;
+    }
+
+    public void setIsStop(boolean isStop) {
+        this.isStop = isStop;
     }
 }
