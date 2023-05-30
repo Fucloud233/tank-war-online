@@ -12,6 +12,7 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
 public class Client extends Application {
@@ -44,6 +45,7 @@ public class Client extends Application {
     private Stage loginStage;
     //聊天室界面
     private Stage primaryStage;
+    //测试的服务器
 
     @Override
     public void start(Stage primaryStage) {
@@ -151,7 +153,7 @@ public class Client extends Application {
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
         launch(args);
     }
 

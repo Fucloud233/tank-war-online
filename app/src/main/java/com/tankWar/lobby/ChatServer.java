@@ -4,7 +4,7 @@ package com.tankWar.lobby;
 import java.io.IOException;
 import java.net.*;
 
-class ChatServer extends Thread {
+public class ChatServer extends Thread {
     ServerSocket serverSocket = null; // 创建服务器端套接字
     public boolean bServerIsRunning = false;
     InetAddress serverAddress=InetAddress.getLocalHost(); //获取本地主机的IP地址
