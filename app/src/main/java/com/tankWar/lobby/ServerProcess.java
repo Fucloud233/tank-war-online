@@ -10,12 +10,15 @@ public class ServerProcess extends Thread {
     private Socket socket = null;// 定义客户端套接字
     private BufferedReader in;// 定义输入流
     private PrintWriter out;// 定义输出流
+    private static Room[] rooms={new Room(0),new Room(1),new Room(2),new Room(3)
+            ,new Room(4),new Room(5),new Room(6),new Room(7),new Room(8)
+            ,new Room(9),new Room(10),new Room(11)};//************************************************
     private static Vector onlineUser = new Vector(10, 5);//保存在线用户的用户名
     private static Vector socketUser = new Vector(10, 5);//保存在线用户的Socket对象
     private String strReceive; //客户端接收的原始信息
     private String strKey; //保存信息的关键字 login talk init reg
     private StringTokenizer st;   //拆分字符串
-    private final String USERLIST_FILE = "E:\\lobby\\app\\src\\main\\java\\com\\tankWar\\lobby\\_user.txt"; // 设定存放用户信息的文件
+    private final String USERLIST_FILE = "D:\\Code\\ideacode\\Gameroom\\src\\chat\\_user.txt"; // 设定存放用户信息的文件
 
     //处理从客户端Socket接收到的信息
     public ServerProcess(Socket client) throws IOException {
@@ -44,6 +47,10 @@ public class ServerProcess extends Thread {
                 } else if (strKey.equals("reg")) {
                     //注册
                     register();
+                } else if (strKey.equals("Create")) {
+                    createroom();
+                } else if (strKey.equals("select room")) {
+                    selectroom();
                 }
             }
         } catch (IOException e) { // 用户关闭客户端造成此异常，关闭该用户套接字。
@@ -118,6 +125,39 @@ public class ServerProcess extends Thread {
             System.out.println("Constants.USER" + name + "注册成功, " + "注册时间:" + t.toLocaleString());
             userLoginSuccess(name); // 自动登陆聊天室
         }
+    }
+
+    //创建房间
+    public void createroom(){
+        String roomnum=st.nextToken();
+        String user_num=st.nextToken();
+        String password=st.nextToken().trim();
+        if (rooms[Integer.parseInt(roomnum)].isIs_used()){
+            out.println("Create|Failed");
+        } else {
+            rooms[Integer.parseInt(roomnum)].setIs_used(true);
+            rooms[Integer.parseInt(roomnum)].setPassword(password);
+            rooms[Integer.parseInt(roomnum)].setUser_num(Integer.parseInt(user_num));
+            out.println("Create|Success");
+        }
+    }
+    //进入房间
+    public void selectroom(){
+        String roomnum=st.nextToken();
+        String password=st.nextToken();
+        String userid=st.nextToken();
+        if (!rooms[Integer.parseInt(roomnum)].isIs_used()){
+            out.println("select room|no created");
+        } else if (!Objects.equals(password, rooms[Integer.parseInt(roomnum)].getPassword())) {
+
+            out.println("select room|password error");
+        } else  {
+            System.out.println("password:"+password);
+            System.out.println();
+            rooms[Integer.parseInt(roomnum)].addPlayer(userid);
+            out.println("select room|success");
+        }
+
     }
 
     //登录
