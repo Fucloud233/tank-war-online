@@ -60,6 +60,10 @@ public class GamePane extends BorderPane {
         catch (IOException e) {
             System.out.println("[Error] 连接失败!");
         }
+
+        // 连接成功后创建处理连接的线程
+        Thread connectThread = new Thread(connectTask);
+        connectThread.start();
     }
 
     // GamePane初始化函数
@@ -197,6 +201,20 @@ public class GamePane extends BorderPane {
         }
     }
 
+    // 处理连接Task
+    Task<Void> connectTask = new Task<Void>() {
+        @Override
+        protected Void call() throws Exception {
+            while (true) {
+                // 延时
+                Thread.sleep(1000 / 60);
+                /*
+                * add code here
+                * */
+            }
+        }
+    };
+
     // 显示游戏界面Task
     Task<Void> showTask = new Task<Void>() {
         @Override
@@ -221,7 +239,7 @@ public class GamePane extends BorderPane {
                 // 处理本机坦克开火
                 if (!hasFired) {
                     bullets.add(myTank.fire());
-                    bullets.add(testTank.fire());
+//                    bullets.add(testTank.fire());
                     hasFired = true;
                 }
 
