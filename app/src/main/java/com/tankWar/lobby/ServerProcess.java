@@ -10,13 +10,9 @@ public class ServerProcess extends Thread {
     private Socket socket = null;// 定义客户端套接字
     private BufferedReader in;// 定义输入流
     private PrintWriter out;// 定义输出流
-    //    private static Room[] rooms={new Room(0),new Room(1),new Room(2),new Room(3)
-//            ,new Room(4),new Room(5),new Room(6),new Room(7),new Room(8)
-//            ,new Room(9),new Room(10),new Room(11)};//************************************************
-    ///////////////////
+
     private static ArrayList<Room> rooms=new ArrayList<>();
     private String RoomNum;
-    //////////////////////
     private static Vector onlineUser = new Vector(10, 5);//保存在线用户的用户名
     private static Vector socketUser = new Vector(10, 5);//保存在线用户的Socket对象
     private String strReceive; //客户端接收的原始信息
@@ -45,7 +41,7 @@ public class ServerProcess extends Thread {
                 } else if (strKey.equals("talk")) {
                     //发言
                     talk();
-                }else if (strKey.equals("roomTalk")) {//////////////////////////////
+                }else if (strKey.equals("roomTalk")) {
                     //发言
                     roomTalk();
                 } else if (strKey.equals("init")) {
@@ -140,18 +136,10 @@ public class ServerProcess extends Thread {
     }
 
     //创建房间
-    public void createroom(){
+    public void createroom() throws IOException {
         String roomnum=st.nextToken();
         String user_num=st.nextToken();
         String password=st.nextToken().trim();
-//        if (rooms[Integer.parseInt(roomnum)].isIs_used()){
-//            out.println("Create|Failed");
-//        } else {
-//            rooms[Integer.parseInt(roomnum)].setIs_used(true);
-//            rooms[Integer.parseInt(roomnum)].setPassword(password);
-//            rooms[Integer.parseInt(roomnum)].setUser_num(Integer.parseInt(user_num));
-//            out.println("Create|Success");
-//        }
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(roomnum)){
@@ -159,45 +147,13 @@ public class ServerProcess extends Thread {
                 return;
             }
         }
-//        sendAll("Create|"+roomnum+"|"+"0/"+user_num);
         out.println("Create|success");
         rooms.add(new Room(roomnum,Integer.parseInt(user_num),password));
-        String strOnline = "lobby";
-        for (int i = 0; i < rooms.size(); i++) {
-            Room room = rooms.get(i);
-            strOnline += "|" + room.getRoomNum();
-            strOnline += "|" + String.valueOf(room.getEnter_num());
-            strOnline += "|" + String.valueOf(room.getUser_num());
+        freshClientsLobbyOnline();
 
-        }
-        sendAll(strOnline);
 
     }
     //进入房间
-//    public void selectroom() throws IOException {
-//        String roomnum=st.nextToken();
-//        String password=st.nextToken();
-//        String userid=st.nextToken();
-//        if (!rooms[Integer.parseInt(roomnum)].isIs_used()){
-//            out.println("select room|no created");
-//        }else if (!rooms[Integer.parseInt(roomnum)].compareWithPassword(password)) {
-//
-//            out.println("select room|password error");
-//        } else if (rooms[Integer.parseInt(roomnum)].findUserId(userid)) {
-//            System.out.println("why");
-//            out.println("select room|success");
-//        }else if (!rooms[Integer.parseInt(roomnum)].compareUserNum()) {
-//
-//            out.println("select room|userNum error");
-//        } else  {
-//            System.out.println("password:"+password);
-////            System.out.println();
-//            rooms[Integer.parseInt(roomnum)].addPlayer(userid);
-//            RoomNum=Integer.parseInt(roomnum);/////////////////////////////////////
-//            userEnterRoomSuccess(userid);
-//        }
-//
-//    }
     public void selectroom() throws IOException {
         String roomnum=st.nextToken();
         String password=st.nextToken();
@@ -213,7 +169,6 @@ public class ServerProcess extends Thread {
                 }else {
                     room.addPlayer(userid);
                     RoomNum=roomnum;
-
                     userEnterRoomSuccess(userid);
                 }
             }
@@ -257,34 +212,12 @@ public class ServerProcess extends Thread {
         System.out.println("[SYSTEM] " + name + " login succeed!");
     }
     ///////////////////成功进入房间//////////////////////////////
-//    private void userEnterRoomSuccess(String name) throws IOException {
-//        Date t = new Date();
-//        //返回给客户端成功登录的内容
-//        out.println("select room|success");
-//        sendRoomAll("online|" + name);
-////        onlineUser.addElement(name);
-////        socketUser.addElement(socket);
-//        rooms[RoomNum].addOnlineUser(name);
-//        rooms[RoomNum].addSocketUser(socket);
-////        System.out.println("用户：" + name + "登录成功，" + "登录时间:" + t.toLocaleString());
-//        freshClientsRoomOnline();
-//        sendRoomAll("talk|>>>欢迎 " + name + " 加入游戏");
-//        System.out.println("[SYSTEM] " + name + " Enter room succeed!");
-//    }
+
     private void userEnterRoomSuccess(String name) throws IOException {
         Date t = new Date();
         //返回给客户端成功登录的内容
         out.println("select room|success");
-        String strOnline = "lobby";
-        for (int i = 0; i < rooms.size(); i++) {
-            Room room = rooms.get(i);
-            strOnline += "|" + room.getRoomNum();
-            strOnline += "|" + String.valueOf(room.getEnter_num());
-            strOnline += "|" + String.valueOf(room.getUser_num());
-
-        }
-        sendAll(strOnline);
-//        sendRoomAll("online|" + name);
+        freshClientsLobbyOnline();
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(RoomNum)){
@@ -297,7 +230,6 @@ public class ServerProcess extends Thread {
         }
     }
 
-    //////////////////////////////////////////////////////////
 
     //发言
     private void talk() throws IOException {
@@ -415,7 +347,7 @@ public class ServerProcess extends Thread {
 //        out.println(strOnline);
         sendAll(strOnline);
     }
-    ////////////////////////房间内的在线用户///////////////////
+    ////////////////////////刷新房间内的在线用户///////////////////
     private void freshClientsRoomOnline() throws IOException {
         String strOnline = "room online";
         String[] userList = new String[20];
@@ -429,12 +361,12 @@ public class ServerProcess extends Thread {
                     userList[j] = useName;
                 }
                 System.out.println("当前在线人数:"+room.sizeOfOnlineUser());
-//                out.println(strOnline);
                 sendRoomAll(strOnline);
             }
         }
 
     }
+    //刷新游戏大厅的在线房间
     private void freshClientsLobbyOnline() throws IOException {
         String strOnline = "lobby";
         for (int i = 0; i < rooms.size(); i++) {
@@ -444,11 +376,10 @@ public class ServerProcess extends Thread {
             strOnline += "|" + String.valueOf(room.getUser_num());
 
         }
-        out.println(strOnline);
+        sendAll(strOnline);
 
     }
 
-    ////////////////////////////////////////////////////////
 
     //信息群发
     private void sendAll(String strSend) {
@@ -491,8 +422,6 @@ public class ServerProcess extends Thread {
         }
     }
 
-    /////////////////////////////////////////////////////
-/////////////////////这里要加上把房间内的在线列表删除///////////////
     //关闭套接字，并将用户信息从在线列表中删除
     private String closeSocket() throws IOException {
         String strUser = "";

@@ -179,7 +179,7 @@ public class Client extends Application {
 
         loginStage = new Stage();
         loginStage.setTitle("登录窗口");
-        //构建网格布局
+        //登陆界面的网格布局
         GridPane loginPane = new GridPane();
         loginPane.setVgap(10);
         loginPane.setHgap(10);
@@ -282,7 +282,7 @@ public class Client extends Application {
             this.socket = s;
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         }
-        //这用来创建每一条房间的消息
+        //这用来创建每一条房间的消息，显示在聊天框上面的右边部分
         public HBox createHBox(String roomNum,int enterNum,int userNum) {
             HBox hBox = new HBox();
             hBox.setAlignment(Pos.CENTER);
@@ -321,10 +321,10 @@ public class Client extends Application {
                     strReceive = in.readLine();
                     st = new StringTokenizer(strReceive, "|");
                     strKey = st.nextToken();
-                    if (strKey.equals("talk")) {
+                    if (strKey.equals("talk")) {//游戏大厅部分聊天框的聊天内容
                         String strTalk = st.nextToken();
                         Platform.runLater(() -> txtViewTalk.appendText("\n" + strTalk));
-                    } else if (strKey.equals("online")) {
+                    } else if (strKey.equals("online")) {//游戏大厅部分聊天框中在线用户的更新
                         Platform.runLater(()->{
                             listOnline.getItems().clear();
                             listOnline.getItems().add("All");
@@ -335,16 +335,10 @@ public class Client extends Application {
                             }
                         });
 
-                    } else if (strKey.equals("remove")) {
-                        while (st.hasMoreTokens()) {
-                            String strRemove = st.nextToken();
-                            Platform.runLater(() -> listOnline.getItems().remove(strRemove));
-                        }
-                    } else if (strKey.equals("warning")) {
+                    }  else if (strKey.equals("warning")) {//登陆失败提示
                         String strWarning = st.nextToken();
                         Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, strWarning).showAndWait());
-                    } else if (strKey.equals("Create")) {
-
+                    } else if (strKey.equals("Create")) {//创建房间的信息
                         while (st.hasMoreTokens()){
                             String strCreate =st.nextToken();
                             if (strCreate.equals("Failed")){
@@ -357,7 +351,7 @@ public class Client extends Application {
                             }
 
                         }
-                    } else if (strKey.equals("select room")) {
+                    } else if (strKey.equals("select room")) {//选择加入房间
                         String strSelect=st.nextToken();
 
                         if (strSelect.equals("password error")) {
@@ -380,7 +374,7 @@ public class Client extends Application {
                                 gameWaitWindow.ShowWindow();
                             });
                         }
-                    } else if (strKey.equals("lobby")) {
+                    } else if (strKey.equals("lobby")) {//更新聊天框上面右边的房间动态信息
                         if (primaryStage.isShowing()){
                             Platform.runLater(()->{
                                 container.getChildren().clear();
@@ -393,12 +387,11 @@ public class Client extends Application {
                                 }
                             });
                         }
-
-                    } else if (strKey.equals("roomTalk")) {
+                    } else if (strKey.equals("roomTalk")) {//在进入房间后的聊天框的聊天内容
                         String strTalk = st.nextToken();
                         Platform.runLater(()->gameWaitWindow.AddTxt("\n" + strTalk));
 //                        Platform.runLater(() -> txtViewTalk.appendText("\n" + strTalk));
-                    }else if (strKey.equals("room online")) {
+                    }else if (strKey.equals("room online")) {//在进入房间后的，更新房间里面的在线用户
                         Platform.runLater(()->{
                             gameWaitWindow.ClearTalkTo();
                             gameWaitWindow.AddTalkTo("All");
