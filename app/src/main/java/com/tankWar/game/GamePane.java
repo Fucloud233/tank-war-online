@@ -221,19 +221,43 @@ public class GamePane extends BorderPane {
             int id = msg.getId();
             Direction dir = msg.getDir();
 
-
-
+            if(dir != Direction.CENTER) {
+                tanks[id].setDirection(dir);
+                tanks[id].setIsStop(false);
+            } else {
+                tanks[id].setIsStop(true);
+            }
         }
 
+        int count = 0;
+
         @Override
-        protected Void call() throws Exception {
+        protected Void call()  {
             while (true) {
+                // 延时
+                try {
+                    Thread.sleep(1000 / 60);
+                }
+                catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // 尝试接收消息
                 Message msg = client.receiveStatusMsg();
+
+                // 如果没有接收到消息则跳过
+                if(msg == null) {
+                    count++;
+//                    System.out.println("为接收到消息 " + count);
+                    continue;
+                }
 
                 switch(msg.getType()) {
                     case Move -> handleMove((MoveMessage) msg);
+                    default -> {
+                        continue;
+                    }
                 }
-
             }
         }
     };
