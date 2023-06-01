@@ -23,9 +23,7 @@ public class Client extends Application {
     PrintWriter out = null;
     //游戏大厅的UI
     private Button addbtn;
-    //    private GridPane gridPane;
-//    private Label[] roomNumLabel=new Label[12];
-//    private Button[] roomBtn=new Button[12];
+
     private VBox container;
     private ScrollPane scrollPane;
 
@@ -55,13 +53,10 @@ public class Client extends Application {
     //聊天室界面
     private Stage primaryStage;
     private CreateRoomWindow roomWindow;
-    private SelectRoomWindow selectRoomWindow;////////////////////////////////////////////
+    private SelectRoomWindow selectRoomWindow;
     private GameWaitWindow gameWaitWindow;
     //一些参数
-    private String selectRoom="-1";//玩家房间选择
-    private String state;//准备状态
-    private boolean isInGame=false;//判断是否从游戏里出来
-    private String serverMessage;//服务器消息
+
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -70,7 +65,7 @@ public class Client extends Application {
         primaryStage.setTitle("游戏大厅");
 
         BorderPane borderPane = new BorderPane();
-
+        //游戏大厅的聊天框部分
         txtTalk = new TextField();
         txtViewTalk = new TextArea();
         btnTalk = new Button("发送");
@@ -85,50 +80,13 @@ public class Client extends Application {
         VBox vBox=new VBox();
         vBox.getChildren().add(txtViewTalk);
         vBox.getChildren().add(hBox);
-        ///////////////////////////////////
+
+        //游戏大厅的聊天框上面右边部分
         container=new VBox();
         scrollPane=new ScrollPane(container);
         VBox.setVgrow(container,Priority.ALWAYS);
 
-        //////////////////////////////////
-
-//        gridPane = new GridPane();
-//        gridPane.setPadding(new Insets(20, 20, 20, 20));
-//        gridPane.setVgap(20);
-//        gridPane.setHgap(40);
-//        gridPane.setAlignment(Pos.CENTER);
-//        for (int i = 0; i < 12; i++) {
-//            roomBtn[i]=new Button(i+"号房间");
-//            roomNumLabel[i]=new Label("已有0人");
-//            roomNumLabel[i].setAlignment(Pos.CENTER);
-//
-///////////////////////////////////////////////////////////////////
-//            roomBtn[i].setMinWidth(100); // 设置最小宽度
-//            roomBtn[i].setMinHeight(50); // 设置最小高度
-//            roomBtn[i].setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;"); // 设置按钮样式
-//            VBox vBox1=new VBox(roomBtn[i],roomNumLabel[i]);
-//           int finalI = i;
-//            roomBtn[i].setOnAction(event -> {
-//                this.selectRoom=String.valueOf(finalI);
-//                try {
-//                    selectRoomWindow=new SelectRoomWindow(socket,selectRoom,userid);
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                selectRoomWindow.ShowWindow();
-//
-//            });
-////////////////////////////////////////////////////////////////////////
-//            // 设置事件 进行房间选择后的处理逻辑
-//            // int finalI = i;
-//            // button.setOnAction(e -> player.setSelectRoom(String.valueOf(finalI)));
-//
-//            gridPane.add(vBox1, i % 3, i / 3);
-//
-//        }
-//        roomNumLabel=new Label[12];
-
-
+        //游戏大厅的聊天框上面左边部分
         addbtn=new Button("创建房间");
         addbtn.setPrefHeight(50);
         addbtn.setPrefWidth(100);
@@ -138,13 +96,15 @@ public class Client extends Application {
         lobbyVB.setAlignment(Pos.CENTER);
         lobbyVB.getChildren().add(addbtn);
 
-
-        borderPane.setCenter(scrollPane);///////////////////////////
+        //最后将组件排布在borderPane上
+        borderPane.setCenter(scrollPane);
         borderPane.setBottom(vBox);
         borderPane.setLeft(lobbyVB);
+        Scene scene = new Scene(borderPane, 800, 600);
+        primaryStage.setScene(scene);
 
 
-        // Button action
+        // 聊天框中的按钮事件
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 out.println("talk|" + txtTalk.getText() + "|" + txtName.getText() + "|" + listOnline.getValue());
@@ -152,12 +112,9 @@ public class Client extends Application {
             }
         });
 
+       //创建房间按钮的事件
         addbtn.setOnAction(e->{
-//            try {
-//                roomWindow=new CreateRoomWindow(socket);
-//            } catch (IOException ex) {
-//                throw new RuntimeException(ex);
-//            }
+
             try {
                 roomWindow = new CreateRoomWindow(socket,txtName.getText());
             } catch (IOException ex) {
@@ -167,15 +124,10 @@ public class Client extends Application {
                 // throw new RuntimeException(ex);
             }
             roomWindow.ShowWindow();
-//            strSend=roomWindow.getStrmes();
+
 
 
         });
-
-        //聊天窗口的场景
-
-        Scene scene = new Scene(borderPane, 800, 600);
-        primaryStage.setScene(scene);
 
         // 登录的UI
         txtServerIP = new TextField("172.17.32.53");
@@ -248,35 +200,7 @@ public class Client extends Application {
         // 登录成功后显示主聊天窗口
         primaryStage.show();
 
-//        while (true) {
-//            if (!isInGame) {
-//                this.selectRoom = "-1";
-////                SelectRoomWindow selectRoomWindow = new SelectRoomWindow(this.x, this.y);
-////                selectRoomWindow.showSelectRoom(this);//调试选择房间窗口
-//                serverMessage = in.readLine();
-//                out.println(this.selectRoom);
-//                refresh(serverMessage);
-//                while (true) {
-////                    refreshWindowLocate(selectRoomWindow.getLocate());//更新位置
-//                    serverMessage = in.readLine();//服务器发过来的房间信息
-//                    if (serverMessage.equals("full")) {//前端弹出提示
-//                        System.out.println("房间人数已满");
-//                        JOptionPane.showMessageDialog(null, "房间人数已满");
-//                        this.selectRoom = "-1";
-//                    }
-//                    if (serverMessage.equals("ok")) {//前端在后面显示进入房间
-//                        out.println("1");
-//                        primaryStage.close();//关闭选择房间窗口
-//                        break;
-//                    }
-//                    storeRoomNum(serverMessage, selectRoomWindow);//储存大厅房间状态(人数)
-//                    out.println(this.selectRoom);
-//
-//                }
-//            }
-//            if (gameReady())//游戏准备环节
-//                break;
-//        }
+
 
     }
 
@@ -299,12 +223,7 @@ public class Client extends Application {
         }
     }
 
-//    public void refresh(String s){
-//        String[] info = s.split(",");
-//        for (int i = 0;i < 12;i++){
-//            this.roomNumLabel[i].setText("已有"+info[i]+"个玩家");
-//        }
-//    }
+
 
     //登录的逻辑
     private void initLogin() throws IOException {
@@ -363,6 +282,7 @@ public class Client extends Application {
             this.socket = s;
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         }
+        //这用来创建每一条房间的消息
         public HBox createHBox(String roomNum,int enterNum,int userNum) {
             HBox hBox = new HBox();
             hBox.setAlignment(Pos.CENTER);
@@ -407,7 +327,7 @@ public class Client extends Application {
                     } else if (strKey.equals("online")) {
                         Platform.runLater(()->{
                             listOnline.getItems().clear();
-                            listOnline.getItems().add("所有人");
+                            listOnline.getItems().add("All");
                             while (st.hasMoreTokens()) {
                                 String strOnline = st.nextToken();
                                 listOnline.getItems().add(strOnline);
@@ -424,15 +344,7 @@ public class Client extends Application {
                         String strWarning = st.nextToken();
                         Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, strWarning).showAndWait());
                     } else if (strKey.equals("Create")) {
-//                        while (st.hasMoreTokens()){
-//                            String strCreate =st.nextToken();
-//                            if (strCreate.equals("Failed")){
-//                                Platform.runLater(() -> new Alert(Alert.AlertType.WARNING,"房间已被使用，请重新创建房间").showAndWait());
-//                            } else if (strCreate.equals("Success")) {
-//                                System.out.println("create ok!");
-//                                Platform.runLater(()->roomWindow.CloseWindow());
-//                            }
-//                        }
+
                         while (st.hasMoreTokens()){
                             String strCreate =st.nextToken();
                             if (strCreate.equals("Failed")){
@@ -441,53 +353,20 @@ public class Client extends Application {
                                 Platform.runLater(()->{
                                     roomWindow.CloseWindow();
                                 });
-//                                String roomNumber = strCreate;
-//                                String roomCount = st.nextToken();
-//
-//                                Platform.runLater(() -> {
-//                                    HBox hBox = new HBox();
-//                                    hBox.setAlignment(Pos.CENTER);
-//                                    hBox.setPadding(new Insets(10));
-//
-//                                    Label nlabel = new Label(roomNumber + "的房间");
-//                                    nlabel.setId("roomLabel");
-//                                    Label plabel = new Label("人数：" + roomCount);
-//                                    plabel.setId("countLabel");
-//                                    Button enterBtn = new Button("进入");
-//                                    enterBtn.setOnAction(e->{
-//                                        try {
-//                                            selectRoomWindow=new SelectRoomWindow(socket,roomNumber,userid);
-//                                        } catch (IOException ex) {
-//                                            throw new RuntimeException(ex);
-//                                        }
-//                                        selectRoomWindow.ShowWindow();
-//                                    });
-//
-//                                    hBox.getChildren().addAll(nlabel, plabel, enterBtn);
-//                                    container.getChildren().add(hBox);
-
-
-
 
                             }
 
                         }
                     } else if (strKey.equals("select room")) {
                         String strSelect=st.nextToken();
-//                        if (strSelect.equals("no created")){
-//                            Platform.runLater(() -> new Alert(Alert.AlertType.WARNING,"该房间没有被创建！").showAndWait());
-//                        }
-//                        if (strSelect.equals("userNum error")) {
-//                            Platform.runLater(() -> new Alert(Alert.AlertType.WARNING,"该房间人数达到上限！").showAndWait());
-//                        }
+
                         if (strSelect.equals("password error")) {
                             Platform.runLater(() -> new Alert(Alert.AlertType.WARNING,"密码错误！").showAndWait());
                         } else if (strSelect.equals("success")){
-                            System.out.println("sss");
+
                             Platform.runLater(() ->{
                                 selectRoomWindow.CloseWindow();
                                 primaryStage.close();
-//                                GameWaitWindow gameWaitWindow= null;
                                 try {
                                     gameWaitWindow = new GameWaitWindow(socket,txtName.getText());
                                 } catch (IOException e) {
@@ -522,7 +401,7 @@ public class Client extends Application {
                     }else if (strKey.equals("room online")) {
                         Platform.runLater(()->{
                             gameWaitWindow.ClearTalkTo();
-                            gameWaitWindow.AddTalkTo("所有人");
+                            gameWaitWindow.AddTalkTo("All");
                             while (st.hasMoreTokens()) {
                                 String strOnline = st.nextToken();
                                 gameWaitWindow.AddTalkTo(strOnline);
