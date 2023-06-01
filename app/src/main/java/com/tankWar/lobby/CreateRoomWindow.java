@@ -104,8 +104,6 @@ public class CreateRoomWindow{
         borderPane.setBottom(hBox);
         createroomStage.setScene(new Scene(borderPane));
         createroomStage.show();
-
-
     }
 //    public String getStrmes(){
 //        return strmes;
