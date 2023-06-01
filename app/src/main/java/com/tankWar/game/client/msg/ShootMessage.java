@@ -6,8 +6,8 @@ public class ShootMessage extends Message {
     Direction dir;
     int x, y;
 
-    public ShootMessage(int id, MessageType type, Direction dir, int x, int y) {
-        super(id, type);
+    public ShootMessage(int id, Direction dir, int x, int y) {
+        super(id, MessageType.Shoot);
         this.dir = dir;
         this.x = x;
         this.y = y;

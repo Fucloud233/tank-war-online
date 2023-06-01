@@ -5,8 +5,8 @@ import com.tankWar.game.entity.Direction;
 public class MoveMessage extends Message {
     Direction dir;
 
-    public MoveMessage(int id, MessageType type, Direction dir) {
-        super(id, type);
+    public MoveMessage(int id, Direction dir) {
+        super(id, MessageType.Move);
         this.dir = dir;
     }
 

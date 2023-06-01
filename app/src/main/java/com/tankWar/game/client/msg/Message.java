@@ -4,6 +4,11 @@ public class Message {
     int id;
     MessageType type;
 
+    public Message() {
+        this.id = -1;
+        this.type = MessageType.Empty;
+    }
+
     public Message(int id, MessageType type) {
         this.id = id;
         this.type = type;
