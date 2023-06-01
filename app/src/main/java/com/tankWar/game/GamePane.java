@@ -1,6 +1,9 @@
 package com.tankWar.game;
 
 import com.tankWar.game.client.GameClient;
+import com.tankWar.game.client.msg.InitMessage;
+import com.tankWar.game.client.msg.Message;
+import com.tankWar.game.client.msg.MoveMessage;
 import com.tankWar.game.entity.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -10,8 +13,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -26,9 +27,10 @@ public class GamePane extends BorderPane {
     GraphicsContext context = canvas.getGraphicsContext2D();
 
     // 游戏元素
-    List<Tank> tanks = new ArrayList<>();
+//    List<Tank> tanks = new ArrayList<>();
+    Tank[] tanks;
     Tank myTank; // 我的坦克
-    Tank testTank; // 测试坦克
+//    Tank testTank; // 测试坦克
     List<Bullet> bullets = new ArrayList<>(); // 子弹列表
     List<Building> buildings = new ArrayList<>(); // 建筑方块列表
 
@@ -42,24 +44,33 @@ public class GamePane extends BorderPane {
 
     // 构造函数
     public GamePane() {
-        this.init();
+        System.out.println("正在连接服务端");
 
         this.connectServer();
+
+        this.init();
     }
 
     // 连接服务器
     void connectServer() {
-        client = new GameClient(0);
+        client = new GameClient();
 
         try {
             client.connect();
         }
         catch (TimeoutException e) {
             System.out.println("[Error] 连接超时!");
+            return;
         }
         catch (IOException e) {
             System.out.println("[Error] 连接失败!");
+            return;
         }
+
+        // 接收初始消息
+        InitMessage initMsg = client.receiveInitMsg();
+        this.tanks = initMsg.getTanks();
+        this.myTank = this.tanks[initMsg.getId()];
 
         // 连接成功后创建处理连接的线程
         Thread connectThread = new Thread(connectTask);
@@ -69,7 +80,9 @@ public class GamePane extends BorderPane {
     // GamePane初始化函数
     void init() {
         // 载入地图
-        loadMap("/map/map.txt");
+//        loadMap("/map/map.txt");
+        // 载入测试地图
+        loadMap("/map/test_map.txt");
 
         // 设置GamePane
         this.setWidth(Config.MapWidth);
@@ -85,13 +98,13 @@ public class GamePane extends BorderPane {
         canvas.setHeight(Config.MapHeight);
 
         // 初始化玩家坦克
-        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2 - 75, 1);
+//        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2 - 75, 1);
 //        testTank = new Tank(Config.MapWidth / 2, Config.MapHeight - 50, 2);
         /*
         初始化在线玩家坦克
         ...
         */
-        tanks.add(myTank);
+//        tanks.add(myTank);
 //        tanks.add(testTank);
 
         // 创建显示游戏的线程
@@ -203,14 +216,24 @@ public class GamePane extends BorderPane {
 
     // 处理连接Task
     Task<Void> connectTask = new Task<Void>() {
+        // todo 处理移动请求
+        private void handleMove(MoveMessage msg) {
+            int id = msg.getId();
+            Direction dir = msg.getDir();
+
+
+
+        }
+
         @Override
         protected Void call() throws Exception {
             while (true) {
-                // 延时
-                Thread.sleep(1000 / 60);
-                /*
-                * add code here
-                * */
+                Message msg = client.receiveStatusMsg();
+
+                switch(msg.getType()) {
+                    case Move -> handleMove((MoveMessage) msg);
+                }
+
             }
         }
     };
