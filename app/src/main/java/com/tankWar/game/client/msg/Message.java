@@ -1,12 +1,10 @@
 package com.tankWar.game.client.msg;
 
 public class Message {
-    int id;
-    MessageType type;
+    int id = -1;
+    MessageType type = MessageType.Empty;
 
     public Message() {
-        this.id = -1;
-        this.type = MessageType.Empty;
     }
 
     public Message(int id, MessageType type) {
