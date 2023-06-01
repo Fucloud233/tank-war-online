@@ -45,8 +45,11 @@ java {
 
 application {
     // Define the main class for the application.
+    mainClass = 'com.tankWar.lobby.Client'
+
+//    mainClass = 'com.tankWar.game.Main'\
 //    mainClass = 'com.tankWar.lobby.Main'
-    mainClass = 'com.tankWar.game.Main'
+//    mainClass = 'com.tankWar.game.Main'
 }
 
 
