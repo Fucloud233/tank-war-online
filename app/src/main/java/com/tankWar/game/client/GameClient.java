@@ -74,11 +74,10 @@ public class GameClient {
 
     String receive() {
         try {
-            String msg = in.readUTF();
-            return msg;
+            return in.readUTF();
         } catch( IOException e) {
 //            e.printStackTrace();
-            System.out.printf("[Error] 客户端%d接收失败!\n", id);
+//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
             return "";
         }
     }
@@ -86,6 +85,7 @@ public class GameClient {
     // 接收消息 服务端返回的状态 (需要额外开辟一个线程)
     public Message receiveStatusMsg() {
         String msg = receive();
+
         if(msg.isEmpty()){
             return null;
         }
@@ -97,7 +97,11 @@ public class GameClient {
         MessageType type = null;
         try {
             JsonNode jsonMsg = mapper.readTree(msg);
-            type = MessageType.valueOf(jsonMsg.get("type").toString());
+
+            // [Warn] 直接使用toString输出内容会包括双引号
+//            System.out.println("msg:" +  jsonMsg.get("type").toString());
+
+            type = MessageType.valueOf(jsonMsg.get("type").asText());
 
             // 3.1 解析并返回移动消息
             if (type == MessageType.Move) {
@@ -124,7 +128,9 @@ public class GameClient {
 
 //        JSONObject jsonMsg = JSONObject.parseObject(msg);
         try {
-            return mapper.readValue(msg, InitMessage.class);
+            InitMessage initMsg = mapper.readValue(msg, InitMessage.class);
+            this.id = initMsg.getId();
+            return initMsg;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;
