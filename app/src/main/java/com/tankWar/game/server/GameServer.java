@@ -34,16 +34,23 @@ public class GameServer {
     }
 
     // 运行函数
-    public void start() throws IOException {
+    public void run()  {
         // 1.建立TCP连接
-        serverSocket = new ServerSocket(Config.port);
-        for(int i=0; i<num; i++) {
-//            System.out.println("正在等待连接");
-            sockets[i] = serverSocket.accept();
+        try {
+            serverSocket = new ServerSocket(Config.port);
 
-            out[i] = new DataOutputStream(sockets[i].getOutputStream());
-            in[i] = new DataInputStream(sockets[i].getInputStream());
-            System.out.println("服务端已连接" + (i+1));
+            ServerPrompt.RunSuccess.print();
+
+            for(int i=0; i<num; i++) {
+//            System.out.println("正在等待连接");
+                sockets[i] = serverSocket.accept();
+
+                out[i] = new DataOutputStream(sockets[i].getOutputStream());
+                in[i] = new DataInputStream(sockets[i].getInputStream());
+                System.out.println("服务端已连接" + (i+1));
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
 
         // 2.获取并广播初始化信息
@@ -63,18 +70,20 @@ public class GameServer {
 //        msg.put("map", )
 
         // todo 添加坦克信息
-        Tank[] tanks = TestExample.getTestTankInfos();
+        Tank[] tanks = new Tank[2];
+        tanks[0] = new Tank(100, 100, 0);
+        tanks[1] = new Tank(200, 200, 1);
 
         // 广播发送所有坦克信息
         try {
             for (int i = 0; i < num; i++) {
                 // 配置消息的基本信息
-                InitMessage message = new InitMessage(1, tanks);
+                InitMessage message = new InitMessage(i, tanks);
                 // 转换成JSON格式并发送
                 String jsonMsg = mapper.writeValueAsString(message);
                 out[i].writeUTF(jsonMsg);
             }
-            ServerPrompt.AllSent.print();
+            ServerPrompt.AllSend.print();
         } catch(IOException e) {
             ServerPrompt.SendFail.print();
             e.printStackTrace();
@@ -113,27 +122,31 @@ public class GameServer {
         @Override
         public void run() {
             // 循环接收消息
-            while (true)
-                handle();
+            boolean flag = true;
+            while(flag)
+                flag = handle();
         }
 
         // 接收消息
-        public void handle()  {
+        public boolean handle()  {
             String msg = null;
             // 1. socket接收到JSON消息
             try {
                 msg = in.readUTF();
                 System.out.println("来自客户端的消息: " + msg);
-            }
-            catch(IOException e) {
+            } catch(SocketException e) {
                 e.printStackTrace();
-                return;
+                return false;
+            } catch(IOException e) {
+                return true;
             }
 
             // 2. 进行验证
 
             // 3. socket广播消息
             broadcast(id, msg);
+
+            return true;
         }
     }
 }

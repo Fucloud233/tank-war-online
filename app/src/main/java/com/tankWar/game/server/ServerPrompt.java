@@ -3,10 +3,12 @@ package com.tankWar.game.server;
 public enum ServerPrompt {
 
     // Prompt
+    RunSuccess("启动成功", 0),
+
     AllSuccess("全部成功", 0),
     AllConnected("客户端全部连接成功", 0),
     AllReceived("客户端消息全部接收成功", 0),
-    AllSent("客户端消息全部发送成功", 0),
+    AllSend("客户端消息全部发送成功", 0),
 
     // Error
     ReceiveFail("接收来自客户端的消息失败", 2),
@@ -25,7 +27,7 @@ public enum ServerPrompt {
 
     public void print() {
         String typeText = null;
-
+        
         switch (type) {
             case 0->{typeText = "[Info] ";}
             case 1->{typeText = "[Warn] ";}
