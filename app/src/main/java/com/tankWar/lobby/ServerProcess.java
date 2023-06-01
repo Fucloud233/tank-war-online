@@ -18,7 +18,7 @@ public class ServerProcess extends Thread {
     private String strReceive; //客户端接收的原始信息
     private String strKey; //保存信息的关键字 login talk init reg
     private StringTokenizer st;   //拆分字符串
-    private final String USERLIST_FILE = "D:\\Code\\ideacode\\Gameroom\\src\\chat\\_user.txt"; // 设定存放用户信息的文件
+    private final String USERLIST_FILE = "E:\\lobby\\app\\src\\main\\java\\com\\tankWar\\lobby\\_user.txt"; // 设定存放用户信息的文件
 
     //处理从客户端Socket接收到的信息
     public ServerProcess(Socket client) throws IOException {

@@ -10,7 +10,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.StringTokenizer;
@@ -82,6 +81,7 @@ public class Client extends Application {
         vBox.getChildren().add(hBox);
 
         gridPane = new GridPane();
+        gridPane.setStyle("-fx-background-image: url('坦克大战login.jpg'); -fx-background-size: cover;");
         gridPane.setPadding(new Insets(20, 20, 20, 20));
         gridPane.setVgap(20);
         gridPane.setHgap(40);
@@ -175,6 +175,8 @@ public class Client extends Application {
 
         //登录按钮的功能
         btnLogin = new Button("登录");
+        btnLogin.getStyleClass().add("custom-button");
+
         btnLogin.setOnAction(e -> {
             //输入的信息全不为空
             if (!txtServerIP.getText().isEmpty() && !txtName.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
@@ -197,7 +199,8 @@ public class Client extends Application {
         });
 
         //注册按钮的功能
-        btnRegister =new Button("注册");
+        btnRegister = new Button("注册");
+        btnRegister.getStyleClass().add("custom-button");
         btnRegister.setOnAction(e->{
             if (!txtServerIP.getText().isEmpty() && !txtName.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
                 try {
@@ -220,18 +223,24 @@ public class Client extends Application {
         loginPane.setVgap(10);
         loginPane.setHgap(10);
         loginPane.setPadding(new Insets(20));
+        loginPane.setAlignment(Pos.CENTER);
+
         loginPane.add(new Label("Server IP:"), 0, 0);
         loginPane.add(txtServerIP, 1, 0);
         loginPane.add(new Label("账号:"), 0, 1);
         loginPane.add(txtName, 1, 1);
         loginPane.add(new Label("密码:"), 0, 2);
         loginPane.add(txtPassword, 1, 2);
-        //列、行、列方向上跨度、行方向上跨度
-        loginPane.add(btnLogin, 1, 3, 1, 2);
-        loginPane.add(btnRegister, 2, 3, 1, 2);
 
-        loginStage.setScene(new Scene(loginPane));
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.getChildren().addAll(btnLogin, btnRegister);
+        loginPane.add(buttonBox, 1, 3);
+
+        Scene loginScene = new Scene(loginPane, 300, 200);
+
         //登录界面
+        loginStage.setScene(loginScene);
         loginStage.showAndWait();
         // 登录成功后显示主聊天窗口
         primaryStage.show();
