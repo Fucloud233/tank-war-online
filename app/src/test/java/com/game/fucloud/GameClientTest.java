@@ -95,7 +95,7 @@ public class GameClientTest {
         // 测试内容：随机选择客户端想服务端发送消息
         clientA.sendMove(Direction.LEFT);
 
-        Message msg = clientB.receiveMessage();
+        Message msg = clientB.receiveStatusMsg();
         if (msg != null) {
             System.out.println("客户端B接收: " + msg.getType());
         }
