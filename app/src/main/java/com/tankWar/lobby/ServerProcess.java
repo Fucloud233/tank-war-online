@@ -103,6 +103,7 @@ public class ServerProcess extends Thread {
     private boolean isUserLogin(String name, String password) {
         String strRead;
         try {
+            //打开文件
             FileInputStream inputfile = new FileInputStream(USERLIST_FILE);
             DataInputStream inputdata = new DataInputStream(inputfile);
             //与文件中的账户名的密码一一比较  找到了则登陆成功
@@ -232,7 +233,7 @@ public class ServerProcess extends Thread {
         System.out.println("用户" + name + "正在登陆..." + "\n" + "密码 :" + password + "\n" + "端口 "
                 + socket + t.toLocaleString());
         //调用用户名和密码的判断
-        if (isUserLogin(name, password)) {      // 判断用户名和密码 -》转为在数据库中寻找
+        if (isUserLogin(name, password)) {      // 判断用户名和密码 ->转为在数据库中寻找
             userLoginSuccess(name);
             succeed = true;
         }
