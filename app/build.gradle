@@ -64,6 +64,10 @@ tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
 
+// 启用并行测试
+test {
+    maxParallelForks = 4
+}
 
 ////////////////////////////////////////////////////
 

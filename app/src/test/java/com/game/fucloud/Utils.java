@@ -8,11 +8,7 @@ public class Utils {
     public static void runGameSever(int size) {
         Thread t = new Thread(()->{
             GameServer server = new GameServer(size);
-            try {
-                server.start();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            server.run();
         });
 
         t.start();

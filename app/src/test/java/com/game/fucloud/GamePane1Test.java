@@ -1,25 +1,33 @@
 package com.game.fucloud;
 
-import com.tankWar.App;
 import com.tankWar.game.GamePane;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.junit.Test;
 
-public class GamePaneTest extends Application {
+public class GamePane1Test extends Application {
     @Test
-    public void runGamePane() {
+    public void runGamePane2() {
         System.out.println("hello");
-        Utils.runGameSever(1);
+//        Utils.runGameSever(1);
 
         Application.launch();
+    }
 
+    @Test
+    public void runGamePane1() {
+        System.out.println("hello");
+//        Utils.runGameSever(1);
+
+        Application.launch();
     }
 
     @Override
     public void start(Stage primaryStage) {
 //        CirclePane circlePane = new CirclePane();
+
+
         GamePane gamePane = new GamePane();
 
         Scene scene = new Scene(gamePane);
