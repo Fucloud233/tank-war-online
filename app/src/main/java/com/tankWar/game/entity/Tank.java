@@ -24,10 +24,16 @@ public class Tank extends Entity {
     static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
 
     static {
-        ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
-        ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
-        ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
-        ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
+        try {
+
+            ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
+            ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
+            ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
+            ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
