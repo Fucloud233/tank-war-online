@@ -4,6 +4,9 @@ package com.tankWar.game.entity;
     Tank 坦克类
  */
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
@@ -27,8 +30,12 @@ public class Tank extends Entity {
         ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
     }
 
+
     // tank构造函数(随机方向)
-    public Tank(double x, double y, int id) {
+    @JsonCreator
+    public Tank(@JsonProperty("x") double x,
+                @JsonProperty("y") double y,
+                @JsonProperty("id") int id) {
         super(Config.TankWidth, Config.TankHeight, x, y);
         this.id = id;
         // 随机坦克方向
@@ -55,11 +62,6 @@ public class Tank extends Entity {
             case RIGHT -> setDirection(Direction.RIGHT);
             default -> System.out.println("Direction error");
         }
-    }
-
-    // 获取坦克ID
-    public int getId() {
-        return id;
     }
 
     // 设置方向
@@ -151,15 +153,17 @@ public class Tank extends Entity {
         return false;
     }
 
+    @JsonIgnore
     @Override
     public Image getImage() {
         return ImageMap.get(this.dir);
     }
 
-    public int getID() {
+    public int getId() {
         return id;
     }
 
+    @JsonIgnore
     public boolean getIsStop() {
         return isStop;
     }

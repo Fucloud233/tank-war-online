@@ -27,8 +27,13 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
 
-    // 使用FastJson解析Json
-    implementation 'com.alibaba:fastjson:2.0.28'
+    // 使用jackson来解析和绑定JSON
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.15.2'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.15.2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -54,7 +59,7 @@ javafx {
 // 设置尝试将多个文件复制到同一目的地时使用的策略
 DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
 
-// 修改为使用'UTF-8'来构建
+// 修改为使用UTF-8来构建
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
