@@ -1,6 +1,8 @@
 package com.tankWar.game.server;
 
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tankWar.game.client.msg.InitMessage;
+import com.tankWar.game.entity.Tank;
 
 import java.io.*;
 import java.net.*;
@@ -18,6 +20,9 @@ public class GameServer {
     DataOutputStream[] out;
     DataInputStream[] in;
 
+    // 用于处理json绑定
+    ObjectMapper mapper = new ObjectMapper();
+    
     public GameServer(int num) {
         // num为游戏中的玩家数量
         this.num = num;
@@ -30,7 +35,7 @@ public class GameServer {
 
     // 运行函数
     public void start() throws IOException {
-        // 建立TCP连接
+        // 1.建立TCP连接
         serverSocket = new ServerSocket(Config.port);
         for(int i=0; i<num; i++) {
 //            System.out.println("正在等待连接");
@@ -41,10 +46,38 @@ public class GameServer {
             System.out.println("服务端已连接" + (i+1));
         }
 
-        // 创建多线程连接业务
+        // 2.获取并广播初始化信息
+        initInfo();
+
+        // 3. 创建多线程连接业务
         for(int i=0; i<num; i++) {
             ReceiveThread t = new ReceiveThread(i);
             t.start();
+        }
+    }
+
+    // 发送初始化信息
+    void initInfo(){
+
+        // todo 添加地图信息
+//        msg.put("map", )
+
+        // todo 添加坦克信息
+        Tank[] tanks = TestExample.getTestTankInfos();
+
+        // 广播发送所有坦克信息
+        try {
+            for (int i = 0; i < num; i++) {
+                // 配置消息的基本信息
+                InitMessage message = new InitMessage(1, tanks);
+                // 转换成JSON格式并发送
+                String jsonMsg = mapper.writeValueAsString(message);
+                out[i].writeUTF(jsonMsg);
+            }
+            ServerPrompt.AllSent.print();
+        } catch(IOException e) {
+            ServerPrompt.SendFail.print();
+            e.printStackTrace();
         }
     }
 
@@ -86,12 +119,11 @@ public class GameServer {
 
         // 接收消息
         public void handle()  {
-            JSONObject jsonMsg;
+            String msg = null;
             // 1. socket接收到JSON消息
             try {
-                String msg = in.readUTF();
+                msg = in.readUTF();
                 System.out.println("来自客户端的消息: " + msg);
-                jsonMsg = JSONObject.parseObject(msg);
             }
             catch(IOException e) {
                 e.printStackTrace();
@@ -101,8 +133,7 @@ public class GameServer {
             // 2. 进行验证
 
             // 3. socket广播消息
-            broadcast(id, jsonMsg.toString());
+            broadcast(id, msg);
         }
-
     }
 }

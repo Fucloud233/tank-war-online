@@ -1,24 +1,30 @@
 package com.tankWar.game.client;
 
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tankWar.game.client.msg.*;
 import com.tankWar.game.entity.Direction;
 import com.tankWar.game.server.Config;
-import com.tankWar.game.client.msg.MessageType;
-import com.tankWar.game.client.msg.Message;
-import com.tankWar.game.client.msg.MoveMessage;
-import com.tankWar.game.client.msg.ShootMessage;
 
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.TimeoutException;
 
 public class GameClient {
-    int id;
+    int id = -1;
 
     Socket clientSocket;
 
     DataOutputStream out;
     DataInputStream in;
+
+    // 用于处理JSON绑定
+    ObjectMapper mapper = new ObjectMapper();
+
+    public GameClient() {
+
+    }
 
     public GameClient(int id)  {
         this.id = id;
@@ -36,30 +42,30 @@ public class GameClient {
 
     // 发送移动消息
     public void sendMove(Direction dir) {
-        JSONObject msg = new JSONObject();
-        msg.put("type", MessageType.Move);
-        msg.put("id", id);
-        msg.put("dir", dir);
-
-        this.send(msg);
+        MoveMessage moveMessage = new MoveMessage(id, dir);
+        try {
+            String msg = mapper.writeValueAsString(moveMessage);
+            this.send(msg);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     // 发送发射消息
     public void sendShoot(Direction dir, int x, int y) {
-        JSONObject msg =  new JSONObject();
-        msg.put("type", MessageType.Shoot);
-        msg.put("id", id);
-        msg.put("x", x);
-        msg.put("y", y);
-
-        this.send(msg);
-//        return result;
+        ShootMessage shootMessage = new ShootMessage(id, dir, x, y);
+        try {
+            String msg  = mapper.writeValueAsString(shootMessage);
+            this.send(msg);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     // 发送消息
-    void send(JSONObject obj)  {
+    void send(String msg)  {
         try {
-            out.writeUTF(obj.toString());
+            out.writeUTF(msg);
         }
         catch( IOException e ){
             System.out.printf("[Error] 客户端%d发送失败!\n", id);
@@ -78,7 +84,7 @@ public class GameClient {
     }
 
     // 接收消息 服务端返回的状态 (需要额外开辟一个线程)
-    public Message receiveMessage() {
+    public Message receiveStatusMsg() {
         String msg = receive();
         if(msg.isEmpty()){
             return null;
@@ -86,27 +92,43 @@ public class GameClient {
 
         // 1.读取Json数据
         // todo 校验JSON格式
-        JSONObject jsonMsg = JSONObject.parseObject(msg);
 
         // 4.1 解析消息数据类型
-        MessageType type = MessageType.valueOf(jsonMsg.getString("type"));
-        int id = jsonMsg.getInteger("id");
+        MessageType type = null;
+        try {
+            JsonNode jsonMsg = mapper.readTree(msg);
+            type = MessageType.valueOf(jsonMsg.get("type").toString());
 
-        // 3.1 解析并返回移动消息
-        if (type == MessageType.Move) {
-            Direction dir = Direction.valueOf(jsonMsg.getString("dir"));
-            return new MoveMessage(id, type, dir);
+            // 3.1 解析并返回移动消息
+            if (type == MessageType.Move) {
+                return mapper.readValue(msg, MoveMessage.class);
+            }
+            // 3.2 解析返回发射消息
+            else if (type == MessageType.Shoot) {
+                return mapper.readValue(msg, ShootMessage.class);
+            }
+            else {
+                System.out.println("接收消息异常!");
+                return  null;
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
         }
-        // 3.2 解析返回发射消息
-        else if (type == MessageType.Shoot) {
-            Direction dir = Direction.valueOf(jsonMsg.getString("dir"));
-            int x = jsonMsg.getInteger("x");
-            int y = jsonMsg.getInteger("y");
+    }
 
-            return new ShootMessage(id, type, dir, x, y);
+    public InitMessage receiveInitMsg() {
+        String msg = receive();
+        if(msg.isEmpty())
+            return null;
+
+//        JSONObject jsonMsg = JSONObject.parseObject(msg);
+        try {
+            return mapper.readValue(msg, InitMessage.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
         }
-
-        return null;
     }
 }
 
