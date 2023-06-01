@@ -213,8 +213,6 @@ public class Client extends Application {
         }
     }
 
-
-
     //登录的逻辑
     private void initLogin() throws IOException {
         strReceive = in.readLine();
