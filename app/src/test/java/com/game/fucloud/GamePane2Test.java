@@ -25,7 +25,7 @@ public class GamePane2Test extends Application{
         Scene scene = new Scene(gamePane);
 
         primaryStage.setScene(scene);
-        primaryStage.setTitle("坦克大战联机版");
+        primaryStage.setTitle("坦克大战联机版2");
         primaryStage.setResizable(false);
         primaryStage.show();
 

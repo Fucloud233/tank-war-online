@@ -16,7 +16,7 @@ public class GamePane1Test extends Application {
     }
 
     @Test
-    public void runGamePane1() {
+    public void runGamePane() {
         System.out.println("hello");
 //        Utils.runGameSever(1);
 
@@ -33,7 +33,7 @@ public class GamePane1Test extends Application {
         Scene scene = new Scene(gamePane);
 
         primaryStage.setScene(scene);
-        primaryStage.setTitle("坦克大战联机版");
+        primaryStage.setTitle("坦克大战联机版1");
         primaryStage.setResizable(false);
         primaryStage.show();
 
