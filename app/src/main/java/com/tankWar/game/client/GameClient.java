@@ -40,6 +40,26 @@ public class GameClient {
         in = new DataInputStream(clientSocket.getInputStream());
     }
 
+    // 发送消息
+    void send(String msg)  {
+        try {
+            out.writeUTF(msg);
+        }
+        catch( IOException e ){
+            System.out.printf("[Error] 客户端%d发送失败!\n", id);
+        }
+    }
+
+    String receive() {
+        try {
+            return in.readUTF();
+        } catch( IOException e) {
+//            e.printStackTrace();
+//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
+            return "";
+        }
+    }
+
     // 发送移动消息
     public void sendMoveMsg(Direction dir) {
         MoveMsg moveMsg = new MoveMsg(id, dir);
@@ -62,24 +82,9 @@ public class GameClient {
         }
     }
 
-    // 发送消息
-    void send(String msg)  {
-        try {
-            out.writeUTF(msg);
-        }
-        catch( IOException e ){
-            System.out.printf("[Error] 客户端%d发送失败!\n", id);
-        }
-    }
+    // 发送自己死亡的消息
+    public void sendDeadMsg() {
 
-    String receive() {
-        try {
-            return in.readUTF();
-        } catch( IOException e) {
-//            e.printStackTrace();
-//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
-            return "";
-        }
     }
 
     // 接收消息 服务端返回的状态 (需要额外开辟一个线程)
@@ -135,6 +140,12 @@ public class GameClient {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // 返回游戏终止消息
+    public OverMsg receiveOverMsg() {
+
+        return null;
     }
 }
 

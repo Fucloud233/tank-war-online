@@ -54,7 +54,7 @@ public class GameServer {
         }
 
         // 2.获取并广播初始化信息
-        initInfo();
+        sendInitMsg();
 
         // 3. 创建多线程连接业务
         for(int i=0; i<num; i++) {
@@ -64,7 +64,7 @@ public class GameServer {
     }
 
     // 发送初始化信息
-    void initInfo(){
+    void sendInitMsg(){
 
         // todo 添加地图信息
 //        msg.put("map", )
@@ -88,6 +88,10 @@ public class GameServer {
             ServerPrompt.SendFail.print();
             e.printStackTrace();
         }
+    }
+
+    void sendOverMsg() {
+
     }
 
     // 广播状态
@@ -122,31 +126,24 @@ public class GameServer {
         @Override
         public void run() {
             // 循环接收消息
-            boolean flag = true;
-            while(flag)
-                flag = handle();
-        }
+            while (true) {
+                String msg = null;
+                // 1. socket接收到JSON消息
+                try {
+                    msg = in.readUTF();
+                    System.out.println("来自客户端的消息: " + msg);
+                } catch(SocketException e) {
+                    e.printStackTrace();
+                    break;
+                } catch(IOException e) {
+                    continue;
+                }
 
-        // 接收消息
-        public boolean handle()  {
-            String msg = null;
-            // 1. socket接收到JSON消息
-            try {
-                msg = in.readUTF();
-                System.out.println("来自客户端的消息: " + msg);
-            } catch(SocketException e) {
-                e.printStackTrace();
-                return false;
-            } catch(IOException e) {
-                return true;
+                // 2. 进行验证
+
+                // 3. socket广播消息
+                broadcast(id, msg);
             }
-
-            // 2. 进行验证
-
-            // 3. socket广播消息
-            broadcast(id, msg);
-
-            return true;
         }
     }
 }
