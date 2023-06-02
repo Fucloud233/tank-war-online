@@ -1,9 +1,9 @@
 package com.tankWar.game;
 
 import com.tankWar.game.client.GameClient;
-import com.tankWar.game.client.msg.InitMessage;
-import com.tankWar.game.client.msg.Message;
-import com.tankWar.game.client.msg.MoveMessage;
+import com.tankWar.game.msg.InitMsg;
+import com.tankWar.game.msg.Message;
+import com.tankWar.game.msg.MoveMsg;
 import com.tankWar.game.entity.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -65,7 +65,7 @@ public class GamePane extends BorderPane {
         }
 
         // 接收初始消息
-        InitMessage initMsg = client.receiveInitMsg();
+        InitMsg initMsg = client.receiveInitMsg();
         this.tanks = initMsg.getTanks();
         this.myTank = this.tanks[initMsg.getId()];
 
@@ -113,7 +113,7 @@ public class GamePane extends BorderPane {
                 // 不同方向 || 已暂停: 则不再发送
                 if((myTank.getDir() != dir || myTank.getIsStop() )&& dir != collideDir) {
                     // 向服务端发送移动消息
-                    client.sendMove(dir);
+                    client.sendMoveMsg(dir);
                 }
 
                 myTank.setDirection(dir);
@@ -133,7 +133,7 @@ public class GamePane extends BorderPane {
             if (Utils.CheckCodeIsMove(code)) {
                 // 如果松开的按键是当前的移动的方向 则停止
                 if (myTank.getDir() == Utils.DirMap.get(code) && !myTank.getIsStop()) {
-                    client.sendMove(Direction.CENTER);
+                    client.sendMoveMsg(Direction.CENTER);
                     myTank.setIsStop(true);
                 }
             }
@@ -204,7 +204,7 @@ public class GamePane extends BorderPane {
     // 处理连接Task
     Task<Void> connectTask = new Task<Void>() {
         // todo 处理移动请求
-        private void handleMove(MoveMessage msg) {
+        private void handleMove(MoveMsg msg) {
             int id = msg.getId();
             Direction dir = msg.getDir();
 
@@ -240,7 +240,7 @@ public class GamePane extends BorderPane {
                 }
 
                 switch(msg.getType()) {
-                    case Move -> handleMove((MoveMessage) msg);
+                    case Move -> handleMove((MoveMsg) msg);
                     default -> {
                         continue;
                     }

@@ -1,7 +1,7 @@
 package com.tankWar.game.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tankWar.game.client.msg.InitMessage;
+import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.entity.Tank;
 
 import java.io.*;
@@ -78,7 +78,7 @@ public class GameServer {
         try {
             for (int i = 0; i < num; i++) {
                 // 配置消息的基本信息
-                InitMessage message = new InitMessage(i, tanks);
+                InitMsg message = new InitMsg(i, tanks);
                 // 转换成JSON格式并发送
                 String jsonMsg = mapper.writeValueAsString(message);
                 out[i].writeUTF(jsonMsg);

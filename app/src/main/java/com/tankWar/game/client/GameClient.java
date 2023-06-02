@@ -3,8 +3,8 @@ package com.tankWar.game.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tankWar.game.client.msg.*;
 import com.tankWar.game.entity.Direction;
+import com.tankWar.game.msg.*;
 import com.tankWar.game.server.Config;
 
 import java.io.*;
@@ -41,10 +41,10 @@ public class GameClient {
     }
 
     // 发送移动消息
-    public void sendMove(Direction dir) {
-        MoveMessage moveMessage = new MoveMessage(id, dir);
+    public void sendMoveMsg(Direction dir) {
+        MoveMsg moveMsg = new MoveMsg(id, dir);
         try {
-            String msg = mapper.writeValueAsString(moveMessage);
+            String msg = mapper.writeValueAsString(moveMsg);
             this.send(msg);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -52,10 +52,10 @@ public class GameClient {
     }
 
     // 发送发射消息
-    public void sendShoot(Direction dir, int x, int y) {
-        ShootMessage shootMessage = new ShootMessage(id, dir, x, y);
+    public void sendShootMsg(Direction dir, int x, int y) {
+        ShootMsg shootMsg = new ShootMsg(id, dir, x, y);
         try {
-            String msg  = mapper.writeValueAsString(shootMessage);
+            String msg  = mapper.writeValueAsString(shootMsg);
             this.send(msg);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -105,11 +105,11 @@ public class GameClient {
 
             // 3.1 解析并返回移动消息
             if (type == MessageType.Move) {
-                return mapper.readValue(msg, MoveMessage.class);
+                return mapper.readValue(msg, MoveMsg.class);
             }
             // 3.2 解析返回发射消息
             else if (type == MessageType.Shoot) {
-                return mapper.readValue(msg, ShootMessage.class);
+                return mapper.readValue(msg, ShootMsg.class);
             }
             else {
                 System.out.println("接收消息异常!");
@@ -121,14 +121,14 @@ public class GameClient {
         }
     }
 
-    public InitMessage receiveInitMsg() {
+    public InitMsg receiveInitMsg() {
         String msg = receive();
         if(msg.isEmpty())
             return null;
 
 //        JSONObject jsonMsg = JSONObject.parseObject(msg);
         try {
-            InitMessage initMsg = mapper.readValue(msg, InitMessage.class);
+            InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
             this.id = initMsg.getId();
             return initMsg;
         } catch (JsonProcessingException e) {

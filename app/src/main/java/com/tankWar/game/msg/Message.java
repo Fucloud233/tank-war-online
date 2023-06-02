@@ -1,4 +1,4 @@
-package com.tankWar.game.client.msg;
+package com.tankWar.game.msg;
 
 public class Message {
     int id = -1;

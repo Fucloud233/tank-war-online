@@ -1,12 +1,12 @@
-package com.tankWar.game.client.msg;
+package com.tankWar.game.msg;
 
 import com.tankWar.game.entity.Direction;
 
-public class ShootMessage extends Message {
+public class ShootMsg extends Message {
     Direction dir;
     int x, y;
 
-    public ShootMessage(int id, Direction dir, int x, int y) {
+    public ShootMsg(int id, Direction dir, int x, int y) {
         super(id, MessageType.Shoot);
         this.dir = dir;
         this.x = x;
