@@ -19,23 +19,20 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class GamePane extends BorderPane {
-    // 游戏部分客户端
+    // 与客户端交互
     GameClient client;
 
-    // 用于绘制的组件
+    // 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
 
-    // 游戏元素
-//    List<Tank> tanks = new ArrayList<>();
+    // 游戏实体
     Tank[] tanks;
     Tank myTank; // 我的坦克
-//    Tank testTank; // 测试坦克
     List<Bullet> bullets = new ArrayList<>(); // 子弹列表
     List<Building> buildings = new ArrayList<>(); // 建筑方块列表
 
-
-    // 记录已经发生碰撞的方向
+    // 记录已经发生碰撞的方向 (防止发生重碰撞)
     Direction collideDir = Direction.INVALID;
 
     // 游戏逻辑控制参数
@@ -46,13 +43,13 @@ public class GamePane extends BorderPane {
     public GamePane() {
         System.out.println("正在连接服务端");
 
-        this.connectServer();
+        this.initEntity();
 
-        this.init();
+        this.initPane();
     }
 
     // 连接服务器
-    void connectServer() {
+    void initEntity() {
         client = new GameClient();
 
         try {
@@ -72,18 +69,18 @@ public class GamePane extends BorderPane {
         this.tanks = initMsg.getTanks();
         this.myTank = this.tanks[initMsg.getId()];
 
+        // 载入地图
+//        loadMap("/map/map.txt");
+        // 载入测试地图
+        loadMap("/map/test_map.txt");
+
         // 连接成功后创建处理连接的线程
         Thread connectThread = new Thread(connectTask);
         connectThread.start();
     }
 
     // GamePane初始化函数
-    void init() {
-        // 载入地图
-//        loadMap("/map/map.txt");
-        // 载入测试地图
-        loadMap("/map/test_map.txt");
-
+    void initPane() {
         // 设置GamePane
         this.setWidth(Config.MapWidth);
         this.setHeight(Config.MapHeight);
@@ -96,16 +93,6 @@ public class GamePane extends BorderPane {
         this.canvas.setFocusTraversable(true);
         canvas.setWidth(Config.MapWidth);
         canvas.setHeight(Config.MapHeight);
-
-        // 初始化玩家坦克
-//        myTank = new Tank(Config.MapWidth / 2, Config.MapHeight / 2 - 75, 1);
-//        testTank = new Tank(Config.MapWidth / 2, Config.MapHeight - 50, 2);
-        /*
-        初始化在线玩家坦克
-        ...
-        */
-//        tanks.add(myTank);
-//        tanks.add(testTank);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
@@ -293,7 +280,7 @@ public class GamePane extends BorderPane {
                 // 处理移动按键输入
                 for(Tank tank: tanks) {
                     // 如果不再移动 则不做处理
-                    if (tank.getIsStop())
+                    if (tank.getIsStop() || tank.getDir() == collideDir)
                         continue;
 
                     double x = tank.getX(), y = tank.getY();
@@ -310,7 +297,7 @@ public class GamePane extends BorderPane {
                         }
                     }
                     else
-                        // 不再喷桩时则不喷桩
+                        // 不再碰撞时则不碰撞
                         collideDir = Direction.INVALID;
                 }
             }

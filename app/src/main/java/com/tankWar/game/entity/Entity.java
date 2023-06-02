@@ -14,6 +14,7 @@ public abstract class Entity {
     Entity(double width, double height) {
         this(width, height, 0, 0);
     }
+
     Entity(double width, double height, double x, double y) {
         this.width = width;
         this.height = height;
