@@ -8,6 +8,7 @@ public class Config {
     public final static float TankWidth = 60;
     public final static float TankHeight = 48;
     public final static int TankSpeed = 3;
+    public final static int TankMaxBulletNum = 3;
 
     // 子弹相关配置
     public final static float BulletSize = 16;

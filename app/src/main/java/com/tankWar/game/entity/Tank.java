@@ -14,29 +14,17 @@ import java.util.HashMap;
 
 public class Tank extends Entity {
     // id 玩家编号
-    private int id;
+    private int id = -1;
     // 坦克是否可以移动
     private boolean isStop = true;
+    // 记录坦克当前的子弹数量
+    private final int bulletNum = Config.TankMaxBulletNum;
     // 坦克速度
     private final int speed = Config.TankSpeed;
 
-    // 坦克不同方向照片
-    static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
-
-    static {
-        try {
-            ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
-            ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
-            ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
-            ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
-        }
-        catch(Exception e) {
-//            e.printStackTrace();
-        }
-    }
-
 
     // tank构造函数(随机方向)
+    // 不能直接删除
     @JsonCreator
     public Tank(@JsonProperty("x") double x,
                 @JsonProperty("y") double y,
@@ -161,7 +149,7 @@ public class Tank extends Entity {
     @JsonIgnore
     @Override
     public Image getImage() {
-        return ImageMap.get(this.dir);
+        return TankImg.ImageMap.get(this.dir);
     }
 
     public int getId() {
@@ -175,5 +163,23 @@ public class Tank extends Entity {
 
     public void setIsStop(boolean isStop) {
         this.isStop = isStop;
+    }
+}
+
+// 使用其他类来记录图像 降低数据和资源的耦合度
+class TankImg {
+    // 坦克不同方向照片
+    public static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
+
+    static {
+        try {
+            ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
+            ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
+            ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
+            ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
+        }
+        catch(Exception e) {
+//            e.printStackTrace();
+        }
     }
 }
