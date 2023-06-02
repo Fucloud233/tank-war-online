@@ -35,25 +35,24 @@ public class ServerProcess extends Thread {
                 strReceive = in.readLine();  // 从服务器端接收一条信息后拆分、解析，并执行相应操作
                 st = new StringTokenizer(strReceive, "|");
                 strKey = st.nextToken();
-                if (strKey.equals("login")) {
-                    //登录
-                    login();
-                } else if (strKey.equals("talk")) {
-                    //发言
-                    talk();
-                }else if (strKey.equals("roomTalk")) {
-                    //发言
-                    roomTalk();
-                } else if (strKey.equals("init")) {
-                    //刷新在线用户列表
-                    freshClientsOnline();
-                } else if (strKey.equals("reg")) {
-                    //注册
-                    register();
-                } else if (strKey.equals("Create")) {
-                    createroom();
-                } else if (strKey.equals("select room")) {
-                    selectroom();
+                switch (strKey) {
+                    case "login" ->
+                        //登录
+                            login();
+                    case "talk" ->
+                        //发言
+                            talk();
+                    case "roomTalk" ->
+                        //发言
+                            roomTalk();
+                    case "init" ->
+                        //刷新在线用户列表
+                            freshClientsOnline();
+                    case "reg" ->
+                        //注册
+                            register();
+                    case "Create" -> createroom();
+                    case "select room" -> selectroom();
                 }
             }
         } catch (IOException e) { // 用户关闭客户端造成此异常，关闭该用户套接字。
@@ -151,32 +150,34 @@ public class ServerProcess extends Thread {
         out.println("Create|success");
         rooms.add(new Room(roomnum,Integer.parseInt(user_num),password));
         freshClientsLobbyOnline();
-
-
     }
+
+
     //进入房间
     public void selectroom() throws IOException {
         String roomnum=st.nextToken();
         String password=st.nextToken();
         String userid=st.nextToken();
         for (int i = 0; i < rooms.size(); i++) {
+            //获取对应的房间
             Room room = rooms.get(i);
             if (room.getRoomNum().equals(roomnum)){
+                //输入房间密码错误
                 if(!room.getPassword().equals(password)){
                     out.println("select room|password error");
                     return;
+                //进入房间成功
                 } else if (room.findUserId(userid)) {
                     out.println("select room|success");
                 }else {
+                    //添加新的用户
                     room.addPlayer(userid);
                     RoomNum=roomnum;
                     userEnterRoomSuccess(userid);
                 }
             }
             break;
-
         }
-
     }
 
     //登录
@@ -367,6 +368,7 @@ public class ServerProcess extends Thread {
         }
 
     }
+
     //刷新游戏大厅的在线房间
     private void freshClientsLobbyOnline() throws IOException {
         String strOnline = "lobby";
