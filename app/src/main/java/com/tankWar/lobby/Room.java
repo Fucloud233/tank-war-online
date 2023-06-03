@@ -5,58 +5,50 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 public class Room {
-    private String RoomNum;
-    private boolean is_used=false;
-    private int user_num;
-    private int enter_num=0;
+    private String RoomNum;//房间号，用房主的账号标识
+    private String hostName;//房主名字
+    private String RoomName;//房间名字
+    private int user_num;//房间的人数上限
+    private int enter_num=0;//房间的当前人数
+    private boolean is_password;//判断有无密码
     private String password;
-    private ArrayList<String> players = new ArrayList<>();
+    private String roomStatus="未开始";//房间状态
+    private static Vector statusUser = new Vector(10,5);//保存房间里用户的状态
+    private static Vector nameUser = new Vector(10,5);//保存房间里面的用户昵称
     private static Vector onlineUser = new Vector(10, 5);//保存在线用户的用户名
     private static Vector socketUser = new Vector(10, 5);//保存在线用户的Socket对象
 
-    public Room(String roomNum,int userNum,String passw){
-        RoomNum=roomNum;
-        user_num=userNum;
-        password=passw;
+    public Room(boolean isPassword,String userName,String account,String roomName,String userNum,String passWord,Socket s){
+        this.is_password=isPassword;
+        this.hostName=userName;
+        this.RoomNum=account;
+        this.RoomName=roomName;
+        this.user_num= Integer.parseInt(userNum);
+        this.password=passWord;
 
     }
-    //设置房间的使用状态
-    public void setIs_used(boolean a){
-        is_used=a;
-    }
-    //设置房间的人数
-    public void setUser_num(int a){
-        user_num=a;
 
-    }
-    //设置房间的密码
-    public void setPassword(String a){
-        password=a;
 
-    }
-    //添加房间里的玩家账号，好像和下面的函数重复了，你可以改改，sorry~
-    public void addPlayer(String a){
-        players.add(a);
-        enter_num++;
-
-    }
-    //添加房间里的玩家账号
-    public void addOnlineUser(String name){
-        onlineUser.addElement(name);
-    }
-    //添加房间里的玩家套接字，注意因为这个函数和上面那个函数往往都是同步添加的，所以它们的下标一样的话，对应的是一个用户
-    //可以再添加的时候合在一起加
-    public void addSocketUser(Socket s){
+    //添加房间里的玩家昵称、账号、套接字和状态。初始状态是wait
+    public void addOnlineUser(String name,String account,Socket s){
+        enter_num+=1;
+        nameUser.addElement(name);
+        onlineUser.addElement(account);
         socketUser.addElement(s);
+        statusUser.addElement("wait");
     }
-    //移除房间里的玩家账号
+
+    //移除房间里的玩家
     public void removeOnlineUser(int i){
         enter_num-=1;
         onlineUser.removeElementAt(i);
-    }
-    //移除房间里的玩家套接字，感觉这个可以和上面的函数合在一起操作
-    public void removeSocketUser(int i){
         socketUser.removeElementAt(i);
+        nameUser.removeElementAt(i);
+        statusUser.removeElementAt(i);
+    }
+    //根据下标找到玩家昵称
+    public String findNameUser(int i){
+        return (String) nameUser.elementAt(i);
     }
     //根据下标找到玩家账号
     public String findOnlineUser(int i){
@@ -67,12 +59,21 @@ public class Room {
 
         return (Socket) socketUser.elementAt(i);
     }
-    //返回房间人数，好像和getEnter_num重复了
-    public int sizeOfOnlineUser(){
-        return onlineUser.size();
+    //根据下标找到玩家状态
+    public String findStatusUser(int i){
+        return (String) statusUser.elementAt(i);
     }
+
     //返回该房间的房间号，我是直接用房主的账号做房间号的
     public String getRoomNum(){return RoomNum;}
+    //返回房间名称
+    public String getRoomName(){
+        return RoomName;
+    }
+    //返回房主名
+    public String getHostName(){
+        return hostName;
+    }
     //返回进入房间的人数
     public int getEnter_num() {
         return enter_num;
@@ -81,19 +82,16 @@ public class Room {
     public int getUser_num() {
         return user_num;
     }
+    //返回房间是否设置了密码
+    public boolean getIs_password(){return is_password;}
     //返回房间的密码
     public String getPassword(){return password;}
-    //返回房间是否被使用的状态
-    public boolean isIs_used() {
-        return is_used;
+    //返回房间的状态
+    public String getRoomStatus(){return roomStatus;}
+    //改变房间的状态
+    public void setRoomStatus(){
+        roomStatus="游戏中";
     }
-    //查看房间内是否已经有用户的账号，有的话就不重复添加了
-    public boolean findUserId(String userId) {
-        int i = players.indexOf(userId);
-        if (i == -1) {
-            return false;
-        }
-        return true;
-    }
+
 
 }

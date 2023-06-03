@@ -10,47 +10,44 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.StringTokenizer;
 
-import static java.lang.System.*;
 
 
 public class CreateRoomWindow{
-    private String RoomNum;
-    private String volumn;
-    private String pw;
     private String strsend;
-    private String strReceived;
-    private String strKey;
-    private StringTokenizer st;
-
-    //    private ComboBox<String> RoomNumCB;
-    private String txtName;
-    private ComboBox<String> volumnCB ;
+    private String username;//房主名字
+    private String account;//房主账号
+    private TextField roomName;//房间名字
+    private ComboBox<String> volumnCB ;//房间人数
+    private ComboBox<String> setpw;//是否要密码
     private PasswordField Password;
     private Button ackLogin;
     private GridPane createPane;
     private Stage createroomStage;
+
+    private GameWaitWindow gameWaitWindow;//传递过来的游戏房间
+
     private Socket socket=new Socket();
     BufferedReader in = null;
     PrintWriter out = null;
-
-    public CreateRoomWindow(Socket s,String name) throws IOException{
+    //在构造函数中加上了初始化传递过来的舞台和场景
+    public CreateRoomWindow(Socket s,String name,String account,GameWaitWindow gameWaitWindow) throws IOException{
         this.socket = s;
-        txtName=name;
+        username=name;
+        this.account=account;
+        this.gameWaitWindow=gameWaitWindow;
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 
     }
-
+    //在布局上添加了输入房间名和选择是否有密码
     public void ShowWindow(){
-//       RoomNumCB=new ComboBox<>();
-//       RoomNumCB.setItems(FXCollections.observableArrayList("0","1","2","3","4","5","6","7","8"
-//       ,"9","10","11"));
-//       RoomNumCB.setValue("0");
+        roomName=new TextField();
         volumnCB=new ComboBox<>();
         volumnCB.setItems(FXCollections.observableArrayList("2","3","4"));
         volumnCB.setValue("2");
+        setpw=new ComboBox<>(FXCollections.<String>observableArrayList("否", "是"));
+        setpw.setValue("否");
         Password=new PasswordField();
         createroomStage=new Stage();
         createroomStage.setTitle("创建房间");
@@ -58,44 +55,45 @@ public class CreateRoomWindow{
         createPane.setVgap(10);
         createPane.setHgap(10);
         createPane.setPadding(new Insets(20));
-//        createPane.add(new Label("房间号:"), 0, 0);
-//        createPane.add(RoomNumCB, 1, 0);
-        createPane.add(new Label("人数:"), 0, 0);
-        createPane.add(volumnCB, 1, 0);
-        createPane.add(new Label("密码:"), 0, 1);
-        createPane.add(Password, 1, 1);
+        createPane.add(new Label("房间名："),0,0);
+        createPane.add(roomName,1,0);
+        createPane.add(new Label("人数:"), 0, 1);
+        createPane.add(volumnCB, 1, 1);
+        createPane.add(new Label("是否设置密码："),0,2);
+        createPane.add(setpw,1,2);
+        createPane.add(new Label("密码:"), 0, 3);
+        createPane.add(Password, 1, 3);
         //列、行、列方向上跨度、行方向上跨度
         HBox hBox=new HBox();
         ackLogin=new Button("确认");
-
+        //分设置密码和没有设置密码的两种情况,信息没填完整会有提示信息
         ackLogin.setOnAction(event ->{
-            if (!Password.getText().isEmpty()){
-                strsend="Create|"+txtName+"|"+volumnCB.getValue()+"|"+Password.getText();
-                out.println(strsend);
-//                try {
-//                    in.readLine();
-//                    System.out.println("Create OK");
-//
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                System.out.println(strsend);
-//                try {
-//                    strReceived=in.readLine();
-//                    System.out.println("OK");
-//
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                st = new StringTokenizer(strReceived, "|");
-//                strKey=st.nextToken();
-//                if (strKey.equals("Create")){
-//                    System.out.println("create ok");
-//                    CloseWindow();
-//                }
+            if (setpw.getValue().equals("是")){
+                if (!roomName.getText().isEmpty()&&!Password.getText().isEmpty()){
+                    strsend="Create|password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue()+"|"+Password.getText();
+                    out.println(strsend);
+                    createroomStage.close();
+                    //打开游戏房间
+                    gameWaitWindow.ShowWindow();
 
 
+                }
+            }else if (setpw.getValue().equals("否")){
+                if (!roomName.getText().isEmpty()){
+                    strsend="Create|no password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
+                    out.println(strsend);
+                    createroomStage.close();
+                    //打开游戏房间
+                    gameWaitWindow.ShowWindow();
+
+
+                }
+
+            }else {
+                new Alert(Alert.AlertType.WARNING,"请输入完整信息！").showAndWait();
             }
+
+
         } );
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().add(ackLogin);
@@ -105,9 +103,7 @@ public class CreateRoomWindow{
         createroomStage.setScene(new Scene(borderPane));
         createroomStage.show();
     }
-//    public String getStrmes(){
-//        return strmes;
-//    }
+
 
     public void CloseWindow(){
         createroomStage.close();

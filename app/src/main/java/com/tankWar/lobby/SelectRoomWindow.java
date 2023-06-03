@@ -1,5 +1,6 @@
 package com.tankWar.lobby;
 
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -12,8 +13,7 @@ import java.io.*;
 import java.net.Socket;
 
 public class SelectRoomWindow {
-    private String room;
-    private String user;
+    private String roomNum;//选择的房间号
     private PasswordField Password;
     private Label label;
     private HBox hBox;
@@ -24,10 +24,9 @@ public class SelectRoomWindow {
     private Socket socket=new Socket();
     PrintWriter out = null;
 
-    public SelectRoomWindow(Socket s,String a,String b) throws IOException {
+    public SelectRoomWindow(Socket s,String a) throws IOException {
         this.socket = s;
-        room=a;
-        user=b;
+        roomNum=a;
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
     }
 
@@ -37,15 +36,19 @@ public class SelectRoomWindow {
         hBox=new HBox(label,Password);
         button=new Button("确认");
         vBox=new VBox(hBox,button);
+        vBox.setAlignment(Pos.CENTER);
         button.setOnAction(event -> {
             String s =Password.getText();
-            out.println("select room|"+room+"|"+s+"|"+user);
+            out.println("password|"+roomNum+"|"+s);
         });
         selectroomstage=new Stage();
         selectroomstage.setTitle("输入房间密码");
         selectroomstage.setScene(new Scene(vBox));
         selectroomstage.show();
 
+    }
+    public boolean isShowing(){
+        return selectroomstage.isShowing();
     }
 
     public void CloseWindow(){

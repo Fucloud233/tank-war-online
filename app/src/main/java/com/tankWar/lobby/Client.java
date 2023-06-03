@@ -1,7 +1,6 @@
 package com.tankWar.lobby;
 
 
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -9,6 +8,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 
 import java.io.*;
@@ -16,7 +17,7 @@ import java.net.Socket;
 import java.util.StringTokenizer;
 
 
-public class Client extends Stage{
+public class Client extends Stage {
 
     // 连接相关的 由登录页面进行传入初始值
     Socket socket;
@@ -33,21 +34,27 @@ public class Client extends Stage{
     private CreateRoomWindow roomWindow;
     private SelectRoomWindow selectRoomWindow;
     private GameWaitWindow gameWaitWindow;
+    private String roomId;//选中的房间号
+    private HBox selectedHBox;//选中的房间条目
+    private boolean isHBoxSelected=false;//判断是否有选择房间条目
 
     private final String username;   //登录时传过来的用户名
+    private final String account;  //用户的账号
+    private Scene lobbyScene; //游戏大厅的场景，方便切换场景
     private Stage primaryStage;
 
-    public Client(String txtName,Socket socket,BufferedReader in,PrintWriter out){
-        username=txtName;
-        this.socket=socket;
-        this.in=in;
-        this.out=out;
+    public Client(String nickname, String account, Socket socket, BufferedReader in, PrintWriter out) {//因为加上了昵称，所以修改了下传参
+        username = nickname;
+        this.account = account;
+        this.socket = socket;
+        this.in = in;
+        this.out = out;
     }
 
     public void RunClient() throws IOException {
         //绑定
         //聊天室界面
-        Stage primaryStage = new Stage();
+        primaryStage = new Stage();
         primaryStage.setTitle("游戏大厅");
 
         BorderPane borderPane = new BorderPane();
@@ -69,7 +76,7 @@ public class Client extends Stage{
         vBox.getChildren().add(hBox); //放入发送框
 
         //带滚轮的房间列表
-        VBox container = new VBox();
+        container = new VBox();
         container.setPrefHeight(250); // 设置容器的固定高度
         ScrollPane scrollPane = new ScrollPane(container);//房间列表
 
@@ -97,11 +104,11 @@ public class Client extends Stage{
         BottomBox.getChildren().add(vBox);
 
         //最后将组件排布在borderPane上
-        borderPane.setCenter(container);
+        borderPane.setCenter(scrollPane);
         borderPane.setBottom(BottomBox);
 
-        Scene scene = new Scene(borderPane, 800, 700);
-        primaryStage.setScene(scene);
+        lobbyScene = new Scene(borderPane, 800, 700);
+        primaryStage.setScene(lobbyScene);
         primaryStage.setResizable(false); // 禁用窗口大小调整
         //显示界面
         btnTalk.setDisable(false);
@@ -112,8 +119,11 @@ public class Client extends Stage{
 
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
-            //处理加入房间的按钮
-            ///////////////////////////////////////////
+            if (selectedHBox!=null && isHBoxSelected==true){
+                out.println("select room|"+roomId);
+            } else {
+                new Alert(Alert.AlertType.WARNING, "请选择房间！").showAndWait();
+            }
         });
 
         // 聊天框中的按钮事件
@@ -128,7 +138,8 @@ public class Client extends Stage{
         newRoomBtn.setOnAction(e -> {
             //获取用户输入的账号
             try {
-                roomWindow = new CreateRoomWindow(socket, username);
+                gameWaitWindow=new GameWaitWindow(socket,username,account,primaryStage,lobbyScene);
+                roomWindow = new CreateRoomWindow(socket, username, account,gameWaitWindow);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -139,35 +150,39 @@ public class Client extends Stage{
 
     class ClientThread implements Runnable {
         //这用来创建每一条房间的消息，显示在聊天框上面
-        public HBox createHBox(String roomNum,int enterNum,int userNum) {
+        public HBox createHBox(String roomNum, String id, String roomName, String hostName, String enterNum, String userNum, String status) {
             HBox hBox = new HBox();
+            hBox.setStyle("-fx-border-color: black; -fx-border-width: 1px");
             hBox.setAlignment(Pos.CENTER);
             hBox.setPadding(new Insets(10));
+            hBox.setSpacing(20);
+            hBox.setId(roomNum);//用房间号做唯一标识
+            Label Id = new Label(id);
+            Id.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+            Label roomLabel = new Label("房间名："+roomName);
+            roomLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+            Label hostLabel = new Label("房主："+hostName);
+            hostLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+            Label enterNumLabel = new Label("房间人数："+enterNum);
+            enterNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+            Label userNumLabel = new Label("人数上限："+userNum);
+            userNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+            Label statusLabel = new Label("房间状态："+status);
+            statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
 
-            Label roomLabel = new Label(roomNum + "的房间");
-            Label countLabel = new Label("人数：" + enterNum+"/"+userNum);
-            Button enterBtn = new Button();
-            ///////////////////////////????这样子的逻辑
-            if (enterNum<userNum){
-                enterBtn.setText("进入");
-            }else {
-                enterBtn.setText("游戏中");
-            }
+            hBox.getChildren().addAll(Id, roomLabel,  hostLabel,  enterNumLabel,  userNumLabel,  statusLabel);
 
-            enterBtn.setOnAction(event -> {
-                if (enterBtn.getText().equals("进入")){
-                    try {
-                        selectRoomWindow=new SelectRoomWindow(socket,roomNum,username);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    selectRoomWindow.ShowWindow();
-                }else{
-                    Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "游戏中无法进入").showAndWait());
+            //设置hbox的选中事件
+            hBox.setOnMouseClicked(event -> {
+                if (selectedHBox != null) {
+                    selectedHBox.setStyle("-fx-border-color: black; -fx-border-width: 1px");
                 }
+                roomId=hBox.getId();
+                selectedHBox = hBox;
+                hBox.setStyle("-fx-border-color: orange; -fx-border-width: 2px");
+                isHBoxSelected=true;
             });
 
-            hBox.getChildren().addAll(roomLabel, countLabel, enterBtn);
             return hBox;
         }
 
@@ -215,49 +230,77 @@ public class Client extends Stage{
                         //选择加入房间
                         case "select room" -> {
                             String strSelect = st.nextToken();
-                            if (strSelect.equals("password error")) {
-                                Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "密码错误！").showAndWait());
-                            } else if (strSelect.equals("success")) {
+                            if (strSelect.equals("failed")) {
+                                Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "无法进入房间！").showAndWait());
+                            } else if (strSelect.equals("success")) {//进入游戏房间
                                 Platform.runLater(() -> {
-                                    selectRoomWindow.CloseWindow();
-                                    primaryStage.close();
+                                    if (selectRoomWindow!=null&&selectRoomWindow.isShowing()){//如果有输入密码的框，就可以关掉了
+                                        selectRoomWindow.CloseWindow();
+                                    }
                                     try {
-                                        gameWaitWindow = new GameWaitWindow(socket, username);
+                                        gameWaitWindow=new GameWaitWindow(socket,username,account,primaryStage,lobbyScene);
                                     } catch (IOException e) {
                                         throw new RuntimeException(e);
                                     }
-                                    gameWaitWindow.setOnClosedCallback(() -> {
-                                        // 在回调函数中恢复上一个页面的内容或执行其他操作
-                                        primaryStage.show();
-                                    });
-                                    primaryStage.hide();
                                     gameWaitWindow.ShowWindow();
                                 });
+                            } else if (strSelect.equals("password")){//提示输入密码
+                                Platform.runLater(()-> {
+                                    try {
+                                        selectRoomWindow=new SelectRoomWindow(socket,roomId);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    selectRoomWindow.ShowWindow();
+                                });
+
+                            }else if (strSelect.equals("password error")){//提示输入密码
+                                Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "密码错误！").showAndWait());
                             }
                         }
                         //在进入房间后的聊天框的聊天内容
                         case "roomTalk" -> {
                             String strTalk = st.nextToken();
                             Platform.runLater(() -> gameWaitWindow.AddTxt("\n" + strTalk));
-                            Platform.runLater(() -> txtViewTalk.appendText("\n" + strTalk));
+//                            Platform.runLater(() -> txtViewTalk.appendText("\n" + strTalk));
                         }
                         //在进入房间后的，更新房间里面的在线用户
-                        case "room online" ->
+                        case "room online" -> Platform.runLater(() -> {
+                            gameWaitWindow.ClearTalkTo();
+                            gameWaitWindow.AddTalkTo("All");
+                            while (st.hasMoreTokens()) {
+                                String strOnline = st.nextToken();
+                                gameWaitWindow.AddTalkTo(strOnline);
+                            }
+                        });
+
+                        case "lobby" -> {
+                            if (primaryStage.isShowing()) {
                                 Platform.runLater(() -> {
-                                    gameWaitWindow.ClearTalkTo();
-                                    gameWaitWindow.AddTalkTo("All");
+                                    container.getChildren().clear();
                                     while (st.hasMoreTokens()) {
-                                        String strOnline = st.nextToken();
-                                        gameWaitWindow.AddTalkTo(strOnline);
+
+                                        String roomNum = st.nextToken();
+                                        String Id = st.nextToken();
+                                        String roomName = st.nextToken();
+                                        String hostName = st.nextToken();
+                                        String enterNum = st.nextToken();
+                                        String userNum = st.nextToken();
+                                        String status = st.nextToken();
+                                        HBox hBox = createHBox(roomNum, Id, roomName, hostName, enterNum, userNum, status);
+                                        container.getChildren().add(hBox);
                                     }
                                 });
+                            }
+                        }
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    Thread.sleep(500);
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
+
+
     }
-
-
 }
