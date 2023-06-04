@@ -314,6 +314,25 @@ public class Client extends Stage {
                                 });
                             }
                         }
+                        //////////////////客户端接收到房主解散该房间的消息////////////////////////
+                        case "Owner exitRoom" -> {
+                            //获取到房间号  同当前用户进行比较 以判断是否发送消息
+                            String RoomNum = st.nextToken();
+                            //只有房间内的普通用户 才会收到对应的提示
+                            if(!username.equals(RoomNum)) {
+                                System.out.println("test delete room");
+                                Platform.runLater(() -> {
+                                    Alert alert = new Alert(Alert.AlertType.WARNING, "房主已解散该房间，您将返回大厅");
+                                    alert.setOnCloseRequest(event -> {
+                                        primaryStage.setScene(lobbyScene); // 返回到大厅场景
+                                        primaryStage.show();
+                                    });
+                                    alert.showAndWait();
+                                });
+                            }
+                        }
+
+
                     }
                     Thread.sleep(500);
                 } catch (IOException | InterruptedException e) {

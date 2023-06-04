@@ -155,7 +155,8 @@ public class GameWaitWindow {
         Optional<ButtonType> result = alert.showAndWait();
 
         if (result.isPresent() && result.get() == confirmButtonType) {
-            out.println("exitRoom|" + name);
+            //发送给服务器退出房间的信息 在服务器端处理退出房间的逻辑
+            out.println("exitRoom");
             primaryStage.setTitle("游戏大厅");
             primaryStage.setScene(lobbyScene);
         }

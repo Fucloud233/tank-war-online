@@ -409,10 +409,25 @@ private void userLoginSuccess(String name) throws IOException {
             if (room.getRoomNum().equals(RoomNum)) {
                 //如果是房主退出了，则解散房间
                 if(room.getHostName().equals(nickname)){
-                    // 从房间中移除该用户 使用Room中的函数
-                    room.removeOnlineUser(room.getUserIndex(nickname));
                     //从总房间列表中将这个房间删除
                     rooms.remove(room);
+                    //先要进行刷新  防止场景切换后出现问题  客户端需要新的Rooms列表进行大厅场景的切换
+                    freshClientsLobbyOnline();//刷新大厅内的房间列表
+                    //向房间内的所有客户端发送 房间解散的信息
+                    Socket socketSend;
+                    PrintWriter outSend;
+                    if (room.getRoomNum().equals(RoomNum)){
+                        for (int j = 0; j < room.getEnter_num(); j++) {
+                            socketSend = room.findSocketUser(j);
+                            outSend = new PrintWriter(new BufferedWriter(
+                                    new OutputStreamWriter(socketSend.getOutputStream())),
+                                    true);
+                            outSend.println("Owner exitRoom|"+room.getRoomNum());
+                        }
+                        break;
+                    }
+                    // 从房间中移除该用户 使用Room中的函数
+                    room.removeOnlineUser(room.getUserIndex(nickname));
                     //调用函数 清空房间内部的所有内容
                     room.ClearALL();
                     //返回给客户端删除房间的消息
