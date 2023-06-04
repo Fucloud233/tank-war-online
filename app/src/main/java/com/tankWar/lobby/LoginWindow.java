@@ -118,8 +118,13 @@ public class LoginWindow extends Application {
                 //转到窗口页面 并关闭登录窗口
                 btnLogin.setDisable(true);
                 primaryStage.close();
+
+                //向服务端发送信息表示登入这个房间
+                out.println("select room|"+txtName.getText()+"|"+socket+"|"+txtName.getText());
+
                 //传入参数并跳转到房间选择页面 connectServer()获取到对应的信息
-                Client client =new Client(txtName.getText(),socket,in,out);
+                String testName=txtName.getText();
+                Client client =new Client(txtName.getText(),testName,socket,in,out);
                 client.RunClient();
             }
             new Alert(Alert.AlertType.INFORMATION, strKey + " " + strStatus + "!");

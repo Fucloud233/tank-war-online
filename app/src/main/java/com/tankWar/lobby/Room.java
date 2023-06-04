@@ -40,9 +40,26 @@ public class Room {
     public void addOnlineUser(String name,String account,Socket s){
         enter_num+=1;
         nameUser.addElement(name);
-        onlineUser.addElement(name);  //现在改完后 里面装的是用户的账号
+        onlineUser.addElement(account);  //现在改完后 里面装的是用户的账号
         socketUser.addElement(s);
-        statusUser.addElement("未准备");
+        if(account.equals(RoomNum)){
+            //房主必然是准备好的
+            statusUser.addElement("已准备");
+        }
+        else{
+            statusUser.addElement("未准备");
+        }
+
+    }
+    /////////////////////////检查是否房间中的用户都是准备好的///////////////////////////////////
+    public boolean areAllUsersReady() {
+        for (int i = 0; i < enter_num; i++) {
+            String status = (String) statusUser.elementAt(i);
+            if (status.equals("未准备")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     //通过索引移除房间里的玩家
@@ -56,6 +73,10 @@ public class Room {
     //乔： 根据昵称找到玩家的索引  后续可以更改为根据账号定位到玩家的索引  此处是为了测试!!!!
     public int getUserIndex(String name){
         return nameUser.indexOf(name);
+    }
+    //乔： 根据账号找到玩家的索引  后续可以更改为根据账号定位到玩家的索引  此处是为了测试!!!!
+    public int getAccountIndex(String name){
+        return onlineUser.indexOf(name);
     }
     //根据下标找到玩家昵称
     public String findNameUser(int i){
@@ -74,7 +95,6 @@ public class Room {
 
     //根据下标找到玩家状态
     public String findStatusUser(int i){
-
         System.out.println(statusUser.elementAt(i));
         return (String) statusUser.elementAt(i);
     }
@@ -85,9 +105,12 @@ public class Room {
             statusUser.setElementAt("已准备", index);
         }
         else{
-            statusUser.setElementAt("准备", index);
+            statusUser.setElementAt("未准备", index);
         }
+        System.out.println("修改后"+statusUser.elementAt(index));
     }
+
+
 
 
     //返回该房间的房间号，我是直接用房主的账号做房间号的

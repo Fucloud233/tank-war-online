@@ -168,18 +168,7 @@ public class GameWaitWindow {
     public void beginGame(){
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
-            boolean allReady = checkAllPlayersReady();
-            if (allReady) {
-                // Start the game
-                startGame();
-            } else {
-                // 提示 有玩家还没有准备
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("提示");
-                alert.setHeaderText(null);
-                alert.setContentText("有玩家尚未准备！");
-                alert.showAndWait();
-            }
+            checkAllPlayersReady();
         }
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if(PlayGameBtn.getText().equals("准备"))
@@ -200,18 +189,10 @@ public class GameWaitWindow {
     }
 
     //检查是否所有的用户都已经准备好
-    private boolean checkAllPlayersReady() {
-        ObservableList<String> players = userListView.getItems();
-        for (String player : players) {
-            if (!player.equals(name + (isRoomOwner ? " (房主)" : ""))) {
-                if (!player.endsWith(" (已准备)")) {
-                    return false;
-                }
-            }
-        }
-        return true;
+    private void checkAllPlayersReady() {
+        //发送给服务器检查房间内用户是否全部准备好的信息
+        out.println("check status");
     }
-
 
     //开始游戏的逻辑！！！！！！！！！！！！！！
     private void startGame() {

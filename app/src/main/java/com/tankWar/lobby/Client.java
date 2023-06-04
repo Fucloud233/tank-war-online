@@ -337,7 +337,24 @@ public class Client extends Stage {
                             }
                         }
 
-
+                        /////////////////////////处理是否开始游戏////////////////////////
+                        case"begin game"->{
+                            //获取到是否成功
+                            String judge = st.nextToken();
+                            if(judge.equals("succeed")){
+                                //可以开始游戏了
+                                Platform.runLater(() -> {
+                                    Alert alert = new Alert(Alert.AlertType.WARNING, "游戏开始！");
+                                    alert.showAndWait();
+                                });
+                            }
+                            else{
+                                Platform.runLater(() -> {
+                                    Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
+                                    alert.showAndWait();
+                                });
+                            }
+                        }
                     }
                     Thread.sleep(500);
                 } catch (IOException | InterruptedException e) {

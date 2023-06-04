@@ -81,6 +81,9 @@ public class ServerProcess extends Thread {
                 }else if(strKey.equals("cancelReady")){
                     //有用户取消准备
                     userCancelReady();
+                }else if(strKey.equals("check status")){
+                    //检查房间内的用户是否都准备好了
+                    checkifALLready();
                 }
             }
         } catch (IOException e) { // 用户关闭客户端造成此异常，关闭该用户套接字。
@@ -102,73 +105,57 @@ public class ServerProcess extends Thread {
         }
     }
 
-    //用户取消准备
+    /////////////////////////是否用户全部准备好/////////////////////////
+    private void checkifALLready() {
+        for (int i = 0; i < rooms.size(); i++) {
+            Room room = rooms.get(i);
+            if(room.getRoomNum().equals(RoomNum)){
+                if(room.areAllUsersReady()){
+                    //用户全都准备好了 开始游戏  改变房间状态/////////////////
+                    room.setRoomStatus();
+                    //返回给客户端
+                    out.println("begin game|succeed");
+                }
+                else{
+                    out.println("begin game|failed");
+                }
+                break;
+            }
+        }
+    }
+
+    ////////////////////////////用户取消准备/////////////////////////
     private void userCancelReady() {
         //取消准备的玩家
         String cancelReadyname=st.nextToken();
-        //传递给客户端的房间在线用户
-        String strOnline = "room online";
+        //更新聊天框
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(RoomNum)){
-                for (int j = 0; j < room.getEnter_num(); j++) {
-                    //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
-                    if(room.findNameUser(j).equals(room.getHostName())){
-                        strOnline += "|" + room.findNameUser(j)+"(房主)";
-                    }
-                    else if(room.findOnlineUser(j).equals(cancelReadyname))  //确定取消准备的人
-                    {
-                        room.changeStatusUser(j);  //切换向量列表中玩家的状态
-                        strOnline += "|" + room.findNameUser(j)+"(未准备)";
-                    }
-                    else{
-                        strOnline += "|" + room.findNameUser(j)+"("+room.findStatusUser(j)+")";
-                    }
-                }
-                System.out.println("当前在线人数:"+room.getEnter_num());
-                //向房间内所有用户发送  发送房间内全部人员的名字
-                sendRoomAll(strOnline);
+                //传递给客户端的房间在线用户
+                sendRoomAll("roomTalk|" + cancelReadyname + " 已取消准备");
+                room.changeStatusUser(room.getUserIndex(nickname));
+                break;
             }
         }
     }
 
-    //用户选择进行准备
+    //////////////////////用户选择进行准备////////////////////////////////
     private void userReady() {
         //准备的玩家
         String Readyname=st.nextToken();
-        //传递给客户端的房间在线用户
-        String strOnline = "room online";
+        //更新聊天框
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(RoomNum)){
-                for (int j = 0; j < room.getEnter_num(); j++) {
-                    //进行打印测试
-                    System.out.println(Readyname);
-                    System.out.println(room.findOnlineUser(j));
+                //传递给客户端的房间在线用户
+                sendRoomAll("roomTalk|" + Readyname + " 已准备");
+                room.changeStatusUser(room.getAccountIndex(Readyname));
 
-                    //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
-                    if(room.findNameUser(j).equals(room.getHostName())){
-                        strOnline += "|" + room.findNameUser(j)+"(房主)";
-                    }
-                    else if(room.findOnlineUser(j).equals(Readyname))  //确定准备的人
-                    {
-                        System.out.println("is rrrready");
-                        room.changeStatusUser(j);  //切换向量列表中玩家的状态
-                        strOnline += "|" + room.findNameUser(j)+"(已准备)";
-                    }
-                    else{
-                        strOnline += "|" + room.findNameUser(j)+"("+room.findStatusUser(j)+")";
-                    }
-                }
-                System.out.println("当前在线人数:"+room.getEnter_num());
-                //向房间内所有用户发送  发送房间内全部人员的名字
-                sendRoomAll(strOnline);
+                break;
             }
         }
     }
-
-
-
 
 
 
@@ -647,13 +634,15 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 for (int j = 0; j < room.getEnter_num(); j++) {
                     //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
-                    if(room.findNameUser(j).equals(room.getHostName())){
+                    System.out.println(room.findNameUser(j));
+                    System.out.println(RoomNum);
+                    if(room.findOnlineUser(j).equals(RoomNum)){
                         strOnline += "|" + room.findNameUser(j)+"(房主)";
-                        System.out.println(room.findNameUser(j));
-                    }else{
-                        //不是房主
+                    }else
+                    {
                         strOnline += "|" + room.findNameUser(j);
                     }
+
                 }
                 System.out.println("当前在线人数:"+room.getEnter_num());
                 //向房间内所有用户发送  发送房间内全部人员的名字
