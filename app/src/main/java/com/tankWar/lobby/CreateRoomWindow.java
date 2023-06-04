@@ -72,6 +72,7 @@ public class CreateRoomWindow{
                     strsend="Create|password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue()+"|"+Password.getText();
                     out.println(strsend);
                     createroomStage.close();
+                    //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;
                     //打开游戏房间
                     gameWaitWindow.ShowWindow();
@@ -81,6 +82,7 @@ public class CreateRoomWindow{
                     strsend="Create|no password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
                     out.println(strsend);
                     createroomStage.close();
+                    //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;
                     //打开游戏房间
                     gameWaitWindow.ShowWindow();

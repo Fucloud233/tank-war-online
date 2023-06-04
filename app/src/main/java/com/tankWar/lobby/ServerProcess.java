@@ -63,10 +63,11 @@ public class ServerProcess extends Thread {
                     //注册
                     /*register();*/
                 } else if (strKey.equals("Create")) {
+                    ///接收到CreateRoomWindow传来的Create 和相关参数
                     //处理创建房间的消息
                     createroom();
-                } else if (strKey.equals("select room")) {
-                    //处理用户选择房间的消息
+                } else if (strKey.equals("Select room")) {
+                    //处理用户选择房间的消息   客户端点击选择房间后传来的Select room
                     selectroom();
                 } else if (strKey.equals("password")) {
                     //选择的房间若设置了密码，需要验证
@@ -74,6 +75,12 @@ public class ServerProcess extends Thread {
                 }else if(strKey.equals("exitRoom")){
                     //退出房间
                     exitroom();
+                }else if(strKey.equals("isReady")){
+                    //有用户准备
+                    userReady();
+                }else if(strKey.equals("cancelReady")){
+                    //有用户取消准备
+                    userCancelReady();
                 }
             }
         } catch (IOException e) { // 用户关闭客户端造成此异常，关闭该用户套接字。
@@ -94,6 +101,77 @@ public class ServerProcess extends Thread {
             throw new RuntimeException(e);
         }
     }
+
+    //用户取消准备
+    private void userCancelReady() {
+        //取消准备的玩家
+        String cancelReadyname=st.nextToken();
+        //传递给客户端的房间在线用户
+        String strOnline = "room online";
+        for (int i = 0; i < rooms.size(); i++) {
+            Room room = rooms.get(i);
+            if(room.getRoomNum().equals(RoomNum)){
+                for (int j = 0; j < room.getEnter_num(); j++) {
+                    //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
+                    if(room.findNameUser(j).equals(room.getHostName())){
+                        strOnline += "|" + room.findNameUser(j)+"(房主)";
+                    }
+                    else if(room.findOnlineUser(j).equals(cancelReadyname))  //确定取消准备的人
+                    {
+                        room.changeStatusUser(j);  //切换向量列表中玩家的状态
+                        strOnline += "|" + room.findNameUser(j)+"(未准备)";
+                    }
+                    else{
+                        strOnline += "|" + room.findNameUser(j)+"("+room.findStatusUser(j)+")";
+                    }
+                }
+                System.out.println("当前在线人数:"+room.getEnter_num());
+                //向房间内所有用户发送  发送房间内全部人员的名字
+                sendRoomAll(strOnline);
+            }
+        }
+    }
+
+    //用户选择进行准备
+    private void userReady() {
+        //准备的玩家
+        String Readyname=st.nextToken();
+        //传递给客户端的房间在线用户
+        String strOnline = "room online";
+        for (int i = 0; i < rooms.size(); i++) {
+            Room room = rooms.get(i);
+            if(room.getRoomNum().equals(RoomNum)){
+                for (int j = 0; j < room.getEnter_num(); j++) {
+                    //进行打印测试
+                    System.out.println(Readyname);
+                    System.out.println(room.findOnlineUser(j));
+
+                    //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
+                    if(room.findNameUser(j).equals(room.getHostName())){
+                        strOnline += "|" + room.findNameUser(j)+"(房主)";
+                    }
+                    else if(room.findOnlineUser(j).equals(Readyname))  //确定准备的人
+                    {
+                        System.out.println("is rrrready");
+                        room.changeStatusUser(j);  //切换向量列表中玩家的状态
+                        strOnline += "|" + room.findNameUser(j)+"(已准备)";
+                    }
+                    else{
+                        strOnline += "|" + room.findNameUser(j)+"("+room.findStatusUser(j)+")";
+                    }
+                }
+                System.out.println("当前在线人数:"+room.getEnter_num());
+                //向房间内所有用户发送  发送房间内全部人员的名字
+                sendRoomAll(strOnline);
+            }
+        }
+    }
+
+
+
+
+
+
     /*
     //判断注册用户的昵称是否重复
     private boolean isExistUserName(String name) {
@@ -341,35 +419,37 @@ public class ServerProcess extends Thread {
 
     }
     */
-//在注册成功后自动登录 原始版本！！！！！！！！！！！！！！！！！！！！！！
-private void userLoginSuccess(String name) throws IOException {
-    Date t = new Date();
-    //返回给客户端成功登录的内容
-    out.println("login|succeed|"+name);
+    //在注册成功后自动登录 原始版本！！！！！！！！！！！！！！！！！！！！！！
+    private void userLoginSuccess(String name) throws IOException {
+        Date t = new Date();
+        //返回给客户端成功登录的内容
+        out.println("login|succeed|"+name);
 //        sendAll("online|" + name);
-    ///////////////////////由于获取不到昵称 我设置随机数来指定
-    // 创建一个随机数生成器对象
-    Random random = new Random();
-    // 生成随机整数
-    int randomInt = random.nextInt();
-    nickname="测试者"+randomInt;
-    ////////////////////////////////////////////////////测试的nickname
+        ///////////////////////由于获取不到昵称 我设置随机数来指定
+        // 创建一个随机数生成器对象
+        Random random = new Random();
+        // 生成随机整数
+        int randomInt = random.nextInt();
+        nickname="测试者"+randomInt;
+        ////////////////////////////////////////////////////测试的nickname
 
+        onlineUser.addElement(name);
+        ///////////////////////////进行赋值 防止为空/////////////////////////
+        this.account=name;
+        socketUser.addElement(socket);
+        nameUser.addElement(nickname); //增加用户昵称列表
 
-    onlineUser.addElement(account);
-    socketUser.addElement(socket);
-    nameUser.addElement(nickname); //增加用户昵称列表
+        System.out.println("用户：" + name + "登录成功，" + "登录时间:" + t.toLocaleString());
+        freshClientsOnline();
+        freshClientsLobbyOnline();
+        sendAll("talk|>>>欢迎 " + name + " 进来与我们一起交谈!");
+        System.out.println("[SYSTEM] " + name + " login succeed!");
+    }
 
-    System.out.println("用户：" + name + "登录成功，" + "登录时间:" + t.toLocaleString());
-    freshClientsOnline();
-    freshClientsLobbyOnline();
-    sendAll("talk|>>>欢迎 " + name + " 进来与我们一起交谈!");
-    System.out.println("[SYSTEM] " + name + " login succeed!");
-}
     ///////////////////普通用户成功进入房间//////////////////////////////
     private void userEnterRoomSuccess() throws IOException {
         Date t = new Date();
-        //返回给客户端成功登录的内容
+        //返回给客户端成功登录的内容   客户端能成功显示窗口
         out.println("select room|success");
        //更新房间里面的信息，并刷新客户端的游戏大厅和游戏房间里的聊天框
         for (int i = 0; i < rooms.size(); i++) {
@@ -386,8 +466,7 @@ private void userLoginSuccess(String name) throws IOException {
     ///////////////////房主成功进入房间//////////////////////////////
     private void OwnerEnterRoomSuccess() throws IOException {
         Date t = new Date();
-        //返回给客户端成功创建房间的内容
-        out.println("Create room|success");
+        //不再给客户端传成功创建房间的信息了 游戏窗口在CreateRoomWindow已经打开
         //更新房间里面的信息，并刷新客户端的游戏大厅和游戏房间里的聊天框
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
@@ -549,7 +628,6 @@ private void userLoginSuccess(String name) throws IOException {
         }
     }
     /////////////////////////刷新大厅内的在线用户/////////////////////
-
     //在线用户列表
     private void freshClientsOnline() throws IOException {
         String strOnline = "online";
@@ -559,6 +637,7 @@ private void userLoginSuccess(String name) throws IOException {
         System.out.println("当前在线人数:"+nameUser.size());
         sendAll(strOnline);
     }
+
     ////////////////////////刷新房间内的在线用户///////////////////
     private void freshClientsRoomOnline() throws IOException {
         //传递给客户端的房间在线用户
@@ -582,6 +661,7 @@ private void userLoginSuccess(String name) throws IOException {
             }
         }
     }
+
     ///////////////////////////刷新游戏大厅的在线房间///////////////////
     private void freshClientsLobbyOnline() throws IOException {
         String strOnline = "lobby";

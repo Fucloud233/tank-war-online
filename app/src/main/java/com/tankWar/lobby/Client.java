@@ -123,7 +123,8 @@ public class Client extends Stage {
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
             if (selectedHBox!=null && isHBoxSelected==true){
-                out.println("select room|"+roomId);
+                //向服务端传选择的房间内容
+                out.println("Select room|"+roomId);
             } else {
                 new Alert(Alert.AlertType.WARNING, "请选择房间！").showAndWait();
             }
@@ -144,6 +145,7 @@ public class Client extends Stage {
                 //创建一个新的房间
                 ///////////////////////////////////////////////////////修改了一下传参 要不然后面为空 !!!!!!!!!!!!!!!!!!!!!!
                 gameWaitWindow=new GameWaitWindow(socket,username,username,primaryStage,lobbyScene);
+                ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
                 roomWindow = new CreateRoomWindow(socket, username, username,gameWaitWindow);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -265,8 +267,9 @@ public class Client extends Stage {
                             }
                         }
 
+                        /*
                         //房主成功创建房间 并直接进入房间
-                        case "Cteate room" -> {
+                        case "Create room" -> {
                             String strSelect = st.nextToken();
                             if (strSelect.equals("success")) {//进入游戏房间
                                 Platform.runLater(() -> {
@@ -278,7 +281,9 @@ public class Client extends Stage {
                                     gameWaitWindow.ShowWindow();
                                 });
                             }
-                        }
+                        }*/
+
+
 
                         //在进入房间后的聊天框的聊天内容
                         case "roomTalk" -> {

@@ -40,9 +40,9 @@ public class Room {
     public void addOnlineUser(String name,String account,Socket s){
         enter_num+=1;
         nameUser.addElement(name);
-        onlineUser.addElement(account);
+        onlineUser.addElement(name);  //现在改完后 里面装的是用户的账号
         socketUser.addElement(s);
-        statusUser.addElement("wait");
+        statusUser.addElement("未准备");
     }
 
     //通过索引移除房间里的玩家
@@ -74,8 +74,21 @@ public class Room {
 
     //根据下标找到玩家状态
     public String findStatusUser(int i){
+
+        System.out.println(statusUser.elementAt(i));
         return (String) statusUser.elementAt(i);
     }
+    //切换对应下表的玩家的状态
+    public void changeStatusUser(int index) {
+        System.out.println(findStatusUser(index)+"test");
+        if(findStatusUser(index).equals("未准备")){
+            statusUser.setElementAt("已准备", index);
+        }
+        else{
+            statusUser.setElementAt("准备", index);
+        }
+    }
+
 
     //返回该房间的房间号，我是直接用房主的账号做房间号的
     public String getRoomNum(){return RoomNum;}

@@ -34,6 +34,7 @@ public class GameWaitWindow {
     private Scene lobbyScene;//接收传过来的场景
     private Stage primaryStage;//接收传过来的主舞台
     public Boolean isRoomOwner=false;   //是否为房主 在CreateRoomWindow中将其设置为true
+    private Button PlayGameBtn;  //开始游戏/准备按钮
 
     public GameWaitWindow(Socket s,String name,String account,Stage primaryStage,Scene lobbyScene) throws IOException{
         this.socket = s;
@@ -69,7 +70,7 @@ public class GameWaitWindow {
         vBox.getChildren().add(hBox); //放入发送框
 
         //开始游戏/准备按钮
-        Button PlayGameBtn = new Button(isRoomOwner ? "开始游戏" : "准备");
+        PlayGameBtn = new Button(isRoomOwner ? "开始游戏" : "准备");
         PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
         PlayGameBtn.setOnAction(e -> beginGame()); //退出房间的事件
 
@@ -165,6 +166,7 @@ public class GameWaitWindow {
 
     //开始游戏  或 进行准备的事件
     public void beginGame(){
+        //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             boolean allReady = checkAllPlayersReady();
             if (allReady) {
@@ -178,9 +180,22 @@ public class GameWaitWindow {
                 alert.setContentText("有玩家尚未准备！");
                 alert.showAndWait();
             }
-        } else {
+        }
+        //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
+        else if(PlayGameBtn.getText().equals("准备"))
+        {
+            //发送一个准备的消息 并传送这个能标识这个用户的键
+            out.println("isReady|"+name);
+            System.out.println(name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
-            togglePlayerReady();
+            PlayGameBtn.setText("已准备");
+        }
+        //用户取消准备
+        else if(PlayGameBtn.getText().equals("已准备")){
+            //发送一个取消准备的消息 并传送这个能标识这个用户的键
+            out.println("cancelReady|"+name);
+            // 非房主用户 切换按钮和对应的状态 已准备-准备
+            PlayGameBtn.setText("准备");
         }
     }
 
@@ -197,23 +212,6 @@ public class GameWaitWindow {
         return true;
     }
 
-    //非房主用户 点击准备按钮之后切换状态  翻转按钮为已经准备 同时房间标签中进行状态的写
-    private void togglePlayerReady() {
-        String player = name + (isRoomOwner ? " (房主)" : "");
-        System.out.println(name);
-        ObservableList<String> players = userListView.getItems();
-        int index = players.indexOf(player);
-        if (index != -1) {
-            //去除已准备
-            if (players.get(index).endsWith(" (已准备)")) {
-                players.set(index, player);
-            } else {
-                //切换为已准备
-                players.set(index, player + " (已准备)");
-            }
-        }
-        //userListView.setItems(FXCollections.observableArrayList(players);
-    }
 
     //开始游戏的逻辑！！！！！！！！！！！！！！
     private void startGame() {
