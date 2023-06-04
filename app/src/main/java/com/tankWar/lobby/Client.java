@@ -14,6 +14,8 @@ import javafx.scene.text.FontWeight;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 
@@ -42,9 +44,6 @@ public class Client extends Stage {
     private final String account;  //用户的账号
     private Scene lobbyScene; //游戏大厅的场景，方便切换场景
     private Stage primaryStage;
-
-
-
 
 
     public Client(String nickname, String account, Socket socket, BufferedReader in, PrintWriter out) {//因为加上了昵称，所以修改了下传参
@@ -302,7 +301,6 @@ public class Client extends Stage {
                                 Platform.runLater(() -> {
                                     container.getChildren().clear();
                                     while (st.hasMoreTokens()) {
-
                                         String roomNum = st.nextToken();
                                         String Id = st.nextToken();
                                         String roomName = st.nextToken();

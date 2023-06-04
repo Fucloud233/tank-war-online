@@ -401,25 +401,31 @@ private void userLoginSuccess(String name) throws IOException {
         }
     }
 
-    /////////////////////////退出房间/////////////////////////
+    //////////////////////////////////////退出房间/////////////////////////
     //退出房间
     public void exitroom() throws IOException {
         // 在房间列表中找到对应的房间
         for (Room room : rooms) {
             if (room.getRoomNum().equals(RoomNum)) {
-                // 从房间中移除该用户 使用Room中的函数
-                room.removeOnlineUser(room.getUserIndex(nickname));
                 //如果是房主退出了，则解散房间
-                if(room.getRoomNum().equals(account)){
-                    //调用函数 清空所有内容
-                    room.ClearALL();
+                if(room.getHostName().equals(nickname)){
+                    // 从房间中移除该用户 使用Room中的函数
+                    room.removeOnlineUser(room.getUserIndex(nickname));
                     //从总房间列表中将这个房间删除
                     rooms.remove(room);
+                    //调用函数 清空房间内部的所有内容
+                    room.ClearALL();
+                    //返回给客户端删除房间的消息
                 }
-                freshClientsRoomOnline();//用户退出房间，房间里面的人员信息会增加
-                freshClientsLobbyOnline();//用户退出房间，大厅里的房间人数会变
-                // 发送退出房间消息给其他用户
-                sendRoomAll("roomTalk|>>>再见 " + nickname + " 退出房间");
+                //普通用户退出该房间
+                else {
+                    // 从房间中移除该用户 使用Room中的函数
+                    room.removeOnlineUser(room.getUserIndex(nickname));
+                    freshClientsRoomOnline();//用户退出房间，房间里面的人员信息会增加
+                    // 发送退出房间消息给其他用户
+                    sendRoomAll("roomTalk|>>>再见 " + nickname + " 退出房间");
+                }
+                freshClientsLobbyOnline();//刷新大厅内的房间列表
                 break;
             }
         }
@@ -546,7 +552,7 @@ private void userLoginSuccess(String name) throws IOException {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(RoomNum)){
                 for (int j = 0; j < room.getEnter_num(); j++) {
-                    //如果是房主 后续在房间人员列表中  设置有房主的标识
+                    //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
                     if(room.findNameUser(j).equals(room.getHostName())){
                         strOnline += "|" + room.findNameUser(j)+"(房主)";
                         System.out.println(room.findNameUser(j));
