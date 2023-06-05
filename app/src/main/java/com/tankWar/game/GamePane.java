@@ -299,7 +299,8 @@ public class GamePane extends BorderPane {
                     }
 
                     bullet.move();
-                    processBulletCollide(bullet);
+                    if(processBulletCollide(bullet))
+                        bullet.setAlive(false);
                 }
             }
         }
@@ -334,23 +335,23 @@ public class GamePane extends BorderPane {
         return isCollide;
     }
 
-    void processBulletCollide(Bullet bullet) {
+    boolean processBulletCollide(Bullet bullet) {
         // 处理子弹与建筑方块的碰撞
         for (Building building: buildings) {
             // 若方块可穿过以及与子弹碰撞
             if (!building.canGoThough() && bullet.isCollidingWith(building)) {
-                bullet.setAlive(false); // 子弹设置死亡
                 // 若方块是可击碎的，则设置方块死亡
                 if (building.isFragile()) {
                     building.setAlive(false);
                 }
+                return true; // 子弹设置死亡
             }
         }
         // 处理坦克与子弹的碰撞
-        for (Tank tank: tanks) {
-            if (bullet.id != tank.getId() && bullet.isCollidingWith(tank)) {
-                bullet.setAlive(false);
-            }
-        }
+        for (Tank tank: tanks)
+            if (bullet.id != tank.getId() && bullet.isCollidingWith(tank))
+                return true;
+
+        return false;
     }
 }

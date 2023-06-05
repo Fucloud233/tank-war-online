@@ -45,8 +45,9 @@ public class Bullet extends Entity {
             y = y + speed;
         }
         // 若超越地图边界或超过最大距离，子弹死亡
+        // 不需要判断是否超越地图边界
         double delta = Math.sqrt((x-startX)*(x-startX)+(y-startY)*(y-startY));
-        if (this.x + this.width / 2 <= 0 || this.x - this.width / 2 >= Config.MapWidth || this.y + this.height / 2 <= 0 || this.y - this.height / 2 >= Config.MapHeight || delta >= maxDistance)
+        if (delta >= maxDistance)
             this.setAlive(false);
     }
 
@@ -63,9 +64,10 @@ public class Bullet extends Entity {
     // 子弹死亡后恢复子弹数量
     @Override
     public void setAlive(boolean alive) {
-        super.setAlive(alive);
-        if(!alive)
+        // 防止重复设置
+        if(this.alive || !alive)
             this.parentTank.recoveryBullet();
+        super.setAlive(alive);
     }
 
     @Override
