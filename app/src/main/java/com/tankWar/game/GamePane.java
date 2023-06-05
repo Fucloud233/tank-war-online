@@ -51,6 +51,7 @@ public class GamePane extends BorderPane {
 
         try {
             System.out.println("正在连接服务端");
+            // 与服务端连接
             client.connect();
         }
         catch (TimeoutException e) {
@@ -107,7 +108,7 @@ public class GamePane extends BorderPane {
             if (Utils.CheckCodeIsMove(code)) {
                 Direction dir = Utils.DirMap.get(code);
 
-                // 不同方向 || 已暂停: 则不再发送
+                // (不同方向 || 停止移动) & 移动方向不是碰撞方向
                 if((myTank.getDir() != dir || myTank.getIsStop() )&& dir != collideDir) {
                     // 向服务端发送移动消息
                     client.sendMoveMsg(dir);
@@ -122,6 +123,7 @@ public class GamePane extends BorderPane {
                 Bullet bullet = myTank.fire();
                 if(bullet != null) {
                     bullets.add(bullet);
+                    // 告知服务端发射子弹
                     client.sendShootMsg(bullet.getDir(), bullet.getX(), bullet.getY());
                 }
 
@@ -136,6 +138,7 @@ public class GamePane extends BorderPane {
             if (Utils.CheckCodeIsMove(code)) {
                 // 如果松开的按键是当前的移动的方向 则停止
                 if (myTank.getDir() == Utils.DirMap.get(code) && !myTank.getIsStop()) {
+                    // 告知服务端停止移动
                     client.sendMoveMsg(Direction.CENTER);
                     myTank.setIsStop(true);
                 }
@@ -217,6 +220,7 @@ public class GamePane extends BorderPane {
             }
         }
 
+        // 处理服务端发来的其他坦克开火请求
         private void handleShoot(ShootMsg msg) {
             int id = msg.getId();
             Direction dir = msg.getDir();
@@ -225,6 +229,7 @@ public class GamePane extends BorderPane {
             bullets.add(new Bullet(id, dir, x, y));
         }
 
+        // 处理服务端初始化游戏请求
         private void handleInit(InitMsg msg) {
             // 清除子弹
             bullets.clear();
@@ -291,10 +296,11 @@ public class GamePane extends BorderPane {
 
                 // 处理移动按键输入
                 for(Tank tank: tanks) {
-                    // 如果不再移动 则不做处理
+                    // 如果不再移动或移动方向与碰撞方向相同 则不做处理
                     if (tank.getIsStop() || tank.getDir() == collideDir)
                         continue;
 
+                    // 移动并记录先前位置
                     double x = tank.getX(), y = tank.getY();
                     tank.move();
 

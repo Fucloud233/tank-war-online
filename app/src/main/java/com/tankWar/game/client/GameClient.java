@@ -14,8 +14,10 @@ import java.util.concurrent.TimeoutException;
 public class GameClient {
     int id = -1;
 
+    // 客户端Socket
     Socket clientSocket;
 
+    // 输入输出数据流
     DataOutputStream out;
     DataInputStream in;
 
@@ -26,7 +28,7 @@ public class GameClient {
 
     }
 
-    public GameClient(int id)  {
+    public GameClient(int id) {
         this.id = id;
     }
 
@@ -41,11 +43,10 @@ public class GameClient {
     }
 
     // 发送消息
-    void send(String msg)  {
+    void send(String msg) {
         try {
             out.writeUTF(msg);
-        }
-        catch( IOException e ){
+        } catch (IOException e) {
             System.out.printf("[Error] 客户端%d发送失败!\n", id);
         }
     }
@@ -53,7 +54,7 @@ public class GameClient {
     String receive() {
         try {
             return in.readUTF();
-        } catch( IOException e) {
+        } catch (IOException e) {
 //            System.out.printf("[Error] 客户端%d接收失败!\n", id);
             return "";
         }
@@ -74,7 +75,7 @@ public class GameClient {
     public void sendShootMsg(Direction dir, double x, double y) {
         ShootMsg shootMsg = new ShootMsg(id, dir, x, y);
         try {
-            String msg  = mapper.writeValueAsString(shootMsg);
+            String msg = mapper.writeValueAsString(shootMsg);
             this.send(msg);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -85,7 +86,7 @@ public class GameClient {
     public void sendDeadMsg() {
         DeadMsg deadMsg = new DeadMsg(this.id);
         try {
-            String msg  = mapper.writeValueAsString(deadMsg);
+            String msg = mapper.writeValueAsString(deadMsg);
             this.send(msg);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -96,7 +97,7 @@ public class GameClient {
     public Message receiveStatusMsg() {
         String msg = receive();
 
-        if(msg.isEmpty()){
+        if (msg.isEmpty()) {
             return null;
         }
 
@@ -114,19 +115,20 @@ public class GameClient {
             type = MessageType.valueOf(jsonMsg.get("type").asText());
 
             // 3.1 解析并返回消息
-            switch(type) {
+            switch (type) {
                 case Move -> {
                     return mapper.readValue(msg, MoveMsg.class);
                 }
-                case Shoot-> {
+                case Shoot -> {
                     return mapper.readValue(msg, ShootMsg.class);
                 }
-                case Init->{
+                case Init -> {
                     return mapper.readValue(msg, InitMsg.class);
                 }
                 default -> {
                     System.out.println("接收消息异常!");
-                    return  null;}
+                    return null;
+                }
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -136,7 +138,7 @@ public class GameClient {
 
     public InitMsg receiveInitMsg() {
         String msg = receive();
-        if(msg.isEmpty())
+        if (msg.isEmpty())
             return null;
 
 //        JSONObject jsonMsg = JSONObject.parseObject(msg);
