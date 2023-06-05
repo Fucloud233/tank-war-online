@@ -18,7 +18,8 @@ public class Config {
     // 地图相关设定
     // 设置地图的最大大小
     public final static float MapMaxWidth = 960;
-    public final static float MapMaxHeight = 960;
+    // 暂时设置为480
+    public final static float MapMaxHeight = 480;
 
     public final static float MapPaddingSize = 10;
 
