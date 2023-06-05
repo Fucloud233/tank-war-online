@@ -33,7 +33,7 @@ public class CreateRoomWindow{
     //在构造函数中加上了初始化传递过来的舞台和场景
     public CreateRoomWindow(Socket s,String name,String account,GameWaitWindow gameWaitWindow) throws IOException{
         this.socket = s;
-        username=name;
+        this.username=name;
         this.account=account;
         this.gameWaitWindow=gameWaitWindow;
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));

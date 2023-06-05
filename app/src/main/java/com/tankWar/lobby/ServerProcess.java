@@ -18,7 +18,7 @@ public class ServerProcess extends Thread {
     private String RoomNum;//用户所在的房间号
     private String account;//当前用户的账号
     private String nickname;
-    private final String USERLIST_FILE = "E:\\lobby\\app\\src\\main\\java\\com\\tankWar\\lobby\\_user.txt"; // 设定存放用户信息的文件
+
     //维护的全局信息
     private static ArrayList<Room> rooms=new ArrayList<>();//维护的每个房间
     private static Vector nameUser = new Vector(10,5);//保存在线用户的用户名
@@ -61,7 +61,7 @@ public class ServerProcess extends Thread {
                     freshClientsOnline();
                 } else if (strKey.equals("register")) {
                     //注册
-                    /*register();*/
+                    register();
                 } else if (strKey.equals("Create")) {
                     ///接收到CreateRoomWindow传来的Create 和相关参数
                     //处理创建房间的消息
@@ -106,7 +106,7 @@ public class ServerProcess extends Thread {
     }
 
     /////////////////////////是否用户全部准备好/////////////////////////
-    private void checkifALLready() {
+    private void checkifALLready() throws IOException {
         for (int i = 0; i < rooms.size(); i++) {
             Room room = rooms.get(i);
             if(room.getRoomNum().equals(RoomNum)){
@@ -115,6 +115,8 @@ public class ServerProcess extends Thread {
                     room.setRoomStatus();
                     //返回给客户端
                     out.println("begin game|succeed");
+                    //刷新大厅中这个房间的状态
+                    freshClientsLobbyOnline();
                 }
                 else{
                     out.println("begin game|failed");
@@ -134,7 +136,7 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 //传递给客户端的房间在线用户
                 sendRoomAll("roomTalk|" + cancelReadyname + " 已取消准备");
-                room.changeStatusUser(room.getUserIndex(nickname));
+                room.changeStatusUser(room.getAccountIndex(account));
                 break;
             }
         }
@@ -150,8 +152,7 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 //传递给客户端的房间在线用户
                 sendRoomAll("roomTalk|" + Readyname + " 已准备");
-                room.changeStatusUser(room.getAccountIndex(Readyname));
-
+                room.changeStatusUser(room.getAccountIndex(account));
                 break;
             }
         }
@@ -159,7 +160,7 @@ public class ServerProcess extends Thread {
 
 
 
-    /*
+
     //判断注册用户的昵称是否重复
     private boolean isExistUserName(String name) {
         String query = "SELECT * FROM users WHERE nickname = ?";
@@ -246,30 +247,6 @@ public class ServerProcess extends Thread {
             }
         }
     }
-*/
-
-    //判断用户名和密码是否正确 原始版本！！！！！！！！！！！！！！
-    private boolean isUserLogin(String name, String password) {
-        String strRead;
-        try {
-            //打开文件
-            FileInputStream inputfile = new FileInputStream(USERLIST_FILE);
-            DataInputStream inputdata = new DataInputStream(inputfile);
-            //与文件中的账户名的密码一一比较  找到了则登陆成功
-            while ((strRead = inputdata.readLine()) != null) {
-                if (strRead.equals(name + "|" + password)) {
-                    return true;
-                }
-            }
-        } catch (FileNotFoundException fn) {
-            System.out.println("[ERROR] User File has not exist!" + fn);
-            out.println("warning|读写文件时出错!");
-        } catch (IOException ie) {
-            System.out.println("[ERROR] " + ie);
-            out.println("warning|读写文件时出错!");
-        }
-        return false;
-    }
 
     //创建房间,分有密码和无密码的情况
     public void createroom() throws IOException {
@@ -281,8 +258,7 @@ public class ServerProcess extends Thread {
             String userNum=st.nextToken();
             String password=st.nextToken();
             RoomNum=account;//对于房主来说，房间号就是他的账号
-            //////////////////////////////修改传参房主名称  方便进行测试！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-            rooms.add(new Room(true,nickname,account,roomName,userNum,password,socket));
+            rooms.add(new Room(true,userName,account,roomName,userNum,password,socket));
             OwnerEnterRoomSuccess();//房主创建房间后就会成功进入房间
         } else if (isPassword.equals("no password")) {
             String userName=st.nextToken();
@@ -290,8 +266,8 @@ public class ServerProcess extends Thread {
             String roomName=st.nextToken();
             String userNum=st.nextToken();
             RoomNum=account;
-            //////////////////////////////修改传参  方便进行测试！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-            rooms.add(new Room(false,nickname,account,roomName,userNum,"",socket));
+
+            rooms.add(new Room(false,userName,account,roomName,userNum,"",socket));
             OwnerEnterRoomSuccess();//房主创建房间后就会成功进入房间
         }
         freshClientsLobbyOnline();//每次创建了一个房间，服务端要刷新所有客户端的房间列表
@@ -334,7 +310,7 @@ public class ServerProcess extends Thread {
         }
 
     }
-/*
+
     //登录
     private void login() throws IOException, SQLException {
         account = st.nextToken(); // 得到用户账号
@@ -359,27 +335,8 @@ public class ServerProcess extends Thread {
             System.out.println("用户 "+ account + "登陆失败！" + t.toLocaleString());
         }
     }
-*/
 
-    //登录  原始版本！！！！！！！！！！！！！！！！！！！！！！
-    private void login() throws IOException, SQLException {
-        String name = st.nextToken(); // 得到用户名称
-        String password = st.nextToken().trim();// 得到用户密码
-        boolean succeed = false;
-        Date t = new Date();
-        System.out.println("用户" + name + "正在登陆..." + "\n" + "密码 :" + password + "\n" + "端口 "
-                + socket + t.toLocaleString());
-        //调用用户名和密码的判断
-        if (isUserLogin(name, password)) {      // 判断用户名和密码 ->转为在数据库中寻找
-            userLoginSuccess(name);
-            succeed = true;
-        }
-        if (!succeed) {
-            out.println("warning|" + name + "登陆失败，请检查您的输入!");
-            System.out.println("用户 "+ name + "登陆失败！" + t.toLocaleString());
-        }
-    }
-    /*
+
     //登陆成功返回给用户它的昵称
     private void userLoginSuccess(String account) throws IOException, SQLException {
         Date t = new Date();
@@ -405,33 +362,7 @@ public class ServerProcess extends Thread {
         }
 
     }
-    */
-    //在注册成功后自动登录 原始版本！！！！！！！！！！！！！！！！！！！！！！
-    private void userLoginSuccess(String name) throws IOException {
-        Date t = new Date();
-        //返回给客户端成功登录的内容
-        out.println("login|succeed|"+name);
-//        sendAll("online|" + name);
-        ///////////////////////由于获取不到昵称 我设置随机数来指定
-        // 创建一个随机数生成器对象
-        Random random = new Random();
-        // 生成随机整数
-        int randomInt = random.nextInt();
-        nickname="测试者"+randomInt;
-        ////////////////////////////////////////////////////测试的nickname
 
-        onlineUser.addElement(name);
-        ///////////////////////////进行赋值 防止为空/////////////////////////
-        this.account=name;
-        socketUser.addElement(socket);
-        nameUser.addElement(nickname); //增加用户昵称列表
-
-        System.out.println("用户：" + name + "登录成功，" + "登录时间:" + t.toLocaleString());
-        freshClientsOnline();
-        freshClientsLobbyOnline();
-        sendAll("talk|>>>欢迎 " + name + " 进来与我们一起交谈!");
-        System.out.println("[SYSTEM] " + name + " login succeed!");
-    }
 
     ///////////////////普通用户成功进入房间//////////////////////////////
     private void userEnterRoomSuccess() throws IOException {
@@ -493,7 +424,7 @@ public class ServerProcess extends Thread {
                         break;
                     }
                     // 从房间中移除该用户 使用Room中的函数
-                    room.removeOnlineUser(room.getUserIndex(nickname));
+                    room.removeOnlineUser(room.getAccountIndex(account));
                     //调用函数 清空房间内部的所有内容
                     room.ClearALL();
                     //返回给客户端删除房间的消息
@@ -501,7 +432,7 @@ public class ServerProcess extends Thread {
                 //普通用户退出该房间
                 else {
                     // 从房间中移除该用户 使用Room中的函数
-                    room.removeOnlineUser(room.getUserIndex(nickname));
+                    room.removeOnlineUser(room.getAccountIndex(account));
                     freshClientsRoomOnline();//用户退出房间，房间里面的人员信息会增加
                     // 发送退出房间消息给其他用户
                     sendRoomAll("roomTalk|>>>再见 " + nickname + " 退出房间");
@@ -514,7 +445,7 @@ public class ServerProcess extends Thread {
 
 
 
-    //大厅发言
+    ////////////////////////////////大厅发言///////////////////////////////////////
     private void talk() throws IOException {
         String strTalkInfo = st.nextToken(); // 得到聊天内容;
         String strSender = st.nextToken(); // 得到发消息人
@@ -637,7 +568,7 @@ public class ServerProcess extends Thread {
                     System.out.println(room.findNameUser(j));
                     System.out.println(RoomNum);
                     if(room.findOnlineUser(j).equals(RoomNum)){
-                        strOnline += "|" + room.findNameUser(j)+"(房主)";
+                        strOnline += "|" + room.findNameUser(j);
                     }else
                     {
                         strOnline += "|" + room.findNameUser(j);

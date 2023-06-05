@@ -39,14 +39,16 @@ public class Room {
     //添加房间里的玩家昵称、账号、套接字和状态。初始状态是wait
     public void addOnlineUser(String name,String account,Socket s){
         enter_num+=1;
-        nameUser.addElement(name);
-        onlineUser.addElement(account);  //现在改完后 里面装的是用户的账号
+
+        onlineUser.addElement(account);
         socketUser.addElement(s);
         if(account.equals(RoomNum)){
-            //房主必然是准备好的
+            //房主必然是准备好的 并且有房主标识
+            nameUser.addElement(name+"(房主)");
             statusUser.addElement("已准备");
         }
         else{
+            nameUser.addElement(name);
             statusUser.addElement("未准备");
         }
 
@@ -70,13 +72,9 @@ public class Room {
         nameUser.removeElementAt(i);
         statusUser.removeElementAt(i);
     }
-    //乔： 根据昵称找到玩家的索引  后续可以更改为根据账号定位到玩家的索引  此处是为了测试!!!!
-    public int getUserIndex(String name){
-        return nameUser.indexOf(name);
-    }
-    //乔： 根据账号找到玩家的索引  后续可以更改为根据账号定位到玩家的索引  此处是为了测试!!!!
-    public int getAccountIndex(String name){
-        return onlineUser.indexOf(name);
+    //根据账号找到玩家的索引
+    public int getAccountIndex(String account){
+        return onlineUser.indexOf(account);
     }
     //根据下标找到玩家昵称
     public String findNameUser(int i){
@@ -100,7 +98,6 @@ public class Room {
     }
     //切换对应下表的玩家的状态
     public void changeStatusUser(int index) {
-        System.out.println(findStatusUser(index)+"test");
         if(findStatusUser(index).equals("未准备")){
             statusUser.setElementAt("已准备", index);
         }

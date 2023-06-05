@@ -143,10 +143,9 @@ public class Client extends Stage {
             //获取用户输入的账号
             try {
                 //创建一个新的房间
-                ///////////////////////////////////////////////////////修改了一下传参 要不然后面为空 !!!!!!!!!!!!!!!!!!!!!!
-                gameWaitWindow=new GameWaitWindow(socket,username,username,primaryStage,lobbyScene);
+                gameWaitWindow=new GameWaitWindow(socket,username,account,primaryStage,lobbyScene);
                 ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
-                roomWindow = new CreateRoomWindow(socket, username, username,gameWaitWindow);
+                roomWindow = new CreateRoomWindow(socket, username, account,gameWaitWindow);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -324,8 +323,7 @@ public class Client extends Stage {
                             //获取到房间号  同当前用户进行比较 以判断是否发送消息
                             String RoomNum = st.nextToken();
                             //只有房间内的普通用户 才会收到对应的提示
-                            if(!username.equals(RoomNum)) {
-                                System.out.println("test delete room");
+                            if(!account.equals(RoomNum)) {
                                 Platform.runLater(() -> {
                                     Alert alert = new Alert(Alert.AlertType.WARNING, "房主已解散该房间，您将返回大厅");
                                     alert.setOnCloseRequest(event -> {
@@ -342,7 +340,8 @@ public class Client extends Stage {
                             //获取到是否成功
                             String judge = st.nextToken();
                             if(judge.equals("succeed")){
-                                //可以开始游戏了
+
+                                //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
                                 Platform.runLater(() -> {
                                     Alert alert = new Alert(Alert.AlertType.WARNING, "游戏开始！");
                                     alert.showAndWait();
