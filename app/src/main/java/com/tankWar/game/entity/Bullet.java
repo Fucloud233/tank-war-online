@@ -5,6 +5,7 @@ package com.tankWar.game.entity;
     由Tank发出，会与建筑方块和其他Tank发生碰撞
  */
 
+import com.tankWar.game.Config;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 

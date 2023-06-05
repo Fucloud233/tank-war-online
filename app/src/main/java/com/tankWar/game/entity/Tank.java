@@ -7,6 +7,7 @@ package com.tankWar.game.entity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tankWar.game.Config;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
@@ -19,8 +20,6 @@ public class Tank extends Entity {
     private boolean isStop = true;
     // 记录坦克当前的子弹数量
     private int bulletNum = Config.TankMaxBulletNum;
-    // 坦克速度
-    private final int speed = Config.TankSpeed;
 
 
     // tank构造函数(随机方向)
@@ -48,13 +47,7 @@ public class Tank extends Entity {
     public Tank(double x, double y, Direction dir, int id) {
         super(Config.TankWidth, Config.TankHeight, x, y);
         this.id = id;
-        switch (dir) {
-            case UP -> setDirection(Direction.UP);
-            case DOWN -> setDirection(Direction.DOWN);
-            case LEFT -> setDirection(Direction.LEFT);
-            case RIGHT -> setDirection(Direction.RIGHT);
-            default -> System.out.println("Direction error");
-        }
+        this.setDirection(dir);
     }
 
     // 设置方向
@@ -81,7 +74,8 @@ public class Tank extends Entity {
         if(this.isStop)
             return;
 
-        // 根据当前方向移动
+        // 根据当前方向和速度移动
+        int speed = Config.TankSpeed;
         switch (dir) {
             case LEFT -> {
                 if (x - this.width / 2 - speed >= 0) {

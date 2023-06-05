@@ -8,7 +8,7 @@ package com.tankWar.game.entity;
     存储不同类型的方块，记录其相关属性
  */
 
-import javafx.scene.canvas.GraphicsContext;
+import com.tankWar.game.Config;
 import javafx.scene.image.Image;
 
 public class Building extends Entity{
@@ -16,8 +16,7 @@ public class Building extends Entity{
 
     // 子弹是否能穿过建筑方块
     public boolean canGoThough(){
-        if(block.name=="empty"||block.name=="grass") return true;
-        return false;
+        return block.name.equals("empty")||block.name.equals("grass");
     }
 
     // 子弹是否可击碎
@@ -33,8 +32,10 @@ public class Building extends Entity{
             case 'S': block = Block.Stone; break;
             case 'W': block = Block.Wood; break;
             case 'G': block = Block.Grass; break;
-            default:
+            default: {
                 System.out.println("ID is illegal!");
+                return;
+            }
         }
         // 设置贴图
         setImage(block.getImg());
@@ -47,7 +48,6 @@ public class Building extends Entity{
 
     @Override
     public void move() {
-
     }
 }
 
@@ -70,13 +70,19 @@ enum Block {
 
     // todo 获得对应方块的贴图
     public Image getImg() {
-        if(name =="stone"){
-            return new Image("/image/stone.png");
-        } else if (name == "wood") {
-            return new Image("/image/wood.png");
-        } else if (name == "grass") {
-            return new Image("/image/grass.png");
+        switch(id) {
+            case 'S'->{
+                return new Image("/image/stone.png");
+            }
+            case 'W'->{
+                return new Image("/image/wood.png");
+            }
+            case 'G'->{
+                return new Image("/image/grass.png");
+            }
+            default -> {
+                return null;
+            }
         }
-        return null;
     }
 }
