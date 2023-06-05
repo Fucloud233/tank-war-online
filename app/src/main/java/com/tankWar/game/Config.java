@@ -16,11 +16,11 @@ public class Config {
     public final static double bulletMaxDistance = 180;
 
     // 地图相关设定
-    public static int BlockXNumber;
-    public static int BlockYNumber;
+    // 设置地图的最大大小
+    public final static float MapMaxWidth = 960;
+    public final static float MapMaxHeight = 960;
+
     public final static float MapPaddingSize = 10;
-    public static float MapWidth = BlockXNumber * BlockSize;
-    public static float MapHeight = BlockYNumber * BlockSize;
 
     // 刷新率
     public final static long RefreshRate = 1000 / 60;

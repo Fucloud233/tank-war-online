@@ -1,29 +1,24 @@
 package com.tankWar.game.msg;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tankWar.game.entity.Tank;
-
 public class InitMsg extends Message{
-
-    Tank[] tanks = null;
+    TankInfo[] tanks = null;
+    int mapId = -1;
 
     public InitMsg() {
         super();
     }
 
-    @JsonCreator
-    public InitMsg(@JsonProperty("id") int id, @JsonProperty("tanks") Tank[] tanks) {
+    public InitMsg(int id, int mapId, TankInfo[] tanks) {
         super(id, MessageType.Init);
-
         this.tanks = tanks;
+        this.mapId = mapId;
     }
 
-    public Tank[] getTanks() {
+    public TankInfo[] getTanks() {
         return tanks;
     }
 
-    public void setTanks(Tank[] tanks) {
-        this.tanks = tanks;
+    public int getMapId() {
+        return mapId;
     }
 }

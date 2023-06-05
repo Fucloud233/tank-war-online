@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.msg.InitMsg;
-import com.tankWar.game.entity.Tank;
 import com.tankWar.game.msg.MessageType;
 import com.tankWar.game.msg.OverMsg;
+import com.tankWar.game.msg.TankInfo;
 
 import java.io.*;
 import java.net.*;
@@ -46,7 +46,7 @@ public class GameServer {
         // 初始化剩余玩家 和 积分数
         scores = new int[num];
         Arrays.fill(scores, 0);
-        restPlayer =  new Vector<Integer>(num);
+        restPlayer =  new Vector<>(num);
         for(int i=0; i<num; i++)
             restPlayer.add(i);
 
@@ -93,17 +93,17 @@ public class GameServer {
     // 发送初始化信息
     void sendInitMsg() throws IOException{
         // todo 添加地图信息
-//        msg.put("map", )
+        int mapId = 0;
 
         // todo 添加坦克信息
-        Tank[] tanks = new Tank[2];
-        tanks[0] = new Tank(100, 100, 0);
-        tanks[1] = new Tank(200, 200, 1);
+        TankInfo[] tanks = new TankInfo[2];
+        tanks[0] = new TankInfo(0, 100, 100);
+        tanks[1] = new TankInfo(1, 200, 200);
 
         // 广播发送所有坦克信息
         for (int i = 0; i < player_num; i++) {
             // 配置消息的基本信息
-            InitMsg message = new InitMsg(i, tanks);
+            InitMsg message = new InitMsg(i, mapId, tanks);
             // 转换成JSON格式并发送
             String jsonMsg = mapper.writeValueAsString(message);
             out[i].writeUTF(jsonMsg);
@@ -177,10 +177,9 @@ public class GameServer {
         public void run() {
             // 循环接收消息
             while (!isOver) {
-                String msgStr = null;
                 // 1. socket接收到JSON消息
                 try {
-                    msgStr = in.readUTF();
+                    String msgStr = in.readUTF();
 //                    System.out.println("来自客户端的消息: " + msgStr);
 
                     // 2. 进行验证

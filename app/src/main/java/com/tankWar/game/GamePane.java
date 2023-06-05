@@ -12,7 +12,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -27,10 +26,15 @@ public class GamePane extends BorderPane {
     GraphicsContext context = canvas.getGraphicsContext2D();
 
     // 游戏实体
-    Tank[] tanks;
-    Tank myTank; // 我的坦克
-    Vector<Bullet> bullets = new Vector<>(); // 子弹列表
-    List<Building> buildings = new ArrayList<>(); // 建筑方块列表
+    // 当前选择地图信息
+    GameMap map = new GameMap();
+    // 所有坦克/我的坦克
+    Tank[] tanks = new Tank[0];
+    Tank myTank;
+    // 子弹列表
+    Vector<Bullet> bullets = new Vector<>();
+    // 建筑方块列表
+    List<Building> buildings = new ArrayList<>();
 
     // 记录已经发生碰撞的方向 (防止发生重碰撞)
     Direction collideDir = Direction.INVALID;
@@ -61,16 +65,6 @@ public class GamePane extends BorderPane {
             return;
         }
 
-        // 接收初始消息
-        InitMsg initMsg = client.receiveInitMsg();
-        this.tanks = initMsg.getTanks();
-        this.myTank = this.tanks[initMsg.getId()];
-
-        // 载入地图
-//        loadMap("/map/map.txt");
-        // 载入测试地图
-        loadMap("/map/test_map.txt");
-
         // 连接成功后创建处理连接的线程
         Thread connectThread = new Thread(connectTask);
         connectThread.start();
@@ -79,8 +73,8 @@ public class GamePane extends BorderPane {
     // GamePane初始化函数
     void initPane() {
         // 设置GamePane
-        this.setWidth(Config.MapWidth);
-        this.setHeight(Config.MapHeight);
+        this.setWidth(Config.MapMaxWidth);
+        this.setHeight(Config.MapMaxHeight);
         this.setStyle("-fx-background-color: Black");
         this.setPadding(new Insets(Config.MapPaddingSize));
         this.setCenter(canvas);
@@ -88,8 +82,8 @@ public class GamePane extends BorderPane {
         // 设置Canvas
         this.canvas.requestFocus();
         this.canvas.setFocusTraversable(true);
-        canvas.setWidth(Config.MapWidth);
-        canvas.setHeight(Config.MapHeight);
+        canvas.setWidth(Config.MapMaxWidth);
+        canvas.setHeight(Config.MapMaxHeight);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
@@ -150,36 +144,21 @@ public class GamePane extends BorderPane {
     }
 
     // 加载地图函数
-    void loadMap(String MapFilePath) {
-        int row = 0;
-        int column = 0;
-        InputStream inputStream = getClass().getResourceAsStream(MapFilePath);
-        Scanner scanner = new Scanner(inputStream);
-        row = 0;
-        // 逐行读取地图文件内容
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            // 处理每行的字符
-            int i;
-            for (i = 0; i < line.length(); i++) {
-                char c = line.charAt(i);
-                // 根据字符映射到地图元素
-                buildings.add(new Building(i * Config.BlockSize + Config.BlockSize / 2, row * Config.BlockSize + Config.BlockSize / 2, c));
-            }
-            if (column < i) column = i;
-            row++;
+    void loadMap(int mapId) {
+        // 如果地图编号改变则重新加载
+        if(mapId != this.map.getId()) {
+            if(!this.map.loadMap(mapId))
+                System.out.println("地图加载失败");
         }
-        // 设置地图大小
-        Config.BlockXNumber = column;
-        Config.BlockYNumber = row;
-        Config.MapWidth = Config.BlockXNumber * Config.BlockSize;
-        Config.MapHeight = Config.BlockYNumber * Config.BlockSize;
+
+        // 设置建筑物信息
+        this.buildings = map.getBuildings();
     }
 
     // 显示游戏画面
     private void showGame() {
         // 每次显示都擦除整个界面，防止残影
-        this.context.clearRect(0, 0, Config.MapWidth, Config.MapHeight);
+        this.context.clearRect(0, 0, Config.MapMaxWidth, Config.MapMaxHeight);
 
         // 绘制坦克
         for (Tank tank: tanks)
@@ -202,7 +181,7 @@ public class GamePane extends BorderPane {
     }
 
     // 处理连接Task
-    Task<Void> connectTask = new Task<Void>() {
+    Task<Void> connectTask = new Task<>() {
         int count = 0;
 
         @Override
@@ -224,10 +203,9 @@ public class GamePane extends BorderPane {
                 switch(msg.getType()) {
                     case Move -> handleMove((MoveMsg) msg);
                     case Shoot -> handleShoot((ShootMsg) msg);
-                    case Init -> handleInit((InitMsg) msg);
+                    case Init ->  handleInit((InitMsg) msg);
                     case Over -> handleOver((OverMsg) msg);
                     default -> {
-                        continue;
                     }
                 }
             }
@@ -256,10 +234,20 @@ public class GamePane extends BorderPane {
         }
 
         private void handleInit(InitMsg msg) {
-            // 清除子弹
+            // 1. 清除子弹
             bullets.clear();
-            // 重置tank信息
-            tanks = msg.getTanks();
+
+            // 2. 加载地图
+            loadMap(msg.getMapId());
+
+            // 3. 取出坦克信息
+            TankInfo[] infos = msg.getTanks();
+            int len = infos.length;
+
+            // 重置坦克信息
+            tanks = new Tank[len];
+            for(TankInfo info:infos)
+                tanks[info.getId()] = new Tank(info);
             myTank = tanks[msg.getId()];
         }
 
@@ -278,7 +266,7 @@ public class GamePane extends BorderPane {
     };
 
     // 显示游戏界面Task
-    Task<Void> showTask = new Task<Void>() {
+    Task<Void> showTask = new Task<>() {
         @Override
         protected Void call() throws Exception {
             while (!isOver) {
@@ -293,7 +281,7 @@ public class GamePane extends BorderPane {
     };
 
     // 游戏逻辑处理Task
-    Task<Void> logicTask = new Task<Void>() {
+    Task<Void> logicTask = new Task<>() {
         @Override
         protected Void call() throws Exception {
             while (!isOver) {
@@ -386,11 +374,8 @@ public class GamePane extends BorderPane {
         // 处理坦克与子弹的碰撞
         for (Tank tank: tanks) {
             if (bullet.id != tank.getId() && bullet.isCollidingWith(tank)) {
-                System.out.println("c Tank " + tank.getId());
-                System.out.println("m Tank " + myTank.getId());
-                if(tank.getId() == myTank.getId()) {
+                if(tank.getId() == myTank.getId())
                     client.sendDeadMsg();
-                }
 
                 tank.setAlive(false);
                 return true;

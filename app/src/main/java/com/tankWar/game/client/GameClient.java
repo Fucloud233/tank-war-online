@@ -94,24 +94,23 @@ public class GameClient {
 
     // 接收消息 服务端返回的状态 (需要额外开辟一个线程)
     public Message receiveStatusMsg() {
+        // 1.读取Json数据
         String msg = receive();
-
         if(msg.isEmpty()){
             return null;
         }
 
-        // 1.读取Json数据
-        // todo 校验JSON格式
+        // 2. todo 校验JSON格式
+//        System.out.println(msg);
 
-        // 4.1 解析消息数据类型
-        MessageType type = null;
+        // 3. 解析并返回消息
         try {
             JsonNode jsonMsg = mapper.readTree(msg);
 
             // [Warn] 直接使用toString输出内容会包括双引号
 //            System.out.println("msg:" +  jsonMsg.get("type").toString());
 
-            type = MessageType.valueOf(jsonMsg.get("type").asText());
+            MessageType type = MessageType.valueOf(jsonMsg.get("type").asText());
 
             // 3.1 解析并返回消息
             switch(type) {
@@ -122,7 +121,12 @@ public class GameClient {
                     return mapper.readValue(msg, ShootMsg.class);
                 }
                 case Init->{
-                    return mapper.readValue(msg, InitMsg.class);
+                    // todo Init问题 Id 应该事先分配好
+                    // 这里和原先的receiveInitMsg合并了
+                    InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
+                    this.id = initMsg.getId();
+                    return initMsg;
+//                    return mapper.readValue(msg, InitMsg.class);
                 }
                 case Over->{
                     return mapper.readValue(msg, OverMsg.class);
@@ -132,21 +136,6 @@ public class GameClient {
                     return  null;
                 }
             }
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public InitMsg receiveInitMsg() {
-        String msg = receive();
-        if(msg.isEmpty())
-            return null;
-
-        try {
-            InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
-            this.id = initMsg.getId();
-            return initMsg;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;

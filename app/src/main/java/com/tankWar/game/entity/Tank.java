@@ -4,10 +4,8 @@ package com.tankWar.game.entity;
     Tank 坦克类
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tankWar.game.Config;
+import com.tankWar.game.msg.TankInfo;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
@@ -15,7 +13,7 @@ import java.util.HashMap;
 
 public class Tank extends Entity {
     // id 玩家编号
-    private int id = -1;
+    private int id;
     // 坦克是否可以移动
     private boolean isStop = true;
     // 记录坦克当前的子弹数量
@@ -24,10 +22,7 @@ public class Tank extends Entity {
 
     // tank构造函数(随机方向)
     // 不能直接删除
-    @JsonCreator
-    public Tank(@JsonProperty("x") double x,
-                @JsonProperty("y") double y,
-                @JsonProperty("id") int id) {
+    public Tank(int id, double x, double y) {
         super(Config.TankWidth, Config.TankHeight, x, y);
         this.id = id;
         // 随机坦克方向
@@ -44,10 +39,14 @@ public class Tank extends Entity {
     }
 
     // tank构造函数(带方向)
-    public Tank(double x, double y, Direction dir, int id) {
+    public Tank(int id, double x, double y, Direction dir) {
         super(Config.TankWidth, Config.TankHeight, x, y);
         this.id = id;
         this.setDirection(dir);
+    }
+
+    public Tank(TankInfo info) {
+        this(info.getId(), info.getX(), info.getY());
     }
 
     // 设置方向
@@ -77,26 +76,10 @@ public class Tank extends Entity {
         // 根据当前方向和速度移动
         int speed = Config.TankSpeed;
         switch (dir) {
-            case LEFT -> {
-                if (x - this.width / 2 - speed >= 0) {
-                    x = x - speed;
-                }
-            }
-            case RIGHT -> {
-                if (x + this.width / 2 + speed <= Config.MapWidth) {
-                    x = x + speed;
-                }
-            }
-            case UP -> {
-                if (y - this.height / 2 - speed >= 0) {
-                    y = y - speed;
-                }
-            }
-            case DOWN -> {
-                if (y + this.height / 2 + speed <= Config.MapHeight) {
-                    y = y + speed;
-                }
-            }
+            case LEFT -> x -= speed;
+            case RIGHT -> x += speed;
+            case UP -> y -= speed;
+            case DOWN -> y +=  speed;
             default -> System.out.println("Direction error");
         }
     }
@@ -109,7 +92,6 @@ public class Tank extends Entity {
         }
 
         // 简化创建子弹的代码
-        Bullet bullet = null;
         double x = this.x, y = this.y;
         // 枪口到子弹中心点位置
         double distance = + Config.TankHeight / 2 + Config.BulletSize / 2;
@@ -121,7 +103,7 @@ public class Tank extends Entity {
             default -> System.out.println("Direction error");
         }
 
-        bullet = new Bullet(this, this.dir, x, y);
+        Bullet bullet = new Bullet(this, this.dir, x, y);
         bulletNum -= 1;
 
         return bullet;
@@ -155,7 +137,6 @@ public class Tank extends Entity {
         return false;
     }
 
-    @JsonIgnore
     @Override
     public Image getImage() {
         return TankImg.ImageMap.get(this.dir);
@@ -165,7 +146,6 @@ public class Tank extends Entity {
         return id;
     }
 
-    @JsonIgnore
     public boolean getIsStop() {
         return isStop;
     }
@@ -178,7 +158,7 @@ public class Tank extends Entity {
 // 使用其他类来记录图像 降低数据和资源的耦合度
 class TankImg {
     // 坦克不同方向照片
-    public static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
+    public static final HashMap<Direction, Image> ImageMap = new HashMap<>();
 
     static {
         try {
