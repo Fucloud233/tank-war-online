@@ -19,16 +19,18 @@ public class GameServer {
 
     // 剩余玩家数量
     int rest_num;
-
+    // 服务端Socket
     ServerSocket serverSocket;
-
+    // 客户端Socket列表
     Socket[] sockets;
+    // 输入输出数据流
     DataOutputStream[] out;
     DataInputStream[] in;
 
     // 用于处理json绑定
     ObjectMapper mapper = new ObjectMapper();
-    
+
+    // 在游戏房间中构造，包含玩家个数
     public GameServer(int num) {
         // num为游戏中的玩家数量
         this.num = num;
@@ -50,7 +52,7 @@ public class GameServer {
             for(int i=0; i<num; i++) {
 //            System.out.println("正在等待连接");
                 sockets[i] = serverSocket.accept();
-
+                // 数据流绑定客户端Socket
                 out[i] = new DataOutputStream(sockets[i].getOutputStream());
                 in[i] = new DataInputStream(sockets[i].getInputStream());
                 System.out.println("服务端已连接" + (i+1));
@@ -62,7 +64,7 @@ public class GameServer {
         // 2.获取并广播初始化信息
         sendInitMsg();
 
-        // 3. 创建多线程连接业务
+        // 3. 创建多线程连接处理每个客户端连接
         for(int i=0; i<num; i++) {
             ReceiveThread t = new ReceiveThread(i);
             t.start();
@@ -82,7 +84,7 @@ public class GameServer {
         tanks[0] = new Tank(100, 100, 0);
         tanks[1] = new Tank(200, 200, 1);
 
-        // 广播发送所有坦克信息
+        // 广播发送所有坦克初始化信息
         try {
             for (int i = 0; i < num; i++) {
                 // 配置消息的基本信息
@@ -102,7 +104,7 @@ public class GameServer {
 
     }
 
-    // 广播状态
+    // 用于广播msg状态
     void broadcast(int id, String msg) {
         for(int i=0; i<num; i++) {
             if(i == id)
@@ -117,18 +119,20 @@ public class GameServer {
         }
     }
 
-    // 用来处理线程
+    // 用来处理接收客户端信息线程
     class ReceiveThread extends Thread{
         int id;
-        DataInputStream in;
+        // 直接使用初始化时创建的输入流即可
+//        DataInputStream in;
 
         ReceiveThread(int id) {
             this.id = id;
-            try {
-                in = new DataInputStream(sockets[id].getInputStream());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+
+//            try {
+//                in = new DataInputStream(sockets[id].getInputStream());
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
         }
 
         void handleDeadMsg() {
@@ -145,7 +149,7 @@ public class GameServer {
                 String msgStr = null;
                 // 1. socket接收到JSON消息
                 try {
-                    msgStr = in.readUTF();
+                    msgStr = in[id].readUTF();
                     System.out.println("来自客户端的消息: " + msgStr);
                 } catch(SocketException e) {
                     e.printStackTrace();
