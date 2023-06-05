@@ -29,23 +29,19 @@ public class GamePane extends BorderPane {
     // 游戏实体
     Tank[] tanks;
     Tank myTank; // 我的坦克
-    List<Bullet> bullets = new ArrayList<>(); // 子弹列表
+    Vector<Bullet> bullets = new Vector<>(); // 子弹列表
     List<Building> buildings = new ArrayList<>(); // 建筑方块列表
 
     // 记录已经发生碰撞的方向 (防止发生重碰撞)
     Direction collideDir = Direction.INVALID;
-
     // 游戏逻辑控制参数
     boolean keyJPressed = false; // 是否按下发射键
-    boolean hasFired = true; // 是否已处理开火
 
     // 构造函数
     public GamePane() {
-        System.out.println("正在连接服务端");
-
         this.initEntity();
-
         this.initPane();
+        this.initAction();
     }
 
     // 连接服务器
@@ -53,6 +49,7 @@ public class GamePane extends BorderPane {
         client = new GameClient();
 
         try {
+            System.out.println("正在连接服务端");
             client.connect();
         }
         catch (TimeoutException e) {
@@ -97,11 +94,10 @@ public class GamePane extends BorderPane {
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
         showThread.start();
+    }
 
-        // 创建处理元素移动和碰撞的线程
-        Thread logicThread = new Thread(logicTask);
-        logicThread.start();
-
+    // 初始化游戏控制
+    void initAction() {
         // 按下事件监听
         this.setOnKeyPressed(e -> {
             // 将按下的按键加入按键集合
@@ -121,7 +117,11 @@ public class GamePane extends BorderPane {
             }
             // 若为发射键，则修改状态为J键已按下未处理开火
             else if (code == KeyCode.J && !keyJPressed) {
-                hasFired = false;
+                // 如果发出的子弹数量超出上限 返回null 此时不添加进去
+                Bullet bullet = myTank.fire();
+                if(bullet != null)
+                    bullets.add(bullet);
+
                 keyJPressed = true;
             }
         });
@@ -141,6 +141,10 @@ public class GamePane extends BorderPane {
                 keyJPressed = false;
             }
         });
+
+        // 创建处理元素移动和碰撞的线程
+        Thread logicThread = new Thread(logicTask);
+        logicThread.start();
     }
 
     // 加载地图函数
@@ -176,20 +180,13 @@ public class GamePane extends BorderPane {
         this.context.clearRect(0, 0, Config.MapWidth, Config.MapHeight);
 
         // 绘制坦克
-        for (Tank tank: tanks) {
+        for (Tank tank: tanks)
             context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
-        }
 
         // 绘制子弹
-        for (int i = bullets.size() - 1; i >= 0; i--) {
-            Bullet bullet = bullets.get(i);
-            bullet.move();
+        for (Bullet bullet : bullets)
             context.drawImage(bullet.getImage(), bullet.getImageX(), bullet.getImageY());
-            // 若子弹已死亡，则移除列表
-            if (!bullet.isAlive()) {
-                bullets.remove(i);
-            }
-        }
+
         // 绘制建筑方块
         for (int i = buildings.size() - 1; i >= 0; i--) {
             Building building = buildings.get(i);
@@ -270,13 +267,6 @@ public class GamePane extends BorderPane {
                 // 延时
                 Thread.sleep(1000 / 60);
 
-                // 处理本机坦克开火
-                if (!hasFired) {
-                    bullets.add(myTank.fire());
-//                    bullets.add(testTank.fire());
-                    hasFired = true;
-                }
-
                 // 处理移动按键输入
                 for(Tank tank: tanks) {
                     // 如果不再移动 则不做处理
@@ -299,6 +289,17 @@ public class GamePane extends BorderPane {
                     else
                         // 不再碰撞时则不碰撞
                         collideDir = Direction.INVALID;
+                }
+
+                for (int i=0; i<bullets.size(); i++) {
+                    Bullet bullet = bullets.get(i);
+                    // 若子弹已死亡，则移除列表
+                    if (!bullet.isAlive()) {
+                        bullets.remove(i);
+                    }
+
+                    bullet.move();
+                    processBulletCollide(bullet);
                 }
             }
         }
@@ -333,28 +334,22 @@ public class GamePane extends BorderPane {
         return isCollide;
     }
 
-    void processCollide() {
+    void processBulletCollide(Bullet bullet) {
         // 处理子弹与建筑方块的碰撞
-        for (int i = bullets.size() - 1; i >= 0; i--) {
-            Bullet bullet = bullets.get(i);
-            for (int j = buildings.size() - 1; j >= 0; j--) {
-                Building building = buildings.get(j);
-                // 若方块可穿过以及与子弹碰撞
-                if (!building.canGoThough() && bullet.isCollidingWith(building)) {
-                    bullet.setAlive(false); // 子弹设置死亡
-                    // 若方块是可击碎的，则设置方块死亡
-                    if (building.isFragile()) {
-                        building.setAlive(false);
-                    }
+        for (Building building: buildings) {
+            // 若方块可穿过以及与子弹碰撞
+            if (!building.canGoThough() && bullet.isCollidingWith(building)) {
+                bullet.setAlive(false); // 子弹设置死亡
+                // 若方块是可击碎的，则设置方块死亡
+                if (building.isFragile()) {
+                    building.setAlive(false);
                 }
-
-                // 处理坦克与子弹的碰撞
-//                for (int j = bullets.size() - 1; j >= 0; j--) {
-//                    Bullet bullet = bullets.get(j);
-//                    if (bullet.id != tank.getID() && tank.isCollidingWith(bullet)) {
-//                        bullet.setAlive(false);
-//                    }
-//                }
+            }
+        }
+        // 处理坦克与子弹的碰撞
+        for (Tank tank: tanks) {
+            if (bullet.id != tank.getId() && bullet.isCollidingWith(tank)) {
+                bullet.setAlive(false);
             }
         }
     }

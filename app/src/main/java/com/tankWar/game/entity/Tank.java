@@ -18,7 +18,7 @@ public class Tank extends Entity {
     // 坦克是否可以移动
     private boolean isStop = true;
     // 记录坦克当前的子弹数量
-    private final int bulletNum = Config.TankMaxBulletNum;
+    private int bulletNum = Config.TankMaxBulletNum;
     // 坦克速度
     private final int speed = Config.TankSpeed;
 
@@ -109,19 +109,34 @@ public class Tank extends Entity {
 
     // 发射子弹
     public Bullet fire() {
+        // 验证子弹是否发射
+        if(this.bulletNum <= 0) {
+            return null;
+        }
+
+        // 简化创建子弹的代码
         Bullet bullet = null;
+        double x = this.x, y = this.y;
+        // 枪口到子弹中心点位置
+        double distance = + Config.TankHeight / 2 + Config.BulletSize / 2;
         switch (this.dir) {
-            case UP ->
-                    bullet = new Bullet(this, this.dir, this.x, this.y - Config.TankHeight / 2 - Config.BulletSize / 2);
-            case DOWN ->
-                    bullet = new Bullet(this, this.dir, this.x, this.y + Config.TankHeight / 2 + Config.BulletSize / 2);
-            case LEFT ->
-                    bullet = new Bullet(this, this.dir, this.x - Config.TankHeight / 2 - Config.BulletSize / 2, this.y);
-            case RIGHT ->
-                    bullet = new Bullet(this, this.dir, this.x + Config.TankHeight / 2 + Config.BulletSize / 2, this.y);
+            case UP ->  y = this.y - distance;
+            case DOWN -> y = this.y + distance;
+            case LEFT -> x = this.x - distance;
+            case RIGHT -> x = this.x + distance;
             default -> System.out.println("Direction error");
         }
+
+        bullet = new Bullet(this, this.dir, x, y);
+        bulletNum -= 1;
+
         return bullet;
+    }
+
+    // 恢复最大子弹数量
+    public void recoveryBullet() {
+        if(bulletNum < Config.TankMaxBulletNum)
+            this.bulletNum ++;
     }
 
     // 碰撞检测

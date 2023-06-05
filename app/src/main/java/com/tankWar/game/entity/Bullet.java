@@ -8,37 +8,28 @@ package com.tankWar.game.entity;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
+import java.util.HashMap;
+
 public class Bullet extends Entity {
     // 坦克id
     public int id;
-    double maxDistance;
-    double startX,startY;
-
+    double startX, startY;
+    double maxDistance = Config.bulletMaxDistance;
     private final int speed = Config.BulletSpeed;
 
-    // 坦克不同方向照片
-    private final Image bulletImageUp = new Image("/image/bulletUp.png");
-    private final Image bulletImageDown = new Image("/image/bulletDown.png");
-    private final Image bulletImageLeft = new Image("/image/bulletLeft.png");
-    private final Image bulletImageRight = new Image("/image/bulletRight.png");
+    // 记录所属父类坦克
+    private final Tank parentTank;
 
     // 子弹构造函数
     Bullet(Tank tank, Direction dir, double x, double y) {
         super(Config.BulletSize, Config.BulletSize);
+        // 设置父类坦克
+        this.parentTank = tank;
+
         this.id = tank.getId();
         this.dir = dir;
-        this.x = x;
-        this.y = y;
-        this.startX = x;
-        this.startY = y;
-        this.maxDistance = Config.bulletMaxDistance;
-        switch (dir) {
-            case UP -> setImage(bulletImageUp);
-            case DOWN -> setImage(bulletImageDown);
-            case RIGHT -> setImage(bulletImageRight);
-            case LEFT -> setImage(bulletImageLeft);
-            default -> System.out.println("Direction error");
-        }
+        this.startX = this.x = x;
+        this.startY = this.y = y;
     }
 
     // 子弹移动
@@ -56,7 +47,7 @@ public class Bullet extends Entity {
         // 若超越地图边界或超过最大距离，子弹死亡
         double delta = Math.sqrt((x-startX)*(x-startX)+(y-startY)*(y-startY));
         if (this.x + this.width / 2 <= 0 || this.x - this.width / 2 >= Config.MapWidth || this.y + this.height / 2 <= 0 || this.y - this.height / 2 >= Config.MapHeight || delta >= maxDistance)
-            this.alive = false;
+            this.setAlive(false);
     }
 
     // 检测子弹是否碰撞地图方块
@@ -67,5 +58,36 @@ public class Bullet extends Entity {
             return boundBox.intersects(entity.x - entity.width / 2, entity.y - entity.height / 2, entity.width, entity.height);
         }
         return false;
+    }
+
+    // 子弹死亡后恢复子弹数量
+    @Override
+    public void setAlive(boolean alive) {
+        super.setAlive(alive);
+        if(!alive)
+            this.parentTank.recoveryBullet();
+    }
+
+    @Override
+    public Image getImage() {
+       return BulletImg.ImageMap.get(this.dir);
+    }
+}
+
+// 使用其他类来记录图像 降低数据和资源的耦合度
+class BulletImg {
+    // 子弹不同方向照片
+    public static final HashMap<Direction, Image> ImageMap = new HashMap<Direction, Image>();
+
+    static {
+        try {
+            ImageMap.put(Direction.UP, new Image("/image/bulletUp.png"));
+            ImageMap.put(Direction.DOWN, new Image("/image/bulletDown.png"));
+            ImageMap.put(Direction.LEFT, new Image("/image/bulletLeft.png"));
+            ImageMap.put(Direction.RIGHT, new Image("/image/bulletRight.png"));
+        }
+        catch(Exception e) {
+//            e.printStackTrace();
+        }
     }
 }
