@@ -124,9 +124,13 @@ public class GameClient {
                 case Init->{
                     return mapper.readValue(msg, InitMsg.class);
                 }
+                case Over->{
+                    return mapper.readValue(msg, OverMsg.class);
+                }
                 default -> {
                     System.out.println("接收消息异常!");
-                    return  null;}
+                    return  null;
+                }
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -139,7 +143,6 @@ public class GameClient {
         if(msg.isEmpty())
             return null;
 
-//        JSONObject jsonMsg = JSONObject.parseObject(msg);
         try {
             InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
             this.id = initMsg.getId();
@@ -148,12 +151,6 @@ public class GameClient {
             e.printStackTrace();
             return null;
         }
-    }
-
-    // 返回游戏终止消息
-    public OverMsg receiveOverMsg() {
-
-        return null;
     }
 }
 

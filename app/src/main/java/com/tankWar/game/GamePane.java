@@ -1,11 +1,8 @@
 package com.tankWar.game;
 
 import com.tankWar.game.client.GameClient;
-import com.tankWar.game.msg.InitMsg;
-import com.tankWar.game.msg.Message;
-import com.tankWar.game.msg.MoveMsg;
+import com.tankWar.game.msg.*;
 import com.tankWar.game.entity.*;
-import com.tankWar.game.msg.ShootMsg;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -22,6 +19,8 @@ import java.util.concurrent.TimeoutException;
 public class GamePane extends BorderPane {
     // 与客户端交互
     GameClient client;
+    // 记录游戏是否结束
+    boolean isOver = false;
 
     // 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
@@ -204,6 +203,37 @@ public class GamePane extends BorderPane {
 
     // 处理连接Task
     Task<Void> connectTask = new Task<Void>() {
+        int count = 0;
+
+        @Override
+        protected Void call() throws InterruptedException {
+            while (!isOver) {
+                // 延时
+                Thread.sleep(Config.RefreshRate);
+
+                // 尝试接收消息
+                Message msg = client.receiveStatusMsg();
+
+                // 如果没有接收到消息则跳过
+                if(msg == null) {
+                    count++;
+//                    System.out.println("为接收到消息 " + count);
+                    continue;
+                }
+
+                switch(msg.getType()) {
+                    case Move -> handleMove((MoveMsg) msg);
+                    case Shoot -> handleShoot((ShootMsg) msg);
+                    case Init -> handleInit((InitMsg) msg);
+                    case Over -> handleOver((OverMsg) msg);
+                    default -> {
+                        continue;
+                    }
+                }
+            }
+            return null;
+        }
+
         // 处理移动请求
         private void handleMove(MoveMsg msg) {
             int id = msg.getId();
@@ -233,38 +263,17 @@ public class GamePane extends BorderPane {
             myTank = tanks[msg.getId()];
         }
 
-        int count = 0;
+        private void handleOver(OverMsg msg) {
+            // 显示结束页面
+            isOver = true;
 
-        @Override
-        protected Void call()  {
-            while (true) {
-                // 延时
-                try {
-                    Thread.sleep(1000 / 60);
-                }
-                catch(InterruptedException e) {
-                    e.printStackTrace();
-                }
+            // todo 显示结算页面
+            Platform.runLater(()->{
+                OverDialog dialog = new OverDialog(msg.getScores());
+                boolean isRetRoom = dialog.display();
 
-                // 尝试接收消息
-                Message msg = client.receiveStatusMsg();
-
-                // 如果没有接收到消息则跳过
-                if(msg == null) {
-                    count++;
-//                    System.out.println("为接收到消息 " + count);
-                    continue;
-                }
-
-                switch(msg.getType()) {
-                    case Move -> handleMove((MoveMsg) msg);
-                    case Shoot -> handleShoot((ShootMsg) msg);
-                    case Init -> handleInit((InitMsg) msg);
-                    default -> {
-                        continue;
-                    }
-                }
-            }
+                System.out.println(isRetRoom?"返回房间":"返回大厅");
+            });
         }
     };
 
@@ -272,12 +281,14 @@ public class GamePane extends BorderPane {
     Task<Void> showTask = new Task<Void>() {
         @Override
         protected Void call() throws Exception {
-            while (true) {
+            while (!isOver) {
                 // 延时
-                Thread.sleep(1000 / 60);
+                Thread.sleep(Config.RefreshRate);
                 // 使用runLater来多线程处理JavaFX组件
                 Platform.runLater(() -> showGame());
             }
+
+            return null;
         }
     };
 
@@ -285,9 +296,9 @@ public class GamePane extends BorderPane {
     Task<Void> logicTask = new Task<Void>() {
         @Override
         protected Void call() throws Exception {
-            while (true) {
+            while (!isOver) {
                 // 延时
-                Thread.sleep(1000 / 60);
+                Thread.sleep(Config.RefreshRate);
 
                 // 处理移动按键输入
                 for(Tank tank: tanks) {
@@ -326,6 +337,8 @@ public class GamePane extends BorderPane {
                         bullet.setAlive(false);
                 }
             }
+
+            return null;
         }
     };
 

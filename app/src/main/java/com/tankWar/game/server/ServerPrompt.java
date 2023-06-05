@@ -4,6 +4,8 @@ public enum ServerPrompt {
 
     // Prompt
     RunSuccess("启动成功", 0),
+    GameOver("游戏结束", 0),
+    BroadcastSuccess("广播成功", 0),
 
     AllSuccess("全部成功", 0),
     AllConnected("客户端全部连接成功", 0),
@@ -16,9 +18,9 @@ public enum ServerPrompt {
 
 
 
-    String text;
+    final String text;
     // 0 消息 1 警告 2 错误
-    int type;
+    final int type;
 
     ServerPrompt(String text, int type) {
         this.text = text;
