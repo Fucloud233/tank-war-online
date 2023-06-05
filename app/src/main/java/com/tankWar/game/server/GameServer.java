@@ -24,19 +24,20 @@ public class GameServer {
     // 记录剩余玩家
     Vector<Integer> restPlayer;
     int[] scores;
-
     // 用于终结游戏
     boolean isOver = false;
 
+    // 服务端Socket
     ServerSocket serverSocket;
-
+    // 客户端Socket列表
     Socket[] sockets;
+    // 输入输出数据流
     DataOutputStream[] out;
-    DataInputStream[] in;
 
     // 用于处理json绑定
     ObjectMapper mapper = new ObjectMapper();
-    
+
+    // 在游戏房间中构造，包含玩家个数
     public GameServer(int num) {
         // num为游戏中的玩家数量
         this.player_num = num;
@@ -52,7 +53,6 @@ public class GameServer {
 
         // 初始化列表
         sockets = new Socket[num];
-        in = new DataInputStream[num];
         out = new DataOutputStream[num];
     }
 
@@ -67,9 +67,8 @@ public class GameServer {
             for(int i = 0; i< player_num; i++) {
 //            System.out.println("正在等待连接");
                 sockets[i] = serverSocket.accept();
-
+                // 数据流绑定客户端Socket
                 out[i] = new DataOutputStream(sockets[i].getOutputStream());
-                in[i] = new DataInputStream(sockets[i].getInputStream());
                 System.out.println("服务端已连接" + (i+1));
             }
         } catch(Exception e) {
@@ -83,7 +82,7 @@ public class GameServer {
             e.printStackTrace();
         }
 
-        // 3. 创建多线程连接业务
+        // 3. 创建多线程连接业务处理每个客户端连接
         for(int i = 0; i< player_num; i++) {
             ReceiveThread t = new ReceiveThread(i);
             t.start();
@@ -100,7 +99,7 @@ public class GameServer {
         tanks[0] = new TankInfo(0, 100, 100);
         tanks[1] = new TankInfo(1, 200, 200);
 
-        // 广播发送所有坦克信息
+        // 广播发送所有坦克初始化信息
         for (int i = 0; i < player_num; i++) {
             // 配置消息的基本信息
             InitMsg message = new InitMsg(i, mapId, tanks);
@@ -129,7 +128,7 @@ public class GameServer {
         ServerPrompt.BroadcastSuccess.print();
     }
 
-    // 用来处理线程
+    // 用来处理接收客户端信息线程
     class ReceiveThread extends Thread{
         int id;
         DataInputStream in;
