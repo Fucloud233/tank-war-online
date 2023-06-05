@@ -18,7 +18,16 @@ public class Bullet extends Entity {
     private final int speed = Config.BulletSpeed;
 
     // 记录所属父类坦克
-    private final Tank parentTank;
+    private Tank parentTank = null;
+
+    // 子弹构造函数
+    public Bullet(int id, Direction dir, double x, double y) {
+        super(Config.BulletSize, Config.BulletSize);
+        this.id = id;
+        this.dir = dir;
+        this.startX = this.x = x;
+        this.startY = this.y = y;
+    }
 
     // 子弹构造函数
     Bullet(Tank tank, Direction dir, double x, double y) {
@@ -65,7 +74,7 @@ public class Bullet extends Entity {
     @Override
     public void setAlive(boolean alive) {
         // 防止重复设置
-        if(this.alive || !alive)
+        if(parentTank!= null && (this.alive || !alive))
             this.parentTank.recoveryBullet();
         super.setAlive(alive);
     }

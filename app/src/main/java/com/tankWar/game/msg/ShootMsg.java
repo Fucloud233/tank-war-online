@@ -3,10 +3,14 @@ package com.tankWar.game.msg;
 import com.tankWar.game.entity.Direction;
 
 public class ShootMsg extends Message {
-    Direction dir;
-    int x, y;
+    Direction dir = Direction.INVALID;
+    double x = 0, y = 0;
 
-    public ShootMsg(int id, Direction dir, int x, int y) {
+    public ShootMsg() {
+        super(-1, MessageType.Shoot);
+    }
+
+    public ShootMsg(int id, Direction dir, double x, double y) {
         super(id, MessageType.Shoot);
         this.dir = dir;
         this.x = x;
@@ -21,7 +25,7 @@ public class ShootMsg extends Message {
         this.dir = dir;
     }
 
-    public int getX() {
+    public double getX() {
         return x;
     }
 
@@ -29,7 +33,7 @@ public class ShootMsg extends Message {
         this.x = x;
     }
 
-    public int getY() {
+    public double getY() {
         return y;
     }
 

@@ -1,8 +1,11 @@
 package com.tankWar.game.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.entity.Tank;
+import com.tankWar.game.msg.MessageType;
 
 import java.io.*;
 import java.net.*;
@@ -13,6 +16,9 @@ import java.net.*;
 public class GameServer {
     // 记录玩家数量
     int num;
+
+    // 剩余玩家数量
+    int rest_num;
 
     ServerSocket serverSocket;
 
@@ -65,6 +71,8 @@ public class GameServer {
 
     // 发送初始化信息
     void sendInitMsg(){
+        // 重置剩余玩家数量
+        this.rest_num = num;
 
         // todo 添加地图信息
 //        msg.put("map", )
@@ -123,15 +131,22 @@ public class GameServer {
             }
         }
 
+        void handleDeadMsg() {
+            rest_num--;
+            // 当只剩下一位玩家则重置游戏
+            if(rest_num == 1)
+                sendInitMsg();
+        }
+
         @Override
         public void run() {
             // 循环接收消息
             while (true) {
-                String msg = null;
+                String msgStr = null;
                 // 1. socket接收到JSON消息
                 try {
-                    msg = in.readUTF();
-                    System.out.println("来自客户端的消息: " + msg);
+                    msgStr = in.readUTF();
+                    System.out.println("来自客户端的消息: " + msgStr);
                 } catch(SocketException e) {
                     e.printStackTrace();
                     break;
@@ -140,9 +155,22 @@ public class GameServer {
                 }
 
                 // 2. 进行验证
+                MessageType type = null;
+                try {
+                    JsonNode json = mapper.readTree(msgStr);
+                    type = MessageType.valueOf(json.get("type").asText());
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+
+                // 如果是死亡消息 则需要单独处理
+                if(type == MessageType.Dead) {
+                    this.handleDeadMsg();
+                    continue;
+                }
 
                 // 3. socket广播消息
-                broadcast(id, msg);
+                broadcast(id, msgStr);
             }
         }
     }

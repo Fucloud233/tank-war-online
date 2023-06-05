@@ -5,6 +5,7 @@ import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.msg.Message;
 import com.tankWar.game.msg.MoveMsg;
 import com.tankWar.game.entity.*;
+import com.tankWar.game.msg.ShootMsg;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -119,8 +120,10 @@ public class GamePane extends BorderPane {
             else if (code == KeyCode.J && !keyJPressed) {
                 // 如果发出的子弹数量超出上限 返回null 此时不添加进去
                 Bullet bullet = myTank.fire();
-                if(bullet != null)
+                if(bullet != null) {
                     bullets.add(bullet);
+                    client.sendShootMsg(bullet.getDir(), bullet.getX(), bullet.getY());
+                }
 
                 keyJPressed = true;
             }
@@ -181,7 +184,8 @@ public class GamePane extends BorderPane {
 
         // 绘制坦克
         for (Tank tank: tanks)
-            context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
+            if(tank.isAlive())
+                context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
 
         // 绘制子弹
         for (Bullet bullet : bullets)
@@ -200,7 +204,7 @@ public class GamePane extends BorderPane {
 
     // 处理连接Task
     Task<Void> connectTask = new Task<Void>() {
-        // todo 处理移动请求
+        // 处理移动请求
         private void handleMove(MoveMsg msg) {
             int id = msg.getId();
             Direction dir = msg.getDir();
@@ -211,6 +215,22 @@ public class GamePane extends BorderPane {
             } else {
                 tanks[id].setIsStop(true);
             }
+        }
+
+        private void handleShoot(ShootMsg msg) {
+            int id = msg.getId();
+            Direction dir = msg.getDir();
+            double x = msg.getX(), y = msg.getY();
+
+            bullets.add(new Bullet(id, dir, x, y));
+        }
+
+        private void handleInit(InitMsg msg) {
+            // 清除子弹
+            bullets.clear();
+            // 重置tank信息
+            tanks = msg.getTanks();
+            myTank = tanks[msg.getId()];
         }
 
         int count = 0;
@@ -238,6 +258,8 @@ public class GamePane extends BorderPane {
 
                 switch(msg.getType()) {
                     case Move -> handleMove((MoveMsg) msg);
+                    case Shoot -> handleShoot((ShootMsg) msg);
+                    case Init -> handleInit((InitMsg) msg);
                     default -> {
                         continue;
                     }
@@ -291,7 +313,8 @@ public class GamePane extends BorderPane {
                         collideDir = Direction.INVALID;
                 }
 
-                for (int i=0; i<bullets.size(); i++) {
+                // 处理子弹发射
+                for (int i=bullets.size()-1; i>=0; i--) {
                     Bullet bullet = bullets.get(i);
                     // 若子弹已死亡，则移除列表
                     if (!bullet.isAlive()) {
@@ -348,9 +371,18 @@ public class GamePane extends BorderPane {
             }
         }
         // 处理坦克与子弹的碰撞
-        for (Tank tank: tanks)
-            if (bullet.id != tank.getId() && bullet.isCollidingWith(tank))
+        for (Tank tank: tanks) {
+            if (bullet.id != tank.getId() && bullet.isCollidingWith(tank)) {
+                System.out.println("c Tank " + tank.getId());
+                System.out.println("m Tank " + myTank.getId());
+                if(tank.getId() == myTank.getId()) {
+                    client.sendDeadMsg();
+                }
+
+                tank.setAlive(false);
                 return true;
+            }
+        }
 
         return false;
     }

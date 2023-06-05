@@ -1,7 +1,11 @@
 package com.tankWar.game.msg;
 
 public class DeadMsg extends Message{
-    DeadMsg() {
+    public DeadMsg() {
         super(-1, MessageType.Dead);
+    }
+
+    public DeadMsg(int id) {
+        super(id, MessageType.Dead);
     }
 }

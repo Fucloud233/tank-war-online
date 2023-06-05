@@ -54,7 +54,6 @@ public class GameClient {
         try {
             return in.readUTF();
         } catch( IOException e) {
-//            e.printStackTrace();
 //            System.out.printf("[Error] 客户端%d接收失败!\n", id);
             return "";
         }
@@ -72,7 +71,7 @@ public class GameClient {
     }
 
     // 发送发射消息
-    public void sendShootMsg(Direction dir, int x, int y) {
+    public void sendShootMsg(Direction dir, double x, double y) {
         ShootMsg shootMsg = new ShootMsg(id, dir, x, y);
         try {
             String msg  = mapper.writeValueAsString(shootMsg);
@@ -84,7 +83,13 @@ public class GameClient {
 
     // 发送自己死亡的消息
     public void sendDeadMsg() {
-
+        DeadMsg deadMsg = new DeadMsg(this.id);
+        try {
+            String msg  = mapper.writeValueAsString(deadMsg);
+            this.send(msg);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     // 接收消息 服务端返回的状态 (需要额外开辟一个线程)
@@ -108,17 +113,20 @@ public class GameClient {
 
             type = MessageType.valueOf(jsonMsg.get("type").asText());
 
-            // 3.1 解析并返回移动消息
-            if (type == MessageType.Move) {
-                return mapper.readValue(msg, MoveMsg.class);
-            }
-            // 3.2 解析返回发射消息
-            else if (type == MessageType.Shoot) {
-                return mapper.readValue(msg, ShootMsg.class);
-            }
-            else {
-                System.out.println("接收消息异常!");
-                return  null;
+            // 3.1 解析并返回消息
+            switch(type) {
+                case Move -> {
+                    return mapper.readValue(msg, MoveMsg.class);
+                }
+                case Shoot-> {
+                    return mapper.readValue(msg, ShootMsg.class);
+                }
+                case Init->{
+                    return mapper.readValue(msg, InitMsg.class);
+                }
+                default -> {
+                    System.out.println("接收消息异常!");
+                    return  null;}
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
