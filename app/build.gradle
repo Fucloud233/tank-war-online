@@ -29,6 +29,14 @@ dependencies {
 
     // 导入mysql
     runtimeOnly 'mysql:mysql-connector-java:8.0.32'
+
+    // 使用jackson来解析和绑定JSON
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.15.2'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.15.2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -45,7 +53,6 @@ application {
 //    mainClass = 'com.tankWar.game.Main'\
 }
 
-
 // 导入javafx
 javafx {
     version = "20"
@@ -53,4 +60,12 @@ javafx {
 }
 tasks.withType(JavaCompile){
     options.encoding="UTF-8"
+}
+
+// 设置尝试将多个文件复制到同一目的地时使用的策略
+DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
+
+// 启用并行测试
+test {
+    maxParallelForks = 4
 }
