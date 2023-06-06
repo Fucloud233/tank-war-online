@@ -1,4 +1,4 @@
-package com.tankWar.game.entity;
+package com.tankWar.game;
 
 public class Config {
     // 建筑方块相关配置
@@ -8,6 +8,7 @@ public class Config {
     public final static float TankWidth = 60;
     public final static float TankHeight = 48;
     public final static int TankSpeed = 3;
+    public final static int TankMaxBulletNum = 1;
 
     // 子弹相关配置
     public final static float BulletSize = 16;
@@ -15,9 +16,13 @@ public class Config {
     public final static double bulletMaxDistance = 180;
 
     // 地图相关设定
-    public static int BlockXNumber;
-    public static int BlockYNumber;
+    // 设置地图的最大大小
+    public final static float MapMaxWidth = 960;
+    // 暂时设置为480
+    public final static float MapMaxHeight = 480;
+
     public final static float MapPaddingSize = 10;
-    public static float MapWidth = BlockXNumber * BlockSize;
-    public static float MapHeight = BlockYNumber * BlockSize;
+
+    // 刷新率
+    public final static long RefreshRate = 1000 / 60;
 }

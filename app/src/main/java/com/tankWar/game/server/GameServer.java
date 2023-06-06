@@ -1,35 +1,58 @@
 package com.tankWar.game.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tankWar.game.client.msg.InitMessage;
-import com.tankWar.game.entity.Tank;
+import com.tankWar.game.msg.InitMsg;
+import com.tankWar.game.msg.MessageType;
+import com.tankWar.game.msg.OverMsg;
+import com.tankWar.game.msg.TankInfo;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
+import java.util.Vector;
 
 // v1 服务端只提供消息的转发，不负责统一的状态管理
 // v2 服务端能够记录状态，并且定时发送状态同步消息
 
 public class GameServer {
     // 记录玩家数量
-    int num;
+    int player_num;
+    // 记录游戏
+    int game_num;
+    // 记录剩余玩家
+    Vector<Integer> restPlayer;
+    int[] scores;
+    // 用于终结游戏
+    boolean isOver = false;
 
+    // 服务端Socket
     ServerSocket serverSocket;
-
+    // 客户端Socket列表
     Socket[] sockets;
+    // 输入输出数据流
     DataOutputStream[] out;
-    DataInputStream[] in;
 
     // 用于处理json绑定
     ObjectMapper mapper = new ObjectMapper();
-    
+
+    // 在游戏房间中构造，包含玩家个数
     public GameServer(int num) {
         // num为游戏中的玩家数量
-        this.num = num;
+        this.player_num = num;
+        // 初始化游戏局数
+        this.game_num = 1;
+
+        // 初始化剩余玩家 和 积分数
+        scores = new int[num];
+        Arrays.fill(scores, 0);
+        restPlayer =  new Vector<>(num);
+        for(int i=0; i<num; i++)
+            restPlayer.add(i);
 
         // 初始化列表
         sockets = new Socket[num];
-        in = new DataInputStream[num];
         out = new DataOutputStream[num];
     }
 
@@ -38,15 +61,14 @@ public class GameServer {
         // 1.建立TCP连接
         try {
             serverSocket = new ServerSocket(Config.port);
-
             ServerPrompt.RunSuccess.print();
 
-            for(int i=0; i<num; i++) {
+            // 建立TCP连接
+            for(int i = 0; i< player_num; i++) {
 //            System.out.println("正在等待连接");
                 sockets[i] = serverSocket.accept();
-
+                // 数据流绑定客户端Socket
                 out[i] = new DataOutputStream(sockets[i].getOutputStream());
-                in[i] = new DataInputStream(sockets[i].getInputStream());
                 System.out.println("服务端已连接" + (i+1));
             }
         } catch(Exception e) {
@@ -54,58 +76,59 @@ public class GameServer {
         }
 
         // 2.获取并广播初始化信息
-        initInfo();
+        try {
+            this.sendInitMsg();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // 3. 创建多线程连接业务
-        for(int i=0; i<num; i++) {
+        // 3. 创建多线程连接业务处理每个客户端连接
+        for(int i = 0; i< player_num; i++) {
             ReceiveThread t = new ReceiveThread(i);
             t.start();
         }
     }
 
     // 发送初始化信息
-    void initInfo(){
-
+    void sendInitMsg() throws IOException{
         // todo 添加地图信息
-//        msg.put("map", )
+        int mapId = 0;
 
         // todo 添加坦克信息
-        Tank[] tanks = new Tank[2];
-        tanks[0] = new Tank(100, 100, 0);
-        tanks[1] = new Tank(200, 200, 1);
+        TankInfo[] tanks = new TankInfo[2];
+        tanks[0] = new TankInfo(0, 100, 100);
+        tanks[1] = new TankInfo(1, 200, 200);
 
-        // 广播发送所有坦克信息
-        try {
-            for (int i = 0; i < num; i++) {
-                // 配置消息的基本信息
-                InitMessage message = new InitMessage(i, tanks);
-                // 转换成JSON格式并发送
-                String jsonMsg = mapper.writeValueAsString(message);
-                out[i].writeUTF(jsonMsg);
-            }
-            ServerPrompt.AllSend.print();
-        } catch(IOException e) {
-            ServerPrompt.SendFail.print();
-            e.printStackTrace();
+        // 广播发送所有坦克初始化信息
+        for (int i = 0; i < player_num; i++) {
+            // 配置消息的基本信息
+            InitMsg message = new InitMsg(i, mapId, tanks);
+            // 转换成JSON格式并发送
+            String jsonMsg = mapper.writeValueAsString(message);
+            out[i].writeUTF(jsonMsg);
         }
+        ServerPrompt.AllSend.print();
+    }
+
+    // 发送结束消息
+    void sendOverMsg() throws IOException {
+        OverMsg msg = new OverMsg(scores);
+        String jsonMsg = mapper.writeValueAsString(msg);
+        broadcast(-1, jsonMsg);
     }
 
     // 广播状态
-    void broadcast(int id, String msg) {
-        for(int i=0; i<num; i++) {
+    void broadcast(int id, String msg) throws IOException {
+        for(int i = 0; i< player_num; i++) {
             if(i == id)
                 continue;
-
-            try {
-//                System.out.println(msg);
-                out[i].writeUTF(msg);
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
+            out[i].writeUTF(msg);
         }
+
+        ServerPrompt.BroadcastSuccess.print();
     }
 
-    // 用来处理线程
+    // 用来处理接收客户端信息线程
     class ReceiveThread extends Thread{
         int id;
         DataInputStream in;
@@ -119,34 +142,70 @@ public class GameServer {
             }
         }
 
+        void handleDeadMsg() throws IOException {
+            // 1.记录死亡信息
+            restPlayer.removeElement(id);
+            if(restPlayer.size()!=1)
+                return;
+
+            // 2. 当只剩下一位玩家则重置游戏
+            int winnerId = restPlayer.get(0);
+
+            // 重置死亡信息
+            restPlayer.clear();
+            for(int i=0; i<player_num; i++)
+                restPlayer.add(i);
+
+            // 3. 加分
+            scores[winnerId]++ ;
+
+            // 4. 判断是否是最后场游戏
+            game_num--;
+            if(game_num != 0) {
+                sendInitMsg();
+                return;
+            }
+
+            // 5. 结束游戏
+            isOver = true;
+            sendOverMsg();
+            ServerPrompt.GameOver.print();
+        }
+
         @Override
         public void run() {
             // 循环接收消息
-            boolean flag = true;
-            while(flag)
-                flag = handle();
-        }
+            while (!isOver) {
+                // 1. socket接收到JSON消息
+                try {
+                    String msgStr = in.readUTF();
+//                    System.out.println("来自客户端的消息: " + msgStr);
 
-        // 接收消息
-        public boolean handle()  {
-            String msg = null;
-            // 1. socket接收到JSON消息
-            try {
-                msg = in.readUTF();
-                System.out.println("来自客户端的消息: " + msg);
-            } catch(SocketException e) {
-                e.printStackTrace();
-                return false;
-            } catch(IOException e) {
-                return true;
+                    // 2. 进行验证
+                    MessageType type = null;
+                    try {
+                        JsonNode json = mapper.readTree(msgStr);
+                        type = MessageType.valueOf(json.get("type").asText());
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+
+                    // 如果是死亡消息 则需要单独处理
+                    if(type == MessageType.Dead) {
+                        this.handleDeadMsg();
+                        continue;
+                    }
+
+                    // 3. socket广播消息
+                    broadcast(id, msgStr);
+                } catch(SocketException e) {
+                    // todo 处理断连情况
+                    e.printStackTrace();
+                    break;
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
             }
-
-            // 2. 进行验证
-
-            // 3. socket广播消息
-            broadcast(id, msg);
-
-            return true;
         }
     }
 }

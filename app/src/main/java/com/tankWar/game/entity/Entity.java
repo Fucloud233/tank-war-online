@@ -7,19 +7,19 @@ public abstract class Entity {
     protected double width, height;
     protected double x, y;
     protected Image image;
-    protected boolean alive;
+    protected boolean alive = true;
     protected Direction dir = Direction.CENTER;
 
     // 构造函数
     Entity(double width, double height) {
         this(width, height, 0, 0);
     }
+
     Entity(double width, double height, double x, double y) {
         this.width = width;
         this.height = height;
         this.x = x;
         this.y = y;
-        this.alive=true;
     }
 
     // 用于处理实体之间的碰撞
@@ -89,4 +89,3 @@ public abstract class Entity {
     }
 
 }
-
