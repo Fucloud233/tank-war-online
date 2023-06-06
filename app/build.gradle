@@ -26,6 +26,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
+
+    // 导入mysql
+    runtimeOnly 'mysql:mysql-connector-java:8.0.32'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -37,7 +40,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.tankWar.lobby.Client'
+    mainClass = 'com.tankWar.lobby.LoginWindow'
 
 //    mainClass = 'com.tankWar.game.Main'\
 }
