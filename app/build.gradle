@@ -27,13 +27,8 @@ dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
 
-    // 使用jackson来解析和绑定JSON
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.2'
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.15.2'
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.15.2'
+    // 导入mysql
+    runtimeOnly 'mysql:mysql-connector-java:8.0.32'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -45,11 +40,9 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.tankWar.lobby.Client'
+    mainClass = 'com.tankWar.lobby.LoginWindow'
 
 //    mainClass = 'com.tankWar.game.Main'\
-//    mainClass = 'com.tankWar.lobby.Main'
-//    mainClass = 'com.tankWar.game.Main'
 }
 
 
@@ -58,30 +51,6 @@ javafx {
     version = "20"
     modules = [ 'javafx.controls' ]
 }
-
-// 设置尝试将多个文件复制到同一目的地时使用的策略
-DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
-
-// 修改为使用UTF-8来构建
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-}
-
-// 启用并行测试
-test {
-    maxParallelForks = 4
-}
-
-////////////////////////////////////////////////////
-
-// 定义客户端应用程序的JavaExec任务
-task runClientApp(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'com.tankWar.game.client.ClientTest' // 客户端应用程序的主类
-}
-
-// 定义服务端应用程序的JavaExec任务
-task runServerApp(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'com.tankWar.game.server.ServerTest' // 服务端应用程序的主类
+tasks.withType(JavaCompile){
+    options.encoding="UTF-8"
 }

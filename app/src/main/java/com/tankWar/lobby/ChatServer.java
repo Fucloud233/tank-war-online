@@ -4,10 +4,22 @@ package com.tankWar.lobby;
 import java.io.IOException;
 import java.net.*;
 
-class ChatServer extends Thread {
+public class ChatServer extends Thread {
     ServerSocket serverSocket = null; // 创建服务器端套接字
     public boolean bServerIsRunning = false;
-    InetAddress serverAddress=InetAddress.getLocalHost(); //获取本地主机的IP地址
+    public static InetAddress serverAddress; //获取本地主机的IP地址
+
+    static {
+        try {
+            serverAddress = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static String getServerIP(){
+        return serverAddress.getHostAddress();
+    }
     public ChatServer() throws UnknownHostException {
         try {
             serverSocket = new ServerSocket(8888); // 启动服务
