@@ -1,6 +1,8 @@
 package com.tankWar.lobby;
 
 
+import com.tankWar.game.server.GameServer;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -28,9 +30,9 @@ public class ServerProcess extends Thread {
     private String strKey; //保存信息的关键字 login talk init reg
     private StringTokenizer st;   //拆分字符串
     //连接数据库
-    private final String databaseURL="jdbc:mysql://localhost:3306/project";
+    private final String databaseURL="jdbc:mysql://localhost:3306/JavaProject";
     private final String userName="root";
-    private final String passWord="yangyt66";
+    private final String passWord="Wu123456";
 
     //处理从客户端Socket接收到的信息
     public ServerProcess(Socket client) throws IOException {
@@ -113,8 +115,13 @@ public class ServerProcess extends Thread {
                 if(room.areAllUsersReady()){
                     //用户全都准备好了 开始游戏  改变房间状态/////////////////
                     room.setRoomStatus();
+
+                    // todo： 添加GameServer
+                    startGameServer();
+
                     //返回给客户端
-                    out.println("begin game|succeed");
+                    sendAll("begin game|succeed");
+//                    out.println("begin game|succeed");
                     //刷新大厅中这个房间的状态
                     freshClientsLobbyOnline();
                 }
@@ -680,5 +687,14 @@ public class ServerProcess extends Thread {
             System.out.println("[ERROR] " + e);
         }
         return strUser;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    void startGameServer(){
+        Thread t = new Thread(()->{
+            GameServer server = new GameServer(2);
+            server.run();
+        });
+        t.start();
     }
 }

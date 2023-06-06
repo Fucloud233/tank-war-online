@@ -1,6 +1,7 @@
 package com.tankWar.lobby;
 
 
+import com.tankWar.game.GamePane;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -340,11 +341,14 @@ public class Client extends Stage {
                             //获取到是否成功
                             String judge = st.nextToken();
                             if(judge.equals("succeed")){
+                                System.out.println("game begin!!!!!!!");
 
                                 //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
                                 Platform.runLater(() -> {
-                                    Alert alert = new Alert(Alert.AlertType.WARNING, "游戏开始！");
-                                    alert.showAndWait();
+
+                                    // TODO: 添加GamePane
+                                    startGame();
+
                                 });
                             }
                             else{
@@ -362,6 +366,22 @@ public class Client extends Stage {
             }
         }
 
+
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    Stage gameStage;
+    void startGame(){
+        GamePane gamePane = new GamePane();
+        Scene scene = new Scene(gamePane);
+
+        gameStage = new Stage();
+        gameStage.setTitle("坦克大战联机版");
+        gameStage.setScene(scene);
+        gameStage.setResizable(false);
+        gameStage.show();
 
     }
 }

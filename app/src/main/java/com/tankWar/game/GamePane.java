@@ -56,6 +56,7 @@ public class GamePane extends BorderPane {
             System.out.println("正在连接服务端");
             // 与服务端连接
             client.connect();
+//            System.out.println("[Info] 连接成功!");
         }
         catch (TimeoutException e) {
             System.out.println("[Error] 连接超时!");
