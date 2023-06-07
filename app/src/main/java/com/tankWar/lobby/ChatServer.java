@@ -7,26 +7,28 @@ import java.net.*;
 public class ChatServer extends Thread {
     ServerSocket serverSocket = null; // 创建服务器端套接字
     public boolean bServerIsRunning = false;
-    public static InetAddress serverAddress; //获取本地主机的IP地址
+    int serverPort;
+    public InetAddress serverAddress; //获取本地主机的IP地址
 
-    static {
-        try {
-            serverAddress = InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    static {
+//        try {
+//            serverAddress = InetAddress.getLocalHost();
+//        } catch (UnknownHostException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
-    static String getServerIP(){
-        return serverAddress.getHostAddress();
-    }
-    public ChatServer(InetAddress address){
+//    static String getServerIP(){
+//        return serverAddress.getHostAddress();
+//    }
+    public ChatServer(InetAddress address, int port){
         this.serverAddress = address;
+        this.serverPort = port;
     }
     @Override
     public void run() {
         try {
-            serverSocket = new ServerSocket(8888); // 启动服务
+            serverSocket = new ServerSocket(this.serverPort); // 启动服务
             bServerIsRunning = true;
             System.out.println("服务器名称:"+serverAddress.getHostName());
             System.out.println("服务器IP:"+serverAddress.getHostAddress());

@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 
 public class ServerTest {
     @Test public void runServer() throws UnknownHostException {
-        ChatServer server=new ChatServer(InetAddress.getLocalHost());
+        ChatServer server=new ChatServer(InetAddress.getLocalHost(), 8888);
         server.run();
     }
 }

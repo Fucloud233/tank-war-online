@@ -692,7 +692,8 @@ public class ServerProcess extends Thread {
     //////////////////////////////////////////////////////////////////////////////////
     void startGameServer(int num){
         Thread t = new Thread(()->{
-            GameServer server = new GameServer(num);
+            GameServer server = null;
+            server = new GameServer(num);
             server.run();
         });
         t.start();

@@ -34,9 +34,9 @@ public class Client extends Stage {
     private VBox container;
     private StringTokenizer st;
 
-    private CreateRoomWindow roomWindow;  //创建房间的实例
-    private SelectRoomWindow selectRoomWindow;
-    private GameWaitWindow gameWaitWindow;
+    private CreateRoomWindow roomWindow;  //创建房间
+    private SelectRoomWindow selectRoomWindow; //选择房间密码弹窗
+    private GameWaitWindow gameWaitWindow; // 房间等待
     private String roomId;//选中的房间号
     private HBox selectedHBox;//选中的房间条目
     private boolean isHBoxSelected=false;//判断是否有选择房间条目
@@ -382,6 +382,5 @@ public class Client extends Stage {
         gameStage.setScene(scene);
         gameStage.setResizable(false);
         gameStage.show();
-
     }
 }

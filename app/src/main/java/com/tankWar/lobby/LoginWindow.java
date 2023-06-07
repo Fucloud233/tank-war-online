@@ -13,15 +13,16 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 
-
 import java.io.*;
 import java.net.Socket;
 import java.util.StringTokenizer;
+
 public class LoginWindow extends Application {
     // 连接相关的
     Socket socket = null;
     BufferedReader in = null;
     PrintWriter out = null;
+    String IP;
     // 登陆界面的UI
     private TextField txtName;
     private PasswordField txtPassword;
@@ -41,17 +42,17 @@ public class LoginWindow extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.primaryStage=primaryStage;
+        this.primaryStage = primaryStage;
         // 初始化登录的UI
         txtName = new TextField();
         txtName.setText("76135896");
         txtPassword = new PasswordField();
         txtPassword.setText("123456"); ///////////固定初始值 方便测试 后续删除
         //初始化注册的UI
-        txtNickName=new TextField();
-        txtAccount=new TextField();
-        setPassword=new PasswordField();
-        btnAck=new Button("确认注册");
+        txtNickName = new TextField();
+        txtAccount = new TextField();
+        setPassword = new PasswordField();
+        btnAck = new Button("确认注册");
 
 
         //登录按钮
@@ -78,9 +79,9 @@ public class LoginWindow extends Application {
 
         //注册按钮
         //注册按钮
-         btnRegister = new Button("注册");
+        btnRegister = new Button("注册");
         //点击注册按钮后触发
-        btnRegister.setOnAction(e->{
+        btnRegister.setOnAction(e -> {
             primaryStage.setTitle("注册窗口");
             primaryStage.setScene(registerScene);
             primaryStage.show();
@@ -93,7 +94,7 @@ public class LoginWindow extends Application {
                     //连接服务器
                     connectServer();
                     //获取登陆的账号和密码//发送给服务器
-                    String strSend = "register|" + txtNickName.getText() + "|" + txtAccount.getText()+"|"+setPassword.getText();
+                    String strSend = "register|" + txtNickName.getText() + "|" + txtAccount.getText() + "|" + setPassword.getText();
                     out.println(strSend);
                     initRegister();
                 } catch (IOException ioException) {
@@ -117,8 +118,8 @@ public class LoginWindow extends Application {
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.getChildren().addAll(btnLogin, btnRegister);
-        loginPane.add(buttonBox, 0, 3,2,1);
-        loginScene=new Scene(loginPane);
+        loginPane.add(buttonBox, 0, 3, 2, 1);
+        loginScene = new Scene(loginPane);
 
         //注册界面的网格布局
 
@@ -135,8 +136,8 @@ public class LoginWindow extends Application {
         HBox buttonBox2 = new HBox(10);
         buttonBox2.setAlignment(Pos.CENTER);
         buttonBox2.getChildren().addAll(btnAck);
-        registerPane.add(buttonBox2, 0,4,2,1);
-        registerScene=new Scene(registerPane);
+        registerPane.add(buttonBox2, 0, 4, 2, 1);
+        registerScene = new Scene(registerPane);
 
 
         // 禁用窗口大小调整
@@ -145,7 +146,6 @@ public class LoginWindow extends Application {
         primaryStage.setTitle("登录窗口");
         primaryStage.setScene(loginScene);
         primaryStage.show();
-
 
 
     }
@@ -164,21 +164,21 @@ public class LoginWindow extends Application {
             System.out.println(strStatus);
             //如果成功登录
             if (strStatus.equals("succeed")) {
-                String nickname=st.nextToken();
+                String nickname = st.nextToken();
                 //转到窗口页面 并关闭登录窗口
                 btnLogin.setDisable(true);
                 primaryStage.close();
                 //传入参数并跳转到房间选择页面 connectServer()获取到对应的信息
-                Client client =new Client(nickname,txtName.getText(),socket,in,out);
+                Client client = new Client(nickname, txtName.getText(), socket, in, out);
                 client.RunClient();
             }
-            new Alert(Alert.AlertType.INFORMATION, strKey + " " + strStatus + "!");
+//            new Alert(Alert.AlertType.INFORMATION, strKey + " " + strStatus + "!");
         }
         if (strKey.equals("warning")) {
             String strStatus = st.nextToken();
-            if (strStatus.equals("double")){
+            if (strStatus.equals("double")) {
                 new Alert(Alert.AlertType.WARNING, "不能重复登录！").showAndWait();
-            }else {
+            } else {
                 new Alert(Alert.AlertType.WARNING, strStatus).showAndWait();
             }
 
@@ -191,16 +191,17 @@ public class LoginWindow extends Application {
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
         if (strKey.equals("register")) {
-            String strStatus=st.nextToken();
-            if (strStatus.equals("success")){
+            String strStatus = st.nextToken();
+            if (strStatus.equals("success")) {
                 showRegistrationSuccess();
-            }else if (strStatus.equals("name")){
+            } else if (strStatus.equals("name")) {
                 new Alert(Alert.AlertType.WARNING, "昵称已被使用！").showAndWait();
             } else if (strStatus.equals("account")) {
                 new Alert(Alert.AlertType.WARNING, "账号已存在！").showAndWait();
             }
         }
     }
+
     // 创建注册成功提示对话框
     private void showRegistrationSuccess() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -220,18 +221,20 @@ public class LoginWindow extends Application {
         alert.showAndWait();
     }
 
-
-
+    public LoginWindow(String IP) {
+        this.IP = IP;
+    }
 
     //连接服务器
     void connectServer() throws IOException {
-        String IP=ChatServer.getServerIP();
+//        String IP = ChatServer.getServerIP();
         //创建套接字
-        socket = new Socket(IP, 8888);
+        socket = new Socket(this.IP, 8888);
         //输入流和输出流
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
     }
+
     public static void main(String[] args) {
         launch(args);
     }

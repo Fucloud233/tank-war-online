@@ -12,6 +12,6 @@ import java.net.UnknownHostException;
 
 public class AppTest {
     @Test public void appHasAGreeting() throws UnknownHostException {
-        ChatServer server=new ChatServer(InetAddress.getLocalHost());
+        ChatServer server=new ChatServer(InetAddress.getLocalHost(), 8080);
     }
 }
