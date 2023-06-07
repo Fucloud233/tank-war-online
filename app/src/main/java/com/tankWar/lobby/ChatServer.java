@@ -20,7 +20,11 @@ public class ChatServer extends Thread {
     static String getServerIP(){
         return serverAddress.getHostAddress();
     }
-    public ChatServer() throws UnknownHostException {
+    public ChatServer(InetAddress address){
+        this.serverAddress = address;
+    }
+    @Override
+    public void run() {
         try {
             serverSocket = new ServerSocket(8888); // 启动服务
             bServerIsRunning = true;
@@ -42,10 +46,10 @@ public class ChatServer extends Thread {
     }
 
     public static void main(String args[]) {
-        try {
-            new ChatServer();
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            new ChatServer();
+//        } catch (UnknownHostException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 }

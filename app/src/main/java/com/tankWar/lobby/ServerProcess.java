@@ -117,7 +117,7 @@ public class ServerProcess extends Thread {
                     room.setRoomStatus();
 
                     // todo： 添加GameServer
-                    startGameServer();
+                    startGameServer(room.getUser_num());
 
                     //返回给客户端
                     sendAll("begin game|succeed");
@@ -690,9 +690,9 @@ public class ServerProcess extends Thread {
     }
 
     //////////////////////////////////////////////////////////////////////////////////
-    void startGameServer(){
+    void startGameServer(int num){
         Thread t = new Thread(()->{
-            GameServer server = new GameServer(2);
+            GameServer server = new GameServer(num);
             server.run();
         });
         t.start();
