@@ -10,6 +10,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 
@@ -52,10 +54,12 @@ public class LoginWindow extends Application {
         txtAccount=new TextField();
         setPassword=new PasswordField();
         btnAck=new Button("确认注册");
+        btnAck.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
 
 
         //登录按钮
         btnLogin = new Button("登录");
+        btnLogin.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
         //点击登录按钮后触发
         btnLogin.setOnAction(e -> {
             //输入的信息全不为空
@@ -79,6 +83,7 @@ public class LoginWindow extends Application {
         //注册按钮
         //注册按钮
          btnRegister = new Button("注册");
+        btnRegister.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
         //点击注册按钮后触发
         btnRegister.setOnAction(e->{
             primaryStage.setTitle("注册窗口");
@@ -106,36 +111,94 @@ public class LoginWindow extends Application {
 
         //登陆界面的网格布局
         loginPane = new GridPane();
+        loginPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
         loginPane.setVgap(10);
         loginPane.setHgap(10);
+        loginPane.setPrefSize(300,200);
+        loginPane.setAlignment(Pos.CENTER);
         loginPane.setPadding(new Insets(20));
-        loginPane.add(new Label("账号:"), 0, 1);
-        loginPane.add(txtName, 1, 1);
-        loginPane.add(new Label("密码:"), 0, 2);
-        loginPane.add(txtPassword, 1, 2);
+        Label accountLbl=new Label("账号：");
+        accountLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
+        loginPane.add(accountLbl, 0, 2);
+        loginPane.add(txtName, 1, 2);
+        Label passLbl=new Label("密码：");
+        passLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
+        loginPane.add(passLbl, 0, 3);
+        loginPane.add(txtPassword, 1, 3);
+        //加个坦克大战的标题
+        HBox titleBox = new HBox(10);
+        titleBox.setAlignment(Pos.CENTER);
+        Label titleLabel = new Label("坦克大战");
+        titleLabel.setAlignment(Pos.CENTER);
+        titleBox.getChildren().add(titleLabel);
+        titleLabel.setFont(Font.font("Bungee", FontWeight.BOLD,30));
+        titleLabel.setStyle("-fx-text-fill: #0e2a10;");
+
         //放置登录和注册的按钮
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.getChildren().addAll(btnLogin, btnRegister);
-        loginPane.add(buttonBox, 0, 3,2,1);
+        loginPane.add(buttonBox, 0, 4,2,1);
+        loginPane.add(titleBox,0,1,2,1);
+        //设置里面组件的大小
+        txtName.setMinSize(200, 30);
+        txtName.setPrefSize(200, 30);
+
+        txtPassword.setMinSize(200, 30);
+        txtPassword.setPrefSize(200, 30);
+
+        btnLogin.setMinSize(100, 30);
+        btnLogin.setPrefSize(100, 30);
+
+        btnRegister.setMinSize(100, 30);
+        btnRegister.setPrefSize(100, 30);
+
         loginScene=new Scene(loginPane);
 
         //注册界面的网格布局
 
         registerPane = new GridPane();
+        registerPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
         registerPane.setVgap(10);
         registerPane.setHgap(10);
         registerPane.setPadding(new Insets(20));
-        registerPane.add(new Label("昵称:"), 0, 1);
-        registerPane.add(txtNickName, 1, 1);
-        registerPane.add(new Label("账号:"), 0, 2);
-        registerPane.add(txtAccount, 1, 2);
-        registerPane.add(new Label("密码:"), 0, 3);
-        registerPane.add(setPassword, 1, 3);
+        Label nickLbl = new Label("昵称：");
+        nickLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
+        registerPane.add(nickLbl, 0, 2);
+        registerPane.add(txtNickName, 1, 2);
+        Label accLbl = new Label("账号：");
+        accLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
+        registerPane.add(accLbl, 0, 3);
+        registerPane.add(txtAccount, 1, 3);
+        Label passwordLbl = new Label("密码：");
+        passwordLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
+        registerPane.add(passwordLbl, 0, 4);
+        registerPane.add(setPassword, 1, 4);
+        registerPane.setPrefSize(300,200);
+        registerPane.setAlignment(Pos.CENTER);
         HBox buttonBox2 = new HBox(10);
         buttonBox2.setAlignment(Pos.CENTER);
         buttonBox2.getChildren().addAll(btnAck);
-        registerPane.add(buttonBox2, 0,4,2,1);
+        registerPane.add(buttonBox2, 0,5,2,1);
+        //加个坦克大战的标题
+        HBox titleBox_1 = new HBox(10);
+        titleBox_1.setAlignment(Pos.CENTER);
+        Label titleLabel_1 = new Label("坦克大战");
+        titleLabel_1.setAlignment(Pos.CENTER);
+        titleBox_1.getChildren().add(titleLabel_1);
+        titleLabel_1.setFont(Font.font("Bungee", FontWeight.BOLD,30));
+        titleLabel_1.setStyle("-fx-text-fill: #0e2a10;");
+        registerPane.add(titleBox_1,0,1,2,1);
+
+        //设置注册里面的组件大小
+        txtNickName.setMinSize(200, 30);
+        txtNickName.setPrefSize(200, 30);
+        txtAccount.setMinSize(200, 30);
+        txtAccount.setPrefSize(200, 30);
+        setPassword.setMinSize(200, 30);
+        setPassword.setPrefSize(200, 30);
+        btnAck.setMinSize(100, 30);
+        btnAck.setPrefSize(100, 30);
         registerScene=new Scene(registerPane);
 
 

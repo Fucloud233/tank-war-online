@@ -94,9 +94,9 @@ public class CreateRoomWindow{
         } );
         hBox.setAlignment(Pos.CENTER);
         hBox.getChildren().add(ackLogin);
+        createPane.add(hBox,0,4,2,1);
         BorderPane borderPane=new BorderPane();
         borderPane.setCenter(createPane);
-        borderPane.setBottom(hBox);
         createroomStage.setScene(new Scene(borderPane));
         createroomStage.show();
     }

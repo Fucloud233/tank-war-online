@@ -61,9 +61,16 @@ public class Client extends Stage {
         primaryStage.setTitle("游戏大厅");
 
         BorderPane borderPane = new BorderPane();
+        //设置迷彩背景
+        borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
         //游戏大厅的聊天框部分
         txtTalk = new TextField();   //编辑发送内容
+        // 设置聊天框的输入框样式
+        txtTalk.setStyle("-fx-background-color: #494f3c; -fx-text-fill: white;");
+        txtTalk.setStyle("-fx-prompt-text-fill: white;");
         txtViewTalk = new TextArea();   //查看聊天内容
+        // 设置txtViewTalk的样式
+        txtViewTalk.setStyle("-fx-control-inner-background: #494f3c; -fx-text-fill: white;-fx-font-size: 15");
         Button btnTalk = new Button("发送");  //发送按钮
         listOnline = new ComboBox<>();  //选择发送的对象
         listOnline.getItems().add("All");  //添加在线人员列表
@@ -80,8 +87,12 @@ public class Client extends Stage {
 
         //带滚轮的房间列表
         container = new VBox();
-        container.setPrefHeight(250); // 设置容器的固定高度
+        container.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
+
+        container.setMinHeight(380); // 设置容器的固定高度
         ScrollPane scrollPane = new ScrollPane(container);//房间列表
+        scrollPane.setFitToWidth(true);
+
 
         //创建房间按钮
         //游戏大厅的UI
@@ -123,6 +134,7 @@ public class Client extends Stage {
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
             if (selectedHBox!=null && isHBoxSelected==true){
+                System.out.println("roomid:"+roomId);
                 //向服务端传选择的房间内容
                 out.println("Select room|"+roomId);
             } else {
@@ -177,15 +189,28 @@ public class Client extends Stage {
             statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
 
             hBox.getChildren().addAll(Id, roomLabel,  hostLabel,  enterNumLabel,  userNumLabel,  statusLabel);
+            hBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);" +
+                    "-fx-border-color: gray;" +
+                    "-fx-border-width: 2px;" +
+                    "-fx-padding: 10px;" +
+                    "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
 
             //设置hbox的选中事件
             hBox.setOnMouseClicked(event -> {
                 if (selectedHBox != null) {
-                    selectedHBox.setStyle("-fx-border-color: black; -fx-border-width: 1px");
+                    selectedHBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);" +
+                            "-fx-border-color: gray;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-padding: 10px;" +
+                            "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
                 }
                 roomId=hBox.getId();
                 selectedHBox = hBox;
-                hBox.setStyle("-fx-border-color: orange; -fx-border-width: 2px");
+                hBox.setStyle("-fx-background-color: #9C8B56;" +
+                        "-fx-border-color: #06280b;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-padding: 10px;" +
+                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
                 isHBoxSelected=true;
             });
 
