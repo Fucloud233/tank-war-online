@@ -1,5 +1,6 @@
 package com.game.marco;
 
+import com.tankWar.game.server.Config;
 import com.tankWar.lobby.LoginWindow;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -14,7 +15,7 @@ public class ClientTest2 extends Application {
     }
 
     @Override public void start(Stage primaryStage) throws Exception {
-        LoginWindow client = new LoginWindow("172.27.62.193");
+        LoginWindow client = new LoginWindow(Config.ip);
         client.start(primaryStage);
     }
 }
