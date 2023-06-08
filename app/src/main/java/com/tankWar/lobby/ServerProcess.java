@@ -287,7 +287,7 @@ public class ServerProcess extends Thread {
                     userEnterRoomSuccess();
                 }
             }
-            break;
+            
         }
     }
     //验证进入房间的密码
@@ -306,7 +306,7 @@ public class ServerProcess extends Thread {
                     userEnterRoomSuccess();
                 }
             }
-            break;
+            
         }
 
     }
