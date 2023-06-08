@@ -8,6 +8,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -15,6 +16,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.StringTokenizer;
+
+import static javafx.scene.paint.Color.GREEN;
+
 public class GameWaitWindow {
     ListView<String> userListView;
     //连接相关
@@ -46,6 +50,7 @@ public class GameWaitWindow {
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
     }
     void ShowWindow(){
+
         //打印是否为房主进行测试
         System.out.println(isRoomOwner);
 
@@ -107,7 +112,7 @@ public class GameWaitWindow {
         userListView.setPrefHeight(maxRows * itemHeight);
         userListView.setPadding(new Insets(10));
         userListView.setStyle("-fx-background-color: #F0F0F0;");
-        ////////////房间内用户——样式的修改/////////////////////////////////////////
+        /////////////////////房间内用户——样式的修改/////////////////
         userListView.setCellFactory(param -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -134,11 +139,18 @@ public class GameWaitWindow {
         newVBox.getChildren().add(userListBox);
         newVBox.getChildren().add(BottomBox);
         borderPane.setCenter(newVBox);
+        // 设置迷彩背景
+        borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
+        PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
+        exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
+        userListView.setStyle("-fx-background-color: #F0F0F0;");
 
+        //borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
 
         //场景切换
         roomScene=new Scene(borderPane,800,700);
         primaryStage.setTitle("游戏房间");
+        roomScene.setFill(GREEN);
         primaryStage.setScene(roomScene);
 
         //发送消息按钮的触发
