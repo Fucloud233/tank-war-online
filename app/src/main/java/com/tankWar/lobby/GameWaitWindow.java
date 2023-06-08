@@ -9,6 +9,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -110,30 +112,37 @@ public class GameWaitWindow {
         int maxRows = 5;
         int itemHeight = 60; // 设置每个条目的高度（根据实际情况调整）
         userListView.setPrefHeight(maxRows * itemHeight);
-        userListView.setPadding(new Insets(10));
-        userListView.setStyle("-fx-background-color: #F0F0F0;");
+        userListView.setPadding(new Insets(5));
+        txtViewTalk.setPadding(new Insets(5));
+
+        //修改边框颜色
+        userListView.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
+        // 设置txtViewTalk的样式
+        txtViewTalk.setStyle("-fx-control-inner-background: #494f3c; -fx-text-fill: white;-fx-font-size: 15");
+
         /////////////////////房间内用户——样式的修改/////////////////
+        // 设置userListView的样式——内部颜色
+        userListView.setStyle("-fx-control-inner-background: #494f3c;");
+        // 设置userListView的单元格样式
         userListView.setCellFactory(param -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty && item != null) {
                     setText(item);
-                    setStyle("-fx-font-size: 20; -fx-font-weight: bold;");
+                    //字体的调整
+                    setFont(Font.font("Arial", FontWeight.BOLD, 20));
+                    setTextFill(Color.WHITE);
+                    setBackground(new Background(new BackgroundFill(Color.web("#494f3c"), null, null)));
                     // 在此处添加任何其他样式或自定义
                 } else {
                     setText(null);
                 }
             }
-
         });
-
-
 
         //将用户列表装进Box中
         userListBox.getChildren().add(userListView);
-
-
         //设置一个新的VBox 装载userList和BottomBox
         VBox newVBox=new VBox();
         newVBox.getChildren().add(userListBox);
@@ -141,11 +150,18 @@ public class GameWaitWindow {
         borderPane.setCenter(newVBox);
         // 设置迷彩背景
         borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
-        PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
-        exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
-        userListView.setStyle("-fx-background-color: #F0F0F0;");
+        // 设置聊天框的输入框样式
+        txtTalk.setStyle("-fx-background-color: #494f3c; -fx-text-fill: white;");
+        txtTalk.setStyle("-fx-prompt-text-fill: white;");
 
-        //borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
+        // 设置聊天框的发送按钮样式
+        btnTalk.setStyle("-fx-base: #b6e7c9; -fx-text-fill: black;");
+
+        // 设置开始游戏/准备按钮样式
+        PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9; -fx-text-fill: black;");
+
+        // 设置退出房间按钮样式
+        exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9; -fx-text-fill: black;");
 
         //场景切换
         roomScene=new Scene(borderPane,800,700);
