@@ -102,9 +102,29 @@ public class GameWaitWindow {
         userListView = new ListView<>(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
 
         // 设置ListView的最大显示行数为4行
-        int maxRows = 4;
-        int itemHeight = 30; // 设置每个条目的高度（根据实际情况调整）
+        int maxRows = 5;
+        int itemHeight = 60; // 设置每个条目的高度（根据实际情况调整）
         userListView.setPrefHeight(maxRows * itemHeight);
+        userListView.setPadding(new Insets(10));
+        userListView.setStyle("-fx-background-color: #F0F0F0;");
+        ////////////房间内用户——样式的修改/////////////////////////////////////////
+        userListView.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item != null) {
+                    setText(item);
+                    setStyle("-fx-font-size: 20; -fx-font-weight: bold;");
+                    // 在此处添加任何其他样式或自定义
+                } else {
+                    setText(null);
+                }
+            }
+
+        });
+
+
+
         //将用户列表装进Box中
         userListBox.getChildren().add(userListView);
 
