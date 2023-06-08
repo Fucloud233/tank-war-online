@@ -144,8 +144,12 @@ public class GameWaitWindow {
         //发送消息按钮的触发
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
-                //获取用户输入的账号
-                out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                if (isRoomOwner){
+                    out.println("roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + listOnline.getValue());
+                }else {
+                    //获取用户输入的账号
+                    out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                }
                 txtTalk.clear();
             }
         });
