@@ -31,20 +31,20 @@ public class ChatServer extends Thread {
             serverSocket = new ServerSocket(); // 启动服务
             serverSocket.bind(new InetSocketAddress(serverAddress, this.serverPort));
             bServerIsRunning = true;
-            System.out.println("服务器名称:"+serverAddress.getHostName());
-            System.out.println("服务器IP:"+serverAddress.getHostAddress());
-            System.out.println("服务器端口:" + 8888);
-            System.out.println("服务器正在运行中...");
+            System.out.println("[info] 服务器名称:"+serverAddress.getHostName());
+            System.out.println("[info] 服务器IP:"+serverAddress.getHostAddress());
+            System.out.println("[info] 服务器端口:" + 8888);
+            System.out.println("[info] 服务器正在运行中...");
             while (true) {
                 Socket socket = serverSocket.accept(); // 监听客户端的连接请求，并返回客户端socket
                 new ServerProcess(socket).start(); // 创建一个新线程来处理与该客户的通讯
             }
         } catch (BindException e) {
-            System.out.println("端口使用中....");
-            System.out.println("请关掉相关程序并重新运行服务器！");
+            System.out.println("[error] 端口使用中....");
+            System.out.println("[error] 请关掉相关程序并重新运行服务器！");
             System.exit(0);
         } catch (IOException e) {
-            System.out.println("[ERROR] Cound not start server." + e);
+            System.out.println("[error] Cound not start server." + e);
         }
     }
 

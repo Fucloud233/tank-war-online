@@ -157,11 +157,11 @@ public class LoginWindow extends Application {
         //截断获取关键的信息内容
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
-        System.out.println(strKey);
+        System.out.println("[info] message type" + strKey);
 
         if (strKey.equals("login")) {
             String strStatus = st.nextToken();
-            System.out.println(strStatus);
+            System.out.println("[info] login Status" + strStatus);
             //如果成功登录
             if (strStatus.equals("succeed")) {
                 String nickname = st.nextToken();

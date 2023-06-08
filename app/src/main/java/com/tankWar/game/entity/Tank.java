@@ -64,7 +64,7 @@ public class Tank extends Entity {
                 this.width = Config.TankHeight;
                 this.height = Config.TankWidth;
             }
-            default -> System.out.println("Direction error");
+            default -> System.out.println("[error] Direction error");
         }
     }
 
@@ -80,7 +80,7 @@ public class Tank extends Entity {
             case RIGHT -> x += speed;
             case UP -> y -= speed;
             case DOWN -> y +=  speed;
-            default -> System.out.println("Direction error");
+            default -> System.out.println("[error] Direction error");
         }
     }
 
@@ -100,7 +100,7 @@ public class Tank extends Entity {
             case DOWN -> y = this.y + distance;
             case LEFT -> x = this.x - distance;
             case RIGHT -> x = this.x + distance;
-            default -> System.out.println("Direction error");
+            default -> System.out.println("[error] Direction error");
         }
 
         Bullet bullet = new Bullet(this, this.dir, x, y);

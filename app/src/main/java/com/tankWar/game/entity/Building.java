@@ -33,7 +33,7 @@ public class Building extends Entity{
             case 'W': block = Block.Wood; break;
             case 'G': block = Block.Grass; break;
             default: {
-                System.out.println("ID is illegal!");
+                System.out.println("[error] ID is illegal!");
                 return;
             }
         }

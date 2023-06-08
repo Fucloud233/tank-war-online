@@ -68,5 +68,5 @@ DuplicatesStrategy duplicatesStrategy = DuplicatesStrategy.INHERIT
 
 // 启用并行测试
 test {
-    maxParallelForks = 4
+    maxParallelForks = 5
 }

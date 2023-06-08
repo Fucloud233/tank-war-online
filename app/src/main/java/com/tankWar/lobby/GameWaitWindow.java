@@ -50,7 +50,7 @@ public class GameWaitWindow {
 
     void ShowWindow() {
         //打印是否为房主进行测试
-        System.out.println(isRoomOwner);
+        System.out.println("[info] 是否房主 "+isRoomOwner);
 
         BorderPane borderPane = new BorderPane();
         //游戏房间的聊天框部分
@@ -179,7 +179,7 @@ public class GameWaitWindow {
         else if (PlayGameBtn.getText().equals("准备")) {
             //发送一个准备的消息 并传送这个能标识这个用户的键
             out.println("isReady|" + name);
-            System.out.println(name);
+            System.out.println("[info] name: "+name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
             PlayGameBtn.setText("已准备");
         }
@@ -202,7 +202,7 @@ public class GameWaitWindow {
     private void startGame() {
         // Add your code to start the game here
         // For example:
-        System.out.println("Game started!");
+        System.out.println("[info] Game started!");
     }
 
     public void changeStatus(String status) {

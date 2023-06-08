@@ -22,7 +22,7 @@ public class GameMap {
         String path = this.getPath(id);
         InputStream inputStream = getClass().getResourceAsStream(path);
         if(inputStream == null) {
-            System.out.println(path + "不存在!");
+            System.out.println("[error]"+path + "不存在!");
             return false;
         }
         Scanner scanner = new Scanner(inputStream);

@@ -21,15 +21,15 @@ public class GameClientTest {
 
         // 建立连接
         try {
-            System.out.println("正在连接");
+            System.out.println("[error] 正在连接");
             client.connect();
-            System.out.println("Connection Success!");
+            System.out.println("[info] Connection Success!");
         }
         catch(TimeoutException e) {
             System.out.println("连接超时");
         }
         catch(IOException e) {
-            System.out.println("Connection failed!");
+            System.out.println("[error] Connection failed!");
         }
 
         // 客户端向服务端发送消息
@@ -48,7 +48,7 @@ public class GameClientTest {
 
         // 建立连接
         try {
-            System.out.println("正在连接");
+            System.out.println("[info] 正在连接");
             for(int i=0; i<size; i++) {
                 clients[i].connect();
 //                Thread.sleep(100);
@@ -56,10 +56,10 @@ public class GameClientTest {
             System.out.println("Connection Success!");
         }
         catch(TimeoutException e) {
-            System.out.println("连接超时");
+            System.out.println("[error] 连接超时");
         }
         catch(IOException e) {
-            System.out.println("Connection failed!");
+            System.out.println("[error] Connection failed!");
         }
 
         // 测试内容：随机选择客户端想服务端发送消息
@@ -78,16 +78,16 @@ public class GameClientTest {
 
         // 建立连接
         try {
-            System.out.println("正在连接");
+            System.out.println("[info] 正在连接");
             clientA.connect();
             clientB.connect();
-            System.out.println("Connection Success!");
+            System.out.println("[info] Connection Success!");
         }
         catch(TimeoutException e) {
-            System.out.println("连接超时");
+            System.out.println("[error] 连接超时");
         }
         catch(IOException e) {
-            System.out.println("Connection failed!");
+            System.out.println("[error] Connection failed!");
             e.printStackTrace();
             return;
         }
@@ -96,7 +96,7 @@ public class GameClientTest {
 
         Message msg = clientB.receiveStatusMsg();
         if (msg != null) {
-            System.out.println("客户端B接收: " + msg.getType());
+            System.out.println("[info] 客户端B接收: " + msg.getType());
         }
     }
 }

@@ -93,7 +93,7 @@ public class Room {
 
     //根据下标找到玩家状态
     public String findStatusUser(int i){
-        System.out.println(statusUser.elementAt(i));
+        System.out.println("[info] "+statusUser.elementAt(i));
         return (String) statusUser.elementAt(i);
     }
     //切换对应下表的玩家的状态
@@ -104,7 +104,7 @@ public class Room {
         else{
             statusUser.setElementAt("未准备", index);
         }
-        System.out.println("修改后"+statusUser.elementAt(index));
+        System.out.println("[info] 修改后"+statusUser.elementAt(index));
     }
 
 

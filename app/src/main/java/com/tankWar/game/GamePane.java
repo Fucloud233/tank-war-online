@@ -46,7 +46,14 @@ public class GamePane extends BorderPane {
     // 构造函数
     public GamePane() {
         myself = this;
-        this.initEntity();
+//        this.initEntity();
+        this.initPane();
+        this.initAction();
+    }
+
+    public GamePane(int port) {
+        myself = this;
+        this.initEntity(port);
         this.initPane();
         this.initAction();
     }
@@ -56,11 +63,11 @@ public class GamePane extends BorderPane {
     }
 
     // 连接服务器
-    void initEntity() {
+    void initEntity(int port) {
         client = new GameClient();
-
+        client.setPort(port);
         try {
-            System.out.println("正在连接服务端");
+            System.out.println("[info] 正在连接服务端");
             // 与服务端连接
             client.connect();
 //            System.out.println("[Info] 连接成功!");
@@ -159,7 +166,7 @@ public class GamePane extends BorderPane {
         // 如果地图编号改变则重新加载
         if(mapId != this.map.getId()) {
             if(!this.map.loadMap(mapId))
-                System.out.println("地图加载失败");
+                System.out.println("[error] 地图加载失败");
         }
 
         // 设置建筑物信息

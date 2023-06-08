@@ -35,7 +35,7 @@ public abstract class Entity {
             case RIGHT -> setDirection(Direction.RIGHT);
             case UP -> setDirection(Direction.UP);
             case DOWN -> setDirection(Direction.DOWN);
-            default -> System.out.println("Direction error");
+            default -> System.out.println("[error] Direction error");
         }
     }
 

@@ -100,7 +100,7 @@ public class ServerProcess extends Thread {
                 throw new RuntimeException(ex);
             }
             Date t = new Date();
-            System.out.println("用户" + leaveUser + "已经退出" + "退出时间" + t.toLocaleString());
+            System.out.println("[info] 用户" + leaveUser + "已经退出" + "退出时间" + t.toLocaleString());
             try {
                 freshClientsOnline();
             } catch (IOException e1) {
@@ -119,12 +119,10 @@ public class ServerProcess extends Thread {
                 if(room.areAllUsersReady()){
                     //用户全都准备好了 开始游戏  改变房间状态/////////////////
                     room.setRoomStatus();
-
-                    // todo： 添加GameServer
-                    startGameServer(room.getUser_num(), Config.port + i);
-
+                    int serverPort = Config.port + i;
+                    startGameServer(room.getUser_num(), serverPort);
                     //返回给客户端
-                    sendAll("begin game|succeed");
+                    sendRoomAll("begin game|succeed|"+serverPort);
 //                    out.println("begin game|succeed");
                     //刷新大厅中这个房间的状态
                     freshClientsLobbyOnline();
@@ -252,7 +250,7 @@ public class ServerProcess extends Thread {
                 statement.setString(3, password);
                 int rowsAffected = statement.executeUpdate();
                 if (rowsAffected > 0) {
-                    System.out.println("User " + name + " 注册成功");
+                    System.out.println("[info] User " + name + " 注册成功");
                     out.println("register|success");
                 }
             }
@@ -334,7 +332,7 @@ public class ServerProcess extends Thread {
         }
         boolean succeed = false;
         Date t = new Date();
-        System.out.println("用户" + account + "正在登陆..." + "\n" + "密码 :" + password + "\n" + "端口 "
+        System.out.println("[info] 用户" + account + " 正在登陆..." + "  密码:" + password + "  端口:"
                 + socket + t.toLocaleString());
         //调用用户账号和密码的判断
         if (isUserLogin(account, password)) {      // 判断用户名和密码 ->转为在数据库中寻找
@@ -343,7 +341,7 @@ public class ServerProcess extends Thread {
         }
         if (!succeed) {
             out.println("warning|" + account + "登陆失败，请检查您的输入!");
-            System.out.println("用户 "+ account + "登陆失败！" + t.toLocaleString());
+            System.out.println("[error] 用户 "+ account + "登陆失败！" + t.toLocaleString());
         }
     }
 
@@ -364,7 +362,7 @@ public class ServerProcess extends Thread {
                 nameUser.addElement(nickname);
                 onlineUser.addElement(account);
                 socketUser.addElement(socket);
-                System.out.println("用户：" + nickname + "登录成功，" + "登录时间:" + t.toString());
+                System.out.println("[info] 用户：" + nickname + "登录成功，" + "登录时间:" + t.toString());
                 freshClientsOnline();
                 freshClientsLobbyOnline();
                 sendAll("talk|>>>欢迎 " + nickname + " 进来与我们一起交谈!");
@@ -474,7 +472,7 @@ public class ServerProcess extends Thread {
         strTalkInfo += strTime;
 
         //记录事件
-        System.out.println("Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
+        System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
                 + t.toLocaleString());
 
         if (strReceiver.equals("All")) {
@@ -521,7 +519,7 @@ public class ServerProcess extends Thread {
         strTalkInfo += strTime;
 
         //记录事件
-        System.out.println("Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
+        System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
                 + t.toLocaleString());
 
         if (strReceiver.equals("All")) {
@@ -563,7 +561,7 @@ public class ServerProcess extends Thread {
         for (int i = 0; i < nameUser.size(); i++) {
             strOnline += "|" + nameUser.elementAt(i);
         }
-        System.out.println("当前在线人数:"+nameUser.size());
+        System.out.println("[info] 当前在线人数:"+nameUser.size());
         sendAll(strOnline);
     }
 
@@ -576,8 +574,8 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 for (int j = 0; j < room.getEnter_num(); j++) {
                     //如果是房主 后续在房间人员列表中  设置有房主的标识///////////
-                    System.out.println(room.findNameUser(j));
-                    System.out.println(RoomNum);
+                    System.out.println("[info] username"+room.findNameUser(j));
+                    System.out.println("[info] roomname"+RoomNum);
                     if(room.findOnlineUser(j).equals(RoomNum)){
                         strOnline += "|" + room.findNameUser(j);
                     }else
@@ -586,7 +584,7 @@ public class ServerProcess extends Thread {
                     }
 
                 }
-                System.out.println("当前在线人数:"+room.getEnter_num());
+                System.out.println("[info] 当前在线人数:"+room.getEnter_num());
                 //向房间内所有用户发送  发送房间内全部人员的名字
                 sendRoomAll(strOnline);
             }
@@ -607,7 +605,7 @@ public class ServerProcess extends Thread {
             strOnline += "|" + room.getRoomStatus();//房间状态
         }
         sendAll(strOnline);
-        System.out.println(strOnline);
+        System.out.println("[info] 在线人数:"+strOnline);
     }
 
 
@@ -696,10 +694,10 @@ public class ServerProcess extends Thread {
     //////////////////////////////////////////////////////////////////////////////////
     Thread gameServerThread;
     GameServer server;
-    void startGameServer(int num, int room_num){
-        // TODO 分配不同的PORT给服务器
+    void startGameServer(int num, int port){
+        System.out.println("[info] New game server, port: " + port);
         gameServerThread = new Thread(()->{
-            server = new GameServer(num);
+            server = new GameServer(num, port);
             server.run();
         });
         gameServerThread.start();

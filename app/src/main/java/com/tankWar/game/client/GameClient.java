@@ -16,6 +16,7 @@ public class GameClient {
 
     // 客户端Socket
     Socket clientSocket;
+    int port;
 
     // 输入输出数据流
     DataOutputStream out;
@@ -32,10 +33,15 @@ public class GameClient {
         this.id = id;
     }
 
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     // 初始化连接 连接正常就不会抛出异常
     public void connect() throws IOException, TimeoutException {
         // TODO
-        clientSocket = new Socket(Config.ip, Config.port);
+        System.out.println("[info] New socket, port: " + this.port);
+        clientSocket = new Socket(Config.ip, this.port);
         clientSocket.setSoTimeout(1000);
 
         // 初始化输入输出端口
@@ -142,7 +148,7 @@ public class GameClient {
                     return mapper.readValue(msg, OverMsg.class);
                 }
                 default -> {
-                    System.out.println("接收消息异常!");
+                    System.out.println("[error] 接收消息异常!");
                     return  null;
                 }
             }

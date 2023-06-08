@@ -344,12 +344,12 @@ public class Client extends Stage {
                             String judge = st.nextToken();
                             if(judge.equals("succeed")){
 //                                System.out.println("game begin!!!!!!!");
-
+                                String port = st.nextToken();
                                 //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
                                 Platform.runLater(() -> {
 
                                     // TODO: 添加GamePane
-                                    startGame();
+                                    startGame(Integer.parseInt(port));
 
                                 });
                             }
@@ -384,8 +384,9 @@ public class Client extends Stage {
 
     Stage gameStage;
     GamePane gamePane;
-    void startGame(){
-        gamePane = new GamePane();
+    void startGame(int port){
+        System.out.println("[info] get port: "+port);
+        gamePane = new GamePane(port);
         Scene scene = new Scene(gamePane);
 
         gameStage = new Stage();
@@ -403,14 +404,14 @@ public class Client extends Stage {
             case "start" -> {
                 gameStatus="play";
                 this.gameWaitWindow.changeStatus("play");
-                System.out.println("clientStatus: "+gameStatus);
+                System.out.println("[info] clientStatus: "+gameStatus);
             }
             case "end" -> {
                 gameStatus="ready";
                 this.gameWaitWindow.changeStatus("ready");
 //                gamePane.closeCamePane();
                 out.println("gameOver");
-                System.out.println("clientStatus: "+gameStatus);
+                System.out.println("[info] clientStatus: "+gameStatus);
             }
         }
     }

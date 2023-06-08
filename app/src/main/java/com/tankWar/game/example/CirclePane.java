@@ -38,7 +38,7 @@ public class CirclePane extends HBox {
                         case DOWN: Y += speed; break;
                         case LEFT: X -= speed; break;
                         case RIGHT: X += speed; break;
-                        default: System.out.println("Input error");
+                        default: System.out.println("[error] Input error");
                     }
                 }
 
