@@ -28,7 +28,8 @@ public class ChatServer extends Thread {
     @Override
     public void run() {
         try {
-            serverSocket = new ServerSocket(this.serverPort); // 启动服务
+            serverSocket = new ServerSocket(); // 启动服务
+            serverSocket.bind(new InetSocketAddress(serverAddress, this.serverPort));
             bServerIsRunning = true;
             System.out.println("服务器名称:"+serverAddress.getHostName());
             System.out.println("服务器IP:"+serverAddress.getHostAddress());

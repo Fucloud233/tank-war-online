@@ -56,10 +56,23 @@ public class GameServer {
         out = new DataOutputStream[num];
     }
 
+    public void closeServer(){
+        try {
+            System.out.println("[info] Socket关闭");
+//            for(int i = 0; i< player_num; i++) {
+//                sockets[i].close();
+//            }
+            serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // 运行函数
     public void run()  {
         // 1.建立TCP连接
         try {
+            // TODO
             serverSocket = new ServerSocket(Config.port);
             ServerPrompt.RunSuccess.print();
 

@@ -10,6 +10,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 public class GamePane extends BorderPane {
     // 与客户端交互
     GameClient client;
+    GamePane myself;
     // 记录游戏是否结束
     boolean isOver = false;
 
@@ -43,9 +45,14 @@ public class GamePane extends BorderPane {
 
     // 构造函数
     public GamePane() {
+        myself = this;
         this.initEntity();
         this.initPane();
         this.initAction();
+    }
+
+    public void closeCamePane(){
+        client.closeSocket();
     }
 
     // 连接服务器
@@ -63,7 +70,7 @@ public class GamePane extends BorderPane {
             return;
         }
         catch (IOException e) {
-            System.out.println("[Error] 连接失败!");
+            System.out.println("[Error] 连接失败!"+e);
             return;
         }
 
@@ -264,9 +271,10 @@ public class GamePane extends BorderPane {
             // todo 显示结算页面
             Platform.runLater(()->{
                 OverDialog dialog = new OverDialog(msg.getScores());
-                boolean isRetRoom = dialog.display();
-
-                System.out.println(isRetRoom?"返回房间":"返回大厅");
+                dialog.display();
+                Stage stage = (Stage) myself.getScene().getWindow();
+                stage.close();
+//                System.out.println(isRetRoom?"返回房间":"返回大厅");
             });
         }
     };

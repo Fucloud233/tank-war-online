@@ -3,6 +3,7 @@ package com.tankWar.lobby;
 
 import com.tankWar.game.GamePane;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.WindowEvent;
 
 
 import java.io.*;
@@ -341,7 +343,7 @@ public class Client extends Stage {
                             //获取到是否成功
                             String judge = st.nextToken();
                             if(judge.equals("succeed")){
-                                System.out.println("game begin!!!!!!!");
+//                                System.out.println("game begin!!!!!!!");
 
                                 //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
                                 Platform.runLater(() -> {
@@ -371,16 +373,45 @@ public class Client extends Stage {
 
 
     ///////////////////////////////////////////////////////////////////////////////////
+    /*
+    * gameStatus:
+    * lobby: 在大厅
+    * play: 已经开始游戏
+    * wait: 进入房间
+    * ready: 准备但没开始游戏
+    * */
+    String gameStatus;
 
     Stage gameStage;
+    GamePane gamePane;
     void startGame(){
-        GamePane gamePane = new GamePane();
+        gamePane = new GamePane();
         Scene scene = new Scene(gamePane);
 
         gameStage = new Stage();
         gameStage.setTitle("坦克大战联机版");
         gameStage.setScene(scene);
         gameStage.setResizable(false);
-        gameStage.show();
+
+        gameStatusChange("start");
+        gameStage.showAndWait();
+        gameStatusChange("end");
+    }
+
+    void gameStatusChange(String status){
+        switch (status){
+            case "start" -> {
+                gameStatus="play";
+                this.gameWaitWindow.changeStatus("play");
+                System.out.println("clientStatus: "+gameStatus);
+            }
+            case "end" -> {
+                gameStatus="ready";
+                this.gameWaitWindow.changeStatus("ready");
+//                gamePane.closeCamePane();
+                out.println("gameOver");
+                System.out.println("clientStatus: "+gameStatus);
+            }
+        }
     }
 }

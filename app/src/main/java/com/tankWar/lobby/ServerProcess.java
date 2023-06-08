@@ -1,6 +1,7 @@
 package com.tankWar.lobby;
 
 
+import com.tankWar.game.server.Config;
 import com.tankWar.game.server.GameServer;
 
 import java.io.*;
@@ -20,6 +21,7 @@ public class ServerProcess extends Thread {
     private String RoomNum;//用户所在的房间号
     private String account;//当前用户的账号
     private String nickname;
+    private int[] gamePortList = {};
 
     //维护的全局信息
     private static ArrayList<Room> rooms=new ArrayList<>();//维护的每个房间
@@ -86,6 +88,8 @@ public class ServerProcess extends Thread {
                 }else if(strKey.equals("check status")){
                     //检查房间内的用户是否都准备好了
                     checkifALLready();
+                }else if(strKey.equals("gameOver")){
+                    processGameOver();
                 }
             }
         } catch (IOException e) { // 用户关闭客户端造成此异常，关闭该用户套接字。
@@ -117,7 +121,7 @@ public class ServerProcess extends Thread {
                     room.setRoomStatus();
 
                     // todo： 添加GameServer
-                    startGameServer(room.getUser_num());
+                    startGameServer(room.getUser_num(), Config.port + i);
 
                     //返回给客户端
                     sendAll("begin game|succeed");
@@ -690,12 +694,23 @@ public class ServerProcess extends Thread {
     }
 
     //////////////////////////////////////////////////////////////////////////////////
-    void startGameServer(int num){
-        Thread t = new Thread(()->{
-            GameServer server = null;
+    Thread gameServerThread;
+    GameServer server;
+    void startGameServer(int num, int room_num){
+        // TODO 分配不同的PORT给服务器
+        gameServerThread = new Thread(()->{
             server = new GameServer(num);
             server.run();
         });
-        t.start();
+        gameServerThread.start();
+    }
+
+    void processGameOver(){
+        if(gameServerThread!=null){
+            gameServerThread.interrupt();
+            server.closeServer();
+            System.out.println("[info] 服务端关闭");
+        }
+
     }
 }

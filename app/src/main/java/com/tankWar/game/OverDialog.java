@@ -11,9 +11,9 @@ public class OverDialog {
     int[] scores;
 
     Button retRoomBtn = new Button("返回房间");
-    Button retLobbyBtn = new Button("返回大厅");
+//    Button retLobbyBtn = new Button("返回大厅");
 
-    boolean isRetRoom;
+//    boolean returnRoom;
 
     Stage primayStage = new Stage();
     HBox mainPane = new HBox();
@@ -35,26 +35,27 @@ public class OverDialog {
 
         // 添加监听
         retRoomBtn.setOnAction(e->{
-            this.isRetRoom = true;
+//            this.returnRoom = true;
             this.primayStage.close();
         });
 
-        retLobbyBtn.setOnAction(e->{
-            this.isRetRoom = false;
-            this.primayStage.close();
-        });
+//        retLobbyBtn.setOnAction(e->{
+//            this.isRetRoom = false;
+//            this.primayStage.close();
+//        });
 
         // todo 显示结算页面
 
         // 添加按钮
-        mainPane.getChildren().addAll(retLobbyBtn, retRoomBtn);
+//        mainPane.getChildren().addAll(retLobbyBtn, retRoomBtn);
+        mainPane.getChildren().addAll(retRoomBtn);
     }
 
     // 返回用户选择结果
-    public boolean display() {
-        System.out.println("show");
+    public void display() {
+//        System.out.println("show");
 
         primayStage.showAndWait();
-        return isRetRoom;
+//        return returnRoom;
     }
 }

@@ -34,12 +34,21 @@ public class GameClient {
 
     // 初始化连接 连接正常就不会抛出异常
     public void connect() throws IOException, TimeoutException {
+        // TODO
         clientSocket = new Socket(Config.ip, Config.port);
         clientSocket.setSoTimeout(1000);
 
         // 初始化输入输出端口
         out = new DataOutputStream(clientSocket.getOutputStream());
         in = new DataInputStream(clientSocket.getInputStream());
+    }
+
+    public void closeSocket(){
+        try {
+            this.clientSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // 发送消息

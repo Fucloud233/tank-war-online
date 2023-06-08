@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.StringTokenizer;
+
 public class GameWaitWindow {
     ListView<String> userListView;
     //连接相关
@@ -33,19 +34,21 @@ public class GameWaitWindow {
     private Scene roomScene;//自己的场景
     private Scene lobbyScene;//接收传过来的场景
     private Stage primaryStage;//接收传过来的主舞台
-    public Boolean isRoomOwner=false;   //是否为房主 在CreateRoomWindow中将其设置为true
+    public Boolean isRoomOwner = false;   //是否为房主 在CreateRoomWindow中将其设置为true
     private Button PlayGameBtn;  //开始游戏/准备按钮
+    Button exitRoomBtn;
 
-    public GameWaitWindow(Socket s,String name,String account,Stage primaryStage,Scene lobbyScene) throws IOException{
+    public GameWaitWindow(Socket s, String name, String account, Stage primaryStage, Scene lobbyScene) throws IOException {
         this.socket = s;
-        this.name=name;
-        this.account=account;
-        this.primaryStage=primaryStage;
-        this.lobbyScene=lobbyScene;
+        this.name = name;
+        this.account = account;
+        this.primaryStage = primaryStage;
+        this.lobbyScene = lobbyScene;
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
     }
-    void ShowWindow(){
+
+    void ShowWindow() {
         //打印是否为房主进行测试
         System.out.println(isRoomOwner);
 
@@ -75,7 +78,7 @@ public class GameWaitWindow {
         PlayGameBtn.setOnAction(e -> beginGame()); //退出房间的事件
 
         //退出房间按钮
-        Button exitRoomBtn = new Button("退出房间");
+        exitRoomBtn = new Button("退出房间");
         exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
         exitRoomBtn.setOnAction(e -> exitRoom()); //退出房间的事件
 
@@ -94,7 +97,7 @@ public class GameWaitWindow {
         BottomBox.getChildren().add(ButtonBox);
         BottomBox.getChildren().add(vBox);
 
-        VBox userListBox=new VBox();
+        VBox userListBox = new VBox();
         // 创建一个ListView来显示房间内的用户   在下面对聊天对象更新的函数中进行更新ListView
         userListView = new ListView<>(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
 
@@ -109,7 +112,7 @@ public class GameWaitWindow {
         borderPane.setCenter(userListBox);
         borderPane.setBottom(BottomBox);
         //场景切换
-        roomScene=new Scene(borderPane,800,700);
+        roomScene = new Scene(borderPane, 800, 700);
         primaryStage.setTitle("游戏房间");
         primaryStage.setScene(roomScene);
 
@@ -124,17 +127,19 @@ public class GameWaitWindow {
 
     }
 
-    void AddTalkTo(String strOnline){
+    void AddTalkTo(String strOnline) {
         listOnline.getItems().add(strOnline);
         //将用户列表进行放置
         userListView.setItems(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
     }
-    void ClearTalkTo(){
+
+    void ClearTalkTo() {
         listOnline.getItems().clear();
         userListView.setItems(FXCollections.observableArrayList());
     }
-    void AddTxt(String strTalk){
-        txtViewTalk.appendText("\n"+strTalk);
+
+    void AddTxt(String strTalk) {
+        txtViewTalk.appendText("\n" + strTalk);
     }
 
     //退出房间的事件
@@ -165,24 +170,23 @@ public class GameWaitWindow {
     }
 
     //开始游戏  或 进行准备的事件
-    public void beginGame(){
+    public void beginGame() {
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             checkAllPlayersReady();
         }
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
-        else if(PlayGameBtn.getText().equals("准备"))
-        {
+        else if (PlayGameBtn.getText().equals("准备")) {
             //发送一个准备的消息 并传送这个能标识这个用户的键
-            out.println("isReady|"+name);
+            out.println("isReady|" + name);
             System.out.println(name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
             PlayGameBtn.setText("已准备");
         }
         //用户取消准备
-        else if(PlayGameBtn.getText().equals("已准备")){
+        else if (PlayGameBtn.getText().equals("已准备")) {
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
-            out.println("cancelReady|"+name);
+            out.println("cancelReady|" + name);
             // 非房主用户 切换按钮和对应的状态 已准备-准备
             PlayGameBtn.setText("准备");
         }
@@ -201,4 +205,20 @@ public class GameWaitWindow {
         System.out.println("Game started!");
     }
 
+    public void changeStatus(String status) {
+        switch (status) {
+            case "play" -> {
+                this.exitRoomBtn.setDisable(true);
+                this.PlayGameBtn.setDisable(true);
+                if (!isRoomOwner) {
+                    beginGame();
+                }
+            }
+            case "ready" -> {
+                this.exitRoomBtn.setDisable(false);
+                this.PlayGameBtn.setDisable(false);
+
+            }
+        }
+    }
 }
