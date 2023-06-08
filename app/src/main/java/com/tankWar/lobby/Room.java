@@ -13,10 +13,10 @@ public class Room {
     private boolean is_password;//判断有无密码
     private String password;
     private String roomStatus="未开始";//房间状态
-    private static Vector statusUser = new Vector(10,5);//保存房间里用户的状态
-    private static Vector nameUser = new Vector(10,5);//保存房间里面的用户昵称
-    private static Vector onlineUser = new Vector(10, 5);//保存在线用户的用户名
-    private static Vector socketUser = new Vector(10, 5);//保存在线用户的Socket对象
+    private Vector statusUser = new Vector(10,5);//保存房间里用户的状态
+    private Vector nameUser = new Vector(10,5);//保存房间里面的用户昵称
+    private Vector onlineUser = new Vector(10, 5);//保存在线用户的用户名
+    private Vector socketUser = new Vector(10, 5);//保存在线用户的Socket对象
 
     public Room(boolean isPassword,String userName,String account,String roomName,String userNum,String passWord,Socket s){
         this.is_password=isPassword;
