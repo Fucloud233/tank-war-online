@@ -30,7 +30,7 @@ public class ServerProcess extends Thread {
     //连接数据库
     private final String databaseURL="jdbc:mysql://localhost:3306/project";
     private final String userName="root";
-    private final String passWord="yangyt66";
+    private final String passWord="123456";
 
     //处理从客户端Socket接收到的信息
     public ServerProcess(Socket client) throws IOException {
