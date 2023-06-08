@@ -58,6 +58,9 @@ public class GameWaitWindow {
         listOnline = new ComboBox<>();
         listOnline.getItems().add("All");
         txtViewTalk.setEditable(false);  //禁止编辑
+        //调整聊天内容的高度
+        txtViewTalk.setPrefHeight(500);
+
 
         //放置输入聊天内容的盒子
         HBox hBox = new HBox(10);
@@ -105,9 +108,14 @@ public class GameWaitWindow {
         //将用户列表装进Box中
         userListBox.getChildren().add(userListView);
 
-        //最后将组件排布在borderPane上
-        borderPane.setCenter(userListBox);
-        borderPane.setBottom(BottomBox);
+
+        //设置一个新的VBox 装载userList和BottomBox
+        VBox newVBox=new VBox();
+        newVBox.getChildren().add(userListBox);
+        newVBox.getChildren().add(BottomBox);
+        borderPane.setCenter(newVBox);
+
+
         //场景切换
         roomScene=new Scene(borderPane,800,700);
         primaryStage.setTitle("游戏房间");
