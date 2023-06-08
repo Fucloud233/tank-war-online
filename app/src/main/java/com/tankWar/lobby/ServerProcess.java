@@ -89,6 +89,7 @@ public class ServerProcess extends Thread {
                     //检查房间内的用户是否都准备好了
                     checkifALLready();
                 }else if(strKey.equals("gameOver")){
+                    // 游戏结束处理
                     processGameOver();
                 }
             }
@@ -119,11 +120,12 @@ public class ServerProcess extends Thread {
                 if(room.areAllUsersReady()){
                     //用户全都准备好了 开始游戏  改变房间状态/////////////////
                     room.setRoomStatus();
+                    // 分配端口号
                     int serverPort = Config.port + i;
+                    // 创建游戏服务端
                     startGameServer(room.getUser_num(), serverPort);
-                    //返回给客户端
+                    //把游戏开始信息发送给房间内所有用户
                     sendRoomAll("begin game|succeed|"+serverPort);
-//                    out.println("begin game|succeed");
                     //刷新大厅中这个房间的状态
                     freshClientsLobbyOnline();
                 }
@@ -694,6 +696,7 @@ public class ServerProcess extends Thread {
     //////////////////////////////////////////////////////////////////////////////////
     Thread gameServerThread;
     GameServer server;
+    // 创建游戏服务端
     void startGameServer(int num, int port){
         System.out.println("[info] New game server, port: " + port);
         gameServerThread = new Thread(()->{
@@ -703,9 +706,12 @@ public class ServerProcess extends Thread {
         gameServerThread.start();
     }
 
+    // 处理游戏结束
     void processGameOver(){
         if(gameServerThread!=null){
+            // 关闭游戏服务端进程
             gameServerThread.interrupt();
+            // 关闭游戏服务端套接字
             server.closeServer();
             System.out.println("[info] 服务端关闭");
         }

@@ -61,11 +61,8 @@ public class GameServer {
 
     public void closeServer(){
         try {
-            System.out.println("[info] Socket关闭");
-//            for(int i = 0; i< player_num; i++) {
-//                sockets[i].close();
-//            }
             serverSocket.close();
+            System.out.println("[info] Socket关闭");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

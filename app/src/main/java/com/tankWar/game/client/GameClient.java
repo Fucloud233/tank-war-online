@@ -16,6 +16,7 @@ public class GameClient {
 
     // 客户端Socket
     Socket clientSocket;
+    // 服务端端口号
     int port;
 
     // 输入输出数据流
@@ -39,7 +40,6 @@ public class GameClient {
 
     // 初始化连接 连接正常就不会抛出异常
     public void connect() throws IOException, TimeoutException {
-        // TODO
         System.out.println("[info] New socket, port: " + this.port);
         clientSocket = new Socket(Config.ip, this.port);
         clientSocket.setSoTimeout(1000);
@@ -47,14 +47,6 @@ public class GameClient {
         // 初始化输入输出端口
         out = new DataOutputStream(clientSocket.getOutputStream());
         in = new DataInputStream(clientSocket.getInputStream());
-    }
-
-    public void closeSocket(){
-        try {
-            this.clientSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     // 发送消息

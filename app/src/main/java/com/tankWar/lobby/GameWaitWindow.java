@@ -205,6 +205,7 @@ public class GameWaitWindow {
         System.out.println("[info] Game started!");
     }
 
+    // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
     public void changeStatus(String status) {
         switch (status) {
             case "play" -> {

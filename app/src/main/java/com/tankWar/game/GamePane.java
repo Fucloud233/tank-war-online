@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 public class GamePane extends BorderPane {
     // 与客户端交互
     GameClient client;
+    // 用于获取Stage
     GamePane myself;
     // 记录游戏是否结束
     boolean isOver = false;
@@ -45,12 +46,12 @@ public class GamePane extends BorderPane {
 
     // 构造函数
     public GamePane() {
-        myself = this;
 //        this.initEntity();
         this.initPane();
         this.initAction();
     }
 
+    // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
     public GamePane(int port) {
         myself = this;
         this.initEntity(port);
@@ -58,19 +59,15 @@ public class GamePane extends BorderPane {
         this.initAction();
     }
 
-    public void closeCamePane(){
-        client.closeSocket();
-    }
-
     // 连接服务器
     void initEntity(int port) {
         client = new GameClient();
+        // 指定服务端的端口号
         client.setPort(port);
         try {
             System.out.println("[info] 正在连接服务端");
             // 与服务端连接
             client.connect();
-//            System.out.println("[Info] 连接成功!");
         }
         catch (TimeoutException e) {
             System.out.println("[Error] 连接超时!");
@@ -275,13 +272,11 @@ public class GamePane extends BorderPane {
             // 显示结束页面
             isOver = true;
 
-            // todo 显示结算页面
             Platform.runLater(()->{
                 OverDialog dialog = new OverDialog(msg.getScores());
                 dialog.display();
                 Stage stage = (Stage) myself.getScene().getWindow();
                 stage.close();
-//                System.out.println(isRetRoom?"返回房间":"返回大厅");
             });
         }
     };

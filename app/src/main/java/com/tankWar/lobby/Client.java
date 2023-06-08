@@ -381,11 +381,12 @@ public class Client extends Stage {
     * ready: 准备但没开始游戏
     * */
     String gameStatus;
-
     Stage gameStage;
     GamePane gamePane;
+    // 开始游戏
     void startGame(int port){
         System.out.println("[info] get port: "+port);
+        // 创建对应端口号的游戏Pane
         gamePane = new GamePane(port);
         Scene scene = new Scene(gamePane);
 
@@ -394,8 +395,12 @@ public class Client extends Stage {
         gameStage.setScene(scene);
         gameStage.setResizable(false);
 
+        // 设置游戏状态为Start
         gameStatusChange("start");
+
         gameStage.showAndWait();
+
+        // 设置游戏状态为End
         gameStatusChange("end");
     }
 
@@ -403,13 +408,16 @@ public class Client extends Stage {
         switch (status){
             case "start" -> {
                 gameStatus="play";
+                // 设置房间窗口状态为正在游戏
                 this.gameWaitWindow.changeStatus("play");
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
             case "end" -> {
                 gameStatus="ready";
+                // 设置房间窗口状态为准备开始
                 this.gameWaitWindow.changeStatus("ready");
 //                gamePane.closeCamePane();
+                // 发送游戏结束信息给服务端
                 out.println("gameOver");
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
