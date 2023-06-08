@@ -113,6 +113,8 @@ public class GameWaitWindow {
         int itemHeight = 60; // 设置每个条目的高度（根据实际情况调整）
         userListView.setPrefHeight(maxRows * itemHeight);
         userListView.setPadding(new Insets(5));
+
+
         txtViewTalk.setPadding(new Insets(5));
 
         //修改边框颜色
@@ -134,13 +136,12 @@ public class GameWaitWindow {
                     setFont(Font.font("Arial", FontWeight.BOLD, 20));
                     setTextFill(Color.WHITE);
                     setBackground(new Background(new BackgroundFill(Color.web("#494f3c"), null, null)));
-                    // 在此处添加任何其他样式或自定义
                 } else {
                     setText(null);
                 }
             }
         });
-
+        userListView.setDisable(true);
         //将用户列表装进Box中
         userListBox.getChildren().add(userListView);
         //设置一个新的VBox 装载userList和BottomBox
