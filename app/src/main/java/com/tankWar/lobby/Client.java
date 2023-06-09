@@ -410,6 +410,7 @@ public class Client extends Stage {
                 gameStatus="play";
                 // 设置房间窗口状态为正在游戏
                 this.gameWaitWindow.changeStatus("play");
+                primaryStage.hide();
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
             case "end" -> {
@@ -418,6 +419,7 @@ public class Client extends Stage {
                 this.gameWaitWindow.changeStatus("ready");
 //                gamePane.closeCamePane();
                 // 发送游戏结束信息给服务端
+                primaryStage.show();
                 out.println("gameOver");
                 System.out.println("[info] clientStatus: "+gameStatus);
             }

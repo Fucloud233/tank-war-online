@@ -209,15 +209,15 @@ public class GameWaitWindow {
     public void changeStatus(String status) {
         switch (status) {
             case "play" -> {
-                this.exitRoomBtn.setDisable(true);
-                this.PlayGameBtn.setDisable(true);
+//                this.exitRoomBtn.setDisable(true);
+//                this.PlayGameBtn.setDisable(true);
                 if (!isRoomOwner) {
                     beginGame();
                 }
             }
             case "ready" -> {
-                this.exitRoomBtn.setDisable(false);
-                this.PlayGameBtn.setDisable(false);
+//                this.exitRoomBtn.setDisable(false);
+//                this.PlayGameBtn.setDisable(false);
 
             }
         }
