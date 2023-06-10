@@ -1,7 +1,7 @@
-2
-100 100 LEFT
-200 200 RIGHT
-15 30
+2 # 玩家数量
+100 100 LEFT # p1出生点(x, y, dir)
+200 200 RIGHT # p2 出生点
+15 30 # 地图大小(row, col)
 SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
 S                            S
 S                            S
@@ -17,4 +17,5 @@ S                            S
 S                            S
 S                            S
 SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
-SS
+
+# 注意最后要留一行空格 在实际制作地图文件时，需要删除#注释

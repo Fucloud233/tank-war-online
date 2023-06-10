@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.msg.MessageType;
 import com.tankWar.game.msg.OverMsg;
-import com.tankWar.game.msg.TankInfo;
 
 import java.io.*;
 import java.net.*;
@@ -103,18 +102,13 @@ public class GameServer {
 
     // 发送初始化信息
     void sendInitMsg() throws IOException{
-        // todo 添加地图信息
+        // 添加地图信息
         int mapId = 0;
-
-        // todo 添加坦克信息
-        TankInfo[] tanks = new TankInfo[2];
-        tanks[0] = new TankInfo(0, 100, 100);
-        tanks[1] = new TankInfo(1, 200, 200);
 
         // 广播发送所有坦克初始化信息
         for (int i = 0; i < player_num; i++) {
             // 配置消息的基本信息
-            InitMsg message = new InitMsg(i, mapId, tanks);
+            InitMsg message = new InitMsg(i, mapId);
             // 转换成JSON格式并发送
             String jsonMsg = mapper.writeValueAsString(message);
             out[i].writeUTF(jsonMsg);

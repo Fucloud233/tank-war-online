@@ -10,21 +10,28 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-public class GamePane extends BorderPane {
+public class GamePane extends VBox {
     // 与客户端交互
     GameClient client;
     // 用于获取Stage
     GamePane myself;
     // 记录游戏是否结束
     boolean isOver = false;
+    // 记录局数
+    int gameNum, curGameNum;
+    // 记录玩家人数
+    int playerNum, restPlayerNum;
 
-    // 用于绘制的组件 (JavaFX相关内容)
+    // 1. 状态栏
+    BorderPane statusPane = new BorderPane();
+    // 2. 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
 
@@ -54,13 +61,13 @@ public class GamePane extends BorderPane {
     // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
     public GamePane(int port) {
         myself = this;
-        this.initEntity(port);
+        this.initConnect(port);
         this.initPane();
         this.initAction();
     }
 
-    // 连接服务器
-    void initEntity(int port) {
+    // 连接服务器 initConnect
+    void initConnect(int port) {
         client = new GameClient();
         // 指定服务端的端口号
         client.setPort(port);
@@ -74,7 +81,7 @@ public class GamePane extends BorderPane {
             return;
         }
         catch (IOException e) {
-            System.out.println("[Error] 连接失败!"+e);
+            System.out.println("[Error] 连接失败!\n"+e);
             return;
         }
 
@@ -85,18 +92,24 @@ public class GamePane extends BorderPane {
 
     // GamePane初始化函数
     void initPane() {
-        // 设置GamePane
-        this.setWidth(Config.MapMaxWidth);
-        this.setHeight(Config.MapMaxHeight);
-        this.setStyle("-fx-background-color: Black");
-        this.setPadding(new Insets(Config.MapPaddingSize));
-        this.setCenter(canvas);
+        // 设置statusPane
+        statusPane.setPrefSize(Config.MapMaxWidth, 150);
 
         // 设置Canvas
         this.canvas.requestFocus();
         this.canvas.setFocusTraversable(true);
         canvas.setWidth(Config.MapMaxWidth);
         canvas.setHeight(Config.MapMaxHeight);
+
+        // 设置GamePane
+        this.setWidth(Config.MapMaxWidth);
+        this.setHeight(Config.MapMaxHeight);
+        this.setStyle("-fx-background-color: Black");
+        this.setPadding(new Insets(Config.MapPaddingSize));
+
+        // 添加子Pane
+        this.getChildren().add(statusPane);
+        this.getChildren().add(canvas);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
@@ -116,7 +129,7 @@ public class GamePane extends BorderPane {
                 // (不同方向 || 停止移动) & 移动方向不是碰撞方向
                 if((myTank.getDir() != dir || myTank.getIsStop() )&& dir != collideDir) {
                     // 向服务端发送移动消息
-                    client.sendMoveMsg(dir);
+                    client.sendMoveMsg(dir, myTank.getX(), myTank.getY());
                 }
 
                 myTank.setDirection(dir);
@@ -144,7 +157,7 @@ public class GamePane extends BorderPane {
                 // 如果松开的按键是当前的移动的方向 则停止
                 if (myTank.getDir() == Utils.DirMap.get(code) && !myTank.getIsStop()) {
                     // 告知服务端停止移动
-                    client.sendMoveMsg(Direction.CENTER);
+                    client.sendMoveMsg(Direction.CENTER, myTank.getX(), myTank.getY());
                     myTank.setIsStop(true);
                 }
             }
@@ -158,6 +171,15 @@ public class GamePane extends BorderPane {
         logicThread.start();
     }
 
+    void initEntity(int id,  int mapId) {
+        // 1. 清除子弹
+        bullets.clear();
+        // 2. 加载地图 (包括建筑物信息+坦克信息)
+        loadMap(mapId);
+        // 3. 设置自己的坦克
+        myTank = tanks[id];
+    }
+
     // 加载地图函数
     void loadMap(int mapId) {
         // 如果地图编号改变则重新加载
@@ -168,6 +190,9 @@ public class GamePane extends BorderPane {
 
         // 设置建筑物信息
         this.buildings = map.getBuildings();
+
+        // 设置坦克初始初始化信息
+        this.tanks = map.getTanks();
     }
 
     // 显示游戏画面
@@ -238,6 +263,10 @@ public class GamePane extends BorderPane {
             } else {
                 tanks[id].setIsStop(true);
             }
+
+            // 重置坦克的坐标信息
+            tanks[id].setX(msg.getX());
+            tanks[id].setY(msg.getY());
         }
 
         // 处理服务端发来的其他坦克开火请求
@@ -251,21 +280,7 @@ public class GamePane extends BorderPane {
 
         // 处理服务端初始化游戏请求
         private void handleInit(InitMsg msg) {
-            // 1. 清除子弹
-            bullets.clear();
-
-            // 2. 加载地图
-            loadMap(msg.getMapId());
-
-            // 3. 取出坦克信息
-            TankInfo[] infos = msg.getTanks();
-            int len = infos.length;
-
-            // 重置坦克信息
-            tanks = new Tank[len];
-            for(TankInfo info:infos)
-                tanks[info.getId()] = new Tank(info);
-            myTank = tanks[msg.getId()];
+            initEntity(msg.getId(), msg.getMapId());
         }
 
         private void handleOver(OverMsg msg) {
@@ -400,5 +415,13 @@ public class GamePane extends BorderPane {
         }
 
         return false;
+    }
+
+    void processGameNum() {
+
+    }
+
+    void processPlayerNum() {
+
     }
 }
