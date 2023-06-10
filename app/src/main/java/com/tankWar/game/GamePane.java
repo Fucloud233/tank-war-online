@@ -1,5 +1,6 @@
 package com.tankWar.game;
 
+import com.tankWar.GameStatusPane;
 import com.tankWar.game.client.GameClient;
 import com.tankWar.game.msg.*;
 import com.tankWar.game.entity.*;
@@ -8,29 +9,29 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-public class GamePane extends VBox {
+public class GamePane extends HBox {
     // 与客户端交互
     GameClient client;
     // 用于获取Stage
     GamePane myself;
     // 记录游戏是否结束
     boolean isOver = false;
-    // 记录局数
-    int gameNum, curGameNum;
-    // 记录玩家人数
-    int playerNum, restPlayerNum;
 
-    // 1. 状态栏
-    BorderPane statusPane = new BorderPane();
+    // 1. 信息栏
+    VBox InfoPane = new VBox();
+    GameStatusPane statusPane = new GameStatusPane();
     // 2. 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
@@ -92,8 +93,18 @@ public class GamePane extends VBox {
 
     // GamePane初始化函数
     void initPane() {
-        // 设置statusPane
-        statusPane.setPrefSize(Config.MapMaxWidth, 150);
+        // 设置InfoPane
+        Label titleLabel = new Label("游戏状态");
+        titleLabel.setStyle("-fx-font-style: BOLD");
+        titleLabel.setStyle("-fx-font-family: 黑体;");
+        titleLabel.setStyle("-fx-font-size: 28px;");
+
+        Separator separator = new Separator();
+
+        InfoPane.setSpacing(5);
+        InfoPane.setPrefSize(150, Config.MapMaxHeight);
+        InfoPane.setPadding(new Insets(Config.MapPaddingSize));
+        InfoPane.getChildren().addAll(titleLabel, separator, statusPane);
 
         // 设置Canvas
         this.canvas.requestFocus();
@@ -104,12 +115,12 @@ public class GamePane extends VBox {
         // 设置GamePane
         this.setWidth(Config.MapMaxWidth);
         this.setHeight(Config.MapMaxHeight);
-        this.setStyle("-fx-background-color: Black");
+//        this.setStyle("-fx-background-color: Black");
         this.setPadding(new Insets(Config.MapPaddingSize));
 
         // 添加子Pane
-        this.getChildren().add(statusPane);
         this.getChildren().add(canvas);
+        this.getChildren().add(InfoPane);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);
@@ -171,17 +182,11 @@ public class GamePane extends VBox {
         logicThread.start();
     }
 
-    void initEntity(int id,  int mapId) {
+    void initEntity(int mapId) {
         // 1. 清除子弹
         bullets.clear();
-        // 2. 加载地图 (包括建筑物信息+坦克信息)
-        loadMap(mapId);
-        // 3. 设置自己的坦克
-        myTank = tanks[id];
-    }
 
-    // 加载地图函数
-    void loadMap(int mapId) {
+        // 2. 加载地图 (包括建筑物信息+坦克信息)
         // 如果地图编号改变则重新加载
         if(mapId != this.map.getId()) {
             if(!this.map.loadMap(mapId))
@@ -193,12 +198,20 @@ public class GamePane extends VBox {
 
         // 设置坦克初始初始化信息
         this.tanks = map.getTanks();
+
+        // 3. 设置自己的坦克 (客户端保存玩家id)
+        myTank = tanks[client.getId()];
     }
+
 
     // 显示游戏画面
     private void showGame() {
         // 每次显示都擦除整个界面，防止残影
         this.context.clearRect(0, 0, Config.MapMaxWidth, Config.MapMaxHeight);
+
+        // 绘制黑色背景
+        this.context.setStroke(Color.BLACK);
+        this.context.fillRect(0, 0, Config.MapMaxWidth, Config.MapMaxHeight);
 
         // 绘制坦克
         for (Tank tank: tanks)
@@ -222,8 +235,6 @@ public class GamePane extends VBox {
 
     // 处理连接Task
     Task<Void> connectTask = new Task<>() {
-        int count = 0;
-
         @Override
         protected Void call() throws InterruptedException {
             while (!isOver) {
@@ -235,7 +246,6 @@ public class GamePane extends VBox {
 
                 // 如果没有接收到消息则跳过
                 if(msg == null) {
-                    count++;
 //                    System.out.println("为接收到消息 " + count);
                     continue;
                 }
@@ -244,6 +254,7 @@ public class GamePane extends VBox {
                     case Move -> handleMove((MoveMsg) msg);
                     case Shoot -> handleShoot((ShootMsg) msg);
                     case Init ->  handleInit((InitMsg) msg);
+                    case Reset -> handleReset((ResetMsg) msg);
                     case Over -> handleOver((OverMsg) msg);
                     default -> {
                     }
@@ -280,7 +291,26 @@ public class GamePane extends VBox {
 
         // 处理服务端初始化游戏请求
         private void handleInit(InitMsg msg) {
-            initEntity(msg.getId(), msg.getMapId());
+            // 修改状态栏信息
+            Platform.runLater(()->{
+                statusPane.setTotalGameNum(msg.getTotalGameNum());
+                statusPane.setCurGameNum(1);
+                statusPane.setTotalPlayerNum(msg.getPlayerNum());
+                statusPane.setRestPlayerNum(msg.getPlayerNum());
+            });
+
+            initEntity(msg.getMapId());
+        }
+
+        private void handleReset(ResetMsg msg) {
+            // 修改状态栏信息
+            Platform.runLater(()-> {
+                statusPane.setCurGameNum(msg.getCurGameNum());
+                statusPane.setTotalPlayerNum(msg.getPlayerNum());
+                statusPane.setRestPlayerNum(msg.getPlayerNum());
+            });
+
+            initEntity(msg.getMapId());
         }
 
         private void handleOver(OverMsg msg) {
@@ -300,14 +330,14 @@ public class GamePane extends VBox {
     Task<Void> showTask = new Task<>() {
         @Override
         protected Void call() throws Exception {
-            while (!isOver) {
-                // 延时
-                Thread.sleep(Config.RefreshRate);
-                // 使用runLater来多线程处理JavaFX组件
-                Platform.runLater(() -> showGame());
-            }
+        while (!isOver) {
+            // 延时
+            Thread.sleep(Config.RefreshRate);
+            // 使用runLater来多线程处理JavaFX组件
+            Platform.runLater(() -> showGame());
+        }
 
-            return null;
+        return null;
         }
     };
 
@@ -315,50 +345,54 @@ public class GamePane extends VBox {
     Task<Void> logicTask = new Task<>() {
         @Override
         protected Void call() throws Exception {
-            while (!isOver) {
-                // 延时
-                Thread.sleep(Config.RefreshRate);
+        while (!isOver) {
+            // 延时
+            Thread.sleep(Config.RefreshRate);
 
-                // 处理移动按键输入
-                for(Tank tank: tanks) {
-                    // 如果不再移动或移动方向与碰撞方向相同 则不做处理
-                    if (tank.getIsStop() || tank.getDir() == collideDir)
-                        continue;
+            // 处理移动按键输入
+            for(Tank tank: tanks) {
+                // 如果不再移动或移动方向与碰撞方向相同 则不做处理
+                if (tank.getIsStop() || tank.getDir() == collideDir)
+                    continue;
 
-                    // 移动并记录先前位置
-                    double x = tank.getX(), y = tank.getY();
-                    tank.move();
+                // 移动并记录先前位置
+                double x = tank.getX(), y = tank.getY();
+                tank.move();
 
-                    // 如果发生碰撞 则归位并暂停
-                    if(processTankCollide(tank)) {
-                        tank.setX(x); tank.setY(y);
-                        tank.setIsStop(true);
+                // 如果发生碰撞 则归位并暂停
+                if(processTankCollide(tank)) {
+                    tank.setX(x); tank.setY(y);
+                    tank.setIsStop(true);
 
-                        // 当该方向发生碰撞时 则记录之
-                        if(tank == myTank) {
-                            collideDir = myTank.getDir();
-                        }
+                    // 当该方向发生碰撞时 则记录之
+                    if(tank == myTank) {
+                        collideDir = myTank.getDir();
                     }
-                    else
-                        // 不再碰撞时则不碰撞
-                        collideDir = Direction.INVALID;
                 }
-
-                // 处理子弹发射
-                for (int i=bullets.size()-1; i>=0; i--) {
-                    Bullet bullet = bullets.get(i);
-                    // 若子弹已死亡，则移除列表
-                    if (!bullet.isAlive()) {
-                        bullets.remove(i);
-                    }
-
-                    bullet.move();
-                    if(processBulletCollide(bullet))
-                        bullet.setAlive(false);
-                }
+                else
+                    // 不再碰撞时则不碰撞
+                    collideDir = Direction.INVALID;
             }
 
-            return null;
+            // 处理子弹发射
+            for (int i=bullets.size()-1; i>=0; i--) {
+                Bullet bullet = bullets.get(i);
+                // 若子弹已死亡，则移除列表
+                if (!bullet.isAlive()) {
+                    bullets.remove(i);
+                }
+
+                bullet.move();
+                if(processBulletCollide(bullet)) {
+                    bullet.setAlive(false);
+
+                    // 减少玩家数量
+                    Platform.runLater(()->statusPane.decResetPlayerNum());
+                }
+            }
+        }
+
+        return null;
         }
     };
 
@@ -415,13 +449,5 @@ public class GamePane extends VBox {
         }
 
         return false;
-    }
-
-    void processGameNum() {
-
-    }
-
-    void processPlayerNum() {
-
     }
 }
