@@ -80,7 +80,18 @@ public class GameMap {
     }
 
     public Tank[] getTanks() {
-        return flag ? tanks.clone() : null;
+        if(!flag) {
+            return null;
+        }
+
+        // 使用这种方法 复制坦克信息
+        int size = this.tanks.length;
+        Tank[] copyTanks = new Tank[size];
+        for(int i=0; i<size; i++) {
+            copyTanks[i] = new Tank(tanks[i]);
+        }
+
+        return copyTanks;
     }
 
     public float getId() {

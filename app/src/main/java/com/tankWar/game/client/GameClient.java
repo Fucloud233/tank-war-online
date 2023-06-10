@@ -129,12 +129,14 @@ public class GameClient {
                     return mapper.readValue(msg, ShootMsg.class);
                 }
                 case Init->{
-                    // todo Init问题 Id 应该事先分配好
-                    // 这里和原先的receiveInitMsg合并了
+                    // InitMsg会给GameClient分配ID
                     InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
                     this.id = initMsg.getId();
                     return initMsg;
 //                    return mapper.readValue(msg, InitMsg.class);
+                }
+                case Reset -> {
+                    return mapper.readValue(msg, ResetMsg.class);
                 }
                 case Over->{
                     return mapper.readValue(msg, OverMsg.class);
@@ -148,6 +150,10 @@ public class GameClient {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public int getId() {
+        return id;
     }
 }
 

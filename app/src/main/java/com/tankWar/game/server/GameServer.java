@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.msg.MessageType;
 import com.tankWar.game.msg.OverMsg;
+import com.tankWar.game.msg.ResetMsg;
 
 import java.io.*;
 import java.net.*;
@@ -16,12 +17,18 @@ import java.util.Vector;
 // v2 服务端能够记录状态，并且定时发送状态同步消息
 
 public class GameServer {
-    // 记录玩家数量
-    int player_num;
     // 记录游戏
-    int game_num;
+    int totalGameNum;
+    int curGameNum = 0;
+
+    // 记录玩家数量
+    // 考虑有人会退出游戏, 保持id的一致性
+//    int totalPlayerNum;
+    Vector<Integer> totalPlayer;
     // 记录剩余玩家
     Vector<Integer> restPlayer;
+
+    // 记录分数
     int[] scores;
     // 用于终结游戏
     boolean isOver = false;
@@ -40,18 +47,21 @@ public class GameServer {
 
     // 在游戏房间中构造，包含玩家个数
     public GameServer(int num, int port) {
-        // num为游戏中的玩家数量
-        this.player_num = num;
         // 初始化游戏局数
-        this.game_num = 1;
+        this.totalGameNum = 2;
+        this.curGameNum = 1;
         this.port=port;
 
-        // 初始化剩余玩家 和 积分数
+
+        // num为游戏中的玩家数量
+        // 初始化玩家 和 积分数
+        totalPlayer =  new Vector<>(num);
+        for(int i=0; i<num; i++)
+            totalPlayer.add(i);
+        restPlayer = new Vector<>(totalPlayer);
+
         scores = new int[num];
         Arrays.fill(scores, 0);
-        restPlayer =  new Vector<>(num);
-        for(int i=0; i<num; i++)
-            restPlayer.add(i);
 
         // 初始化列表
         sockets = new Socket[num];
@@ -75,7 +85,7 @@ public class GameServer {
             ServerPrompt.RunSuccess.print();
 
             // 建立TCP连接
-            for(int i = 0; i< player_num; i++) {
+            for(int i: totalPlayer) {
 //            System.out.println("正在等待连接");
                 sockets[i] = serverSocket.accept();
                 // 数据流绑定客户端Socket
@@ -94,7 +104,7 @@ public class GameServer {
         }
 
         // 3. 创建多线程连接业务处理每个客户端连接
-        for(int i = 0; i< player_num; i++) {
+        for(int i: totalPlayer) {
             ReceiveThread t = new ReceiveThread(i);
             t.start();
         }
@@ -106,13 +116,26 @@ public class GameServer {
         int mapId = 0;
 
         // 广播发送所有坦克初始化信息
-        for (int i = 0; i < player_num; i++) {
+        for (int i: totalPlayer) {
             // 配置消息的基本信息
-            InitMsg message = new InitMsg(i, mapId);
+            InitMsg message = new InitMsg(i, mapId, totalPlayer.size(), totalGameNum);
             // 转换成JSON格式并发送
             String jsonMsg = mapper.writeValueAsString(message);
             out[i].writeUTF(jsonMsg);
         }
+        ServerPrompt.AllSend.print();
+    }
+
+    // 发送重置信息
+    void sendResetMsg() throws IOException{
+        // 添加地图信息
+        int mapId = 0;
+
+        // 重置消息对于所有人都是相同的
+        ResetMsg message = new ResetMsg(mapId, totalPlayer.size(), curGameNum);
+        // 转换成JSON格式并发送
+        String jsonMsg = mapper.writeValueAsString(message);
+        broadcast(-1, jsonMsg);
         ServerPrompt.AllSend.print();
     }
 
@@ -125,7 +148,7 @@ public class GameServer {
 
     // 广播状态
     void broadcast(int id, String msg) throws IOException {
-        for(int i = 0; i< player_num; i++) {
+        for(int i: totalPlayer) {
             if(i == id)
                 continue;
             out[i].writeUTF(msg);
@@ -156,19 +179,17 @@ public class GameServer {
 
             // 2. 当只剩下一位玩家则重置游戏
             int winnerId = restPlayer.get(0);
-
             // 重置死亡信息
             restPlayer.clear();
-            for(int i=0; i<player_num; i++)
-                restPlayer.add(i);
+            restPlayer.addAll(totalPlayer);
 
             // 3. 加分
             scores[winnerId]++ ;
 
             // 4. 判断是否是最后场游戏
-            game_num--;
-            if(game_num != 0) {
-                sendInitMsg();
+            if(curGameNum < totalGameNum) {
+                curGameNum++;
+                sendResetMsg();
                 return;
             }
 

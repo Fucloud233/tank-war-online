@@ -44,6 +44,11 @@ public class Tank extends Entity {
         this.setDirection(dir);
     }
 
+    // 复制构造函数
+    public Tank(Tank tank) {
+        this(tank.getId(), tank.getX(), tank.getY(), tank.getDir());
+    }
+
     // 设置方向
     public void setDirection(Direction dir) {
         this.dir = dir;
