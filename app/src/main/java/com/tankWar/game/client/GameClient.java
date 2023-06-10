@@ -68,8 +68,8 @@ public class GameClient {
     }
 
     // 发送移动消息
-    public void sendMoveMsg(Direction dir) {
-        MoveMsg moveMsg = new MoveMsg(id, dir);
+    public void sendMoveMsg(Direction dir, double x, double y) {
+        MoveMsg moveMsg = new MoveMsg(id, dir, x, y);
         try {
             String msg = mapper.writeValueAsString(moveMsg);
             this.send(msg);

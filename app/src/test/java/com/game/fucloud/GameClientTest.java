@@ -33,7 +33,7 @@ public class GameClientTest {
         }
 
         // 客户端向服务端发送消息
-        client.sendMoveMsg(Direction.LEFT);
+        client.sendMoveMsg(Direction.LEFT, 0, 0);
     }
 
     // 多个客户端测试
@@ -65,7 +65,7 @@ public class GameClientTest {
         // 测试内容：随机选择客户端想服务端发送消息
         for(int i=0; i<10; i++) {
             int id = ra.nextInt(0, 4);
-            clients[id].sendMoveMsg(Direction.LEFT);
+            clients[id].sendMoveMsg(Direction.LEFT, 0, 0);
         }
     }
 
@@ -92,7 +92,7 @@ public class GameClientTest {
             return;
         }
         // 测试内容：随机选择客户端想服务端发送消息
-        clientA.sendMoveMsg(Direction.LEFT);
+        clientA.sendMoveMsg(Direction.LEFT, 0, 0);
 
         Message msg = clientB.receiveStatusMsg();
         if (msg != null) {
