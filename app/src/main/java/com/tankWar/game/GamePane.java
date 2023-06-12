@@ -13,6 +13,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -52,18 +53,18 @@ public class GamePane extends BorderPane {
     }
 
     // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
-    public GamePane(int port) {
-        myself = this;
-        this.initEntity(port);
+    public GamePane(Socket clientSocket) {
+        this.initEntity(clientSocket);
         this.initPane();
         this.initAction();
     }
 
     // 连接服务器
-    void initEntity(int port) {
+    void initEntity(Socket clientSocket) {
+        System.out.println("[info] socket:"+clientSocket);
         client = new GameClient();
         // 指定服务端的端口号
-        client.setPort(port);
+        client.setSocket(clientSocket);
         try {
             System.out.println("[info] 正在连接服务端");
             // 与服务端连接
@@ -204,16 +205,18 @@ public class GamePane extends BorderPane {
             while (!isOver) {
                 // 延时
                 Thread.sleep(Config.RefreshRate);
-
                 // 尝试接收消息
                 Message msg = client.receiveStatusMsg();
-
+//                System.out.println("finish");
                 // 如果没有接收到消息则跳过
                 if(msg == null) {
                     count++;
+//                    System.out.println("get no message");
 //                    System.out.println("为接收到消息 " + count);
                     continue;
                 }
+
+
 
                 switch(msg.getType()) {
                     case Move -> handleMove((MoveMsg) msg);
@@ -224,6 +227,7 @@ public class GamePane extends BorderPane {
                     }
                 }
             }
+
             return null;
         }
 

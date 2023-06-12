@@ -22,6 +22,7 @@ public class ServerProcess extends Thread {
     private String account;//当前用户的账号
     private String nickname;
     private int[] gamePortList = {};
+    boolean gameStart = false;
 
     //维护的全局信息
     private static ArrayList<Room> rooms=new ArrayList<>();//维护的每个房间
@@ -39,7 +40,8 @@ public class ServerProcess extends Thread {
     //处理从客户端Socket接收到的信息
     public ServerProcess(Socket client) throws IOException {
         socket = client;
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));  // 客户端接收
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        // 客户端接收
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                 socket.getOutputStream())), true);  // 客户端输出
     }
@@ -47,7 +49,7 @@ public class ServerProcess extends Thread {
     //使用while循环来连续读取从客户端发送来的信息  根据不同的信息进行不同的操作执行
     public void run() {
         try {
-            while (true) {
+            while (true&&!gameStart) {
                 strReceive = in.readLine();  // 从服务器端接收一条信息后拆分、解析，并执行相应操作
                 st = new StringTokenizer(strReceive, "|");
                 strKey = st.nextToken();
@@ -121,11 +123,15 @@ public class ServerProcess extends Thread {
                     //用户全都准备好了 开始游戏  改变房间状态/////////////////
                     room.setRoomStatus();
                     // 分配端口号
-                    int serverPort = Config.port + i;
+//                    int serverPort = Config.port + i;
+
+
+
+
                     // 创建游戏服务端
-                    startGameServer(room.getUser_num(), serverPort);
+                    startGameServer(room.getUser_num(), room.getSocketUser());
                     //把游戏开始信息发送给房间内所有用户
-                    sendRoomAll("begin game|succeed|"+serverPort);
+                    sendRoomAll("begin game|succeed");
                     //刷新大厅中这个房间的状态
                     freshClientsLobbyOnline();
                 }
@@ -135,6 +141,7 @@ public class ServerProcess extends Thread {
                 break;
             }
         }
+
     }
 
     ////////////////////////////用户取消准备/////////////////////////
@@ -697,10 +704,15 @@ public class ServerProcess extends Thread {
     Thread gameServerThread;
     GameServer server;
     // 创建游戏服务端
-    void startGameServer(int num, int port){
-        System.out.println("[info] New game server, port: " + port);
+    void startGameServer(int num, Vector<Socket> sockets){
+        Socket[] socketArray = new Socket[sockets.size()];
+        for (int i = 0; i < sockets.size(); i++) {
+            socketArray[i] = sockets.get(i);
+        }
+        gameStart=true;
+//        System.out.println("[info] New game server, port: " + port);
         gameServerThread = new Thread(()->{
-            server = new GameServer(num, port);
+            server = new GameServer(socketArray);
             server.run();
         });
         gameServerThread.start();
@@ -712,7 +724,7 @@ public class ServerProcess extends Thread {
             // 关闭游戏服务端进程
             gameServerThread.interrupt();
             // 关闭游戏服务端套接字
-            server.closeServer();
+//            server.closeServer();
             System.out.println("[info] 服务端关闭");
         }
 

@@ -48,6 +48,8 @@ public class Client extends Stage {
     private Scene lobbyScene; //游戏大厅的场景，方便切换场景
     private Stage primaryStage;
 
+    boolean gameStart =false;
+
 
     public Client(String nickname, String account, Socket socket, BufferedReader in, PrintWriter out) {//因为加上了昵称，所以修改了下传参
         username = nickname;
@@ -196,9 +198,10 @@ public class Client extends Stage {
         }
 
         public void run() {
-            while (true) {
+            while (true&&!gameStart) {
                 try {
                     String strReceive = in.readLine();
+                    System.out.println(strReceive);
                     st = new StringTokenizer(strReceive, "|");
                     String strKey = st.nextToken();
                     //截取消息 显示对应的内容
@@ -343,13 +346,15 @@ public class Client extends Stage {
                             //获取到是否成功
                             String judge = st.nextToken();
                             if(judge.equals("succeed")){
+//                                in.close();
+
 //                                System.out.println("game begin!!!!!!!");
-                                String port = st.nextToken();
+//                                String port = st.nextToken();
                                 //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
                                 Platform.runLater(() -> {
 
                                     // TODO: 添加GamePane
-                                    startGame(Integer.parseInt(port));
+                                    startGame();
 
                                 });
                             }
@@ -384,19 +389,19 @@ public class Client extends Stage {
     Stage gameStage;
     GamePane gamePane;
     // 开始游戏
-    void startGame(int port){
-        System.out.println("[info] get port: "+port);
+    void startGame(){
+//        System.out.println("[info] get port: "+port);
+        // 设置游戏状态为Start
+        gameStatusChange("start");
+
         // 创建对应端口号的游戏Pane
-        gamePane = new GamePane(port);
+        gamePane = new GamePane(this.socket);
         Scene scene = new Scene(gamePane);
 
         gameStage = new Stage();
         gameStage.setTitle("坦克大战联机版");
         gameStage.setScene(scene);
         gameStage.setResizable(false);
-
-        // 设置游戏状态为Start
-        gameStatusChange("start");
 
         gameStage.showAndWait();
 
@@ -408,6 +413,8 @@ public class Client extends Stage {
         switch (status){
             case "start" -> {
                 gameStatus="play";
+//                out.close();
+                gameStart = true;
                 // 设置房间窗口状态为正在游戏
                 this.gameWaitWindow.changeStatus("play");
                 primaryStage.hide();
@@ -415,6 +422,7 @@ public class Client extends Stage {
             }
             case "end" -> {
                 gameStatus="ready";
+                gameStart=false;
                 // 设置房间窗口状态为准备开始
                 this.gameWaitWindow.changeStatus("ready");
 //                gamePane.closeCamePane();

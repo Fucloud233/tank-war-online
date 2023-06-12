@@ -34,23 +34,35 @@ public class GameClient {
         this.id = id;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setSocket(Socket socket) {
+        this.clientSocket = socket;
     }
 
     // 初始化连接 连接正常就不会抛出异常
     public void connect() throws IOException, TimeoutException {
-        System.out.println("[info] New socket, port: " + this.port);
-        clientSocket = new Socket(Config.ip, this.port);
-        clientSocket.setSoTimeout(1000);
+//        System.out.println("[info] New socket, port: " + this.port);
+//        clientSocket = new Socket(Config.ip, this.port);
+//        clientSocket.setSoTimeout(1000);
 
         // 初始化输入输出端口
         out = new DataOutputStream(clientSocket.getOutputStream());
         in = new DataInputStream(clientSocket.getInputStream());
-    }
+        System.out.println(clientSocket);
+        // 获取当前可读取的字节数
+        int availableBytes = in.available();
+        System.out.println("aaaaaaaaaa"+availableBytes);
+        // 跳过可读取的字节数
+        in.skipBytes(availableBytes);
+        System.out.println("bbbbbbbbbb"+in.available());
 
+//        System.out.println(in);
+    }
+    int count=0;
     // 发送消息
     void send(String msg) {
+
+        System.out.println("send!!!!!!!!!!!!!!"+msg+"  "+count);
+        count++;
         try {
             out.writeUTF(msg);
         } catch (IOException e) {
@@ -58,11 +70,15 @@ public class GameClient {
         }
     }
 
+//    boolean hasInit = false;
     String receive() {
         try {
+
+//            System.out.println(in.available());
+            if(in.available()<=0) return "";
             return in.readUTF();
         } catch (IOException e) {
-//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
+            // 处理异常
             return "";
         }
     }
@@ -120,6 +136,8 @@ public class GameClient {
 
             MessageType type = MessageType.valueOf(jsonMsg.get("type").asText());
 
+//            System.out.println("get message");
+
             // 3.1 解析并返回消息
             switch (type) {
                 case Move -> {
@@ -131,6 +149,7 @@ public class GameClient {
                 case Init->{
                     // todo Init问题 Id 应该事先分配好
                     // 这里和原先的receiveInitMsg合并了
+                    System.out.println("get init info");
                     InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
                     this.id = initMsg.getId();
                     return initMsg;

@@ -107,8 +107,9 @@ public class Room {
         System.out.println("[info] 修改后"+statusUser.elementAt(index));
     }
 
-
-
+    public Vector getSocketUser() {
+        return socketUser;
+    }
 
     //返回该房间的房间号，我是直接用房主的账号做房间号的
     public String getRoomNum(){return RoomNum;}

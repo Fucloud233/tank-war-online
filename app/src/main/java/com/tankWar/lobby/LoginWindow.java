@@ -45,7 +45,7 @@ public class LoginWindow extends Application {
         this.primaryStage = primaryStage;
         // 初始化登录的UI
         txtName = new TextField();
-        txtName.setText("123456");
+        txtName.setText("1");
         txtPassword = new PasswordField();
         txtPassword.setText("111111"); ///////////固定初始值 方便测试 后续删除
         //初始化注册的UI

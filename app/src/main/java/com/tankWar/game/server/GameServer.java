@@ -28,7 +28,7 @@ public class GameServer {
     boolean isOver = false;
 
     // 服务端Socket
-    ServerSocket serverSocket;
+//    ServerSocket serverSocket;
     // 服务端端口号
     int port;
     // 客户端Socket列表
@@ -40,45 +40,47 @@ public class GameServer {
     ObjectMapper mapper = new ObjectMapper();
 
     // 在游戏房间中构造，包含玩家个数
-    public GameServer(int num, int port) {
+    public GameServer(Socket[] sockets) {
+
         // num为游戏中的玩家数量
-        this.player_num = num;
+        this.player_num = sockets.length;
         // 初始化游戏局数
         this.game_num = 1;
-        this.port=port;
+//        this.port=port;
 
         // 初始化剩余玩家 和 积分数
-        scores = new int[num];
+        scores = new int[this.player_num];
         Arrays.fill(scores, 0);
-        restPlayer =  new Vector<>(num);
-        for(int i=0; i<num; i++)
+        restPlayer =  new Vector<>(this.player_num);
+        for(int i=0; i<this.player_num; i++)
             restPlayer.add(i);
 
         // 初始化列表
-        sockets = new Socket[num];
-        out = new DataOutputStream[num];
+//        sockets = new Socket[num];
+        this.sockets = sockets;
+        out = new DataOutputStream[this.player_num];
     }
 
-    public void closeServer(){
-        try {
-            serverSocket.close();
-            System.out.println("[info] Socket关闭");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void closeServer(){
+//        try {
+//            serverSocket.close();
+//            System.out.println("[info] Socket关闭");
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     // 运行函数
     public void run()  {
         // 1.建立TCP连接
         try {
-            serverSocket = new ServerSocket(this.port);
+//            serverSocket = new ServerSocket(this.port);
             ServerPrompt.RunSuccess.print();
 
             // 建立TCP连接
             for(int i = 0; i< player_num; i++) {
 //            System.out.println("正在等待连接");
-                sockets[i] = serverSocket.accept();
+//                sockets[i] = serverSocket.accept();
                 // 数据流绑定客户端Socket
                 out[i] = new DataOutputStream(sockets[i].getOutputStream());
                 System.out.println("[info] 服务端已连接" + (i+1));
@@ -89,9 +91,12 @@ public class GameServer {
 
         // 2.获取并广播初始化信息
         try {
+            Thread.sleep(2000);
             this.sendInitMsg();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         // 3. 创建多线程连接业务处理每个客户端连接
@@ -110,9 +115,10 @@ public class GameServer {
         TankInfo[] tanks = new TankInfo[2];
         tanks[0] = new TankInfo(0, 100, 100);
         tanks[1] = new TankInfo(1, 200, 200);
-
+        System.out.println("[info] player num:"+player_num);
         // 广播发送所有坦克初始化信息
         for (int i = 0; i < player_num; i++) {
+            System.out.println("[info] player"+i+"socket:"+sockets[i]);
             // 配置消息的基本信息
             InitMsg message = new InitMsg(i, mapId, tanks);
             // 转换成JSON格式并发送
@@ -124,6 +130,7 @@ public class GameServer {
 
     // 发送结束消息
     void sendOverMsg() throws IOException {
+        System.out.println("game over!!!!!!!!!");
         OverMsg msg = new OverMsg(scores);
         String jsonMsg = mapper.writeValueAsString(msg);
         broadcast(-1, jsonMsg);
@@ -149,6 +156,11 @@ public class GameServer {
             this.id = id;
             try {
                 in = new DataInputStream(sockets[id].getInputStream());
+//                System.out.println(in.available());
+//                int availableBytes = in.available();
+//                System.out.println("aaaaaaaaaa"+availableBytes);
+//                // 跳过可读取的字节数
+//                in.skipBytes(availableBytes);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -183,15 +195,17 @@ public class GameServer {
             sendOverMsg();
             ServerPrompt.GameOver.print();
         }
-
+        int count = 0;
         @Override
         public void run() {
             // 循环接收消息
             while (!isOver) {
                 // 1. socket接收到JSON消息
                 try {
+                    System.out.println(in.available());
                     String msgStr = in.readUTF();
-//                    System.out.println("来自客户端的消息: " + msgStr);
+                    System.out.println("来自客户端的消息: " + msgStr+"  "+ count);
+                    count++;
 
                     // 2. 进行验证
                     MessageType type = null;
