@@ -229,7 +229,7 @@ public class LoginWindow extends Application {
     void connectServer() throws IOException {
 //        String IP = ChatServer.getServerIP();
         //创建套接字
-        socket = new Socket(this.IP, 8888);
+        socket = new Socket(this.IP, 8080);
         //输入流和输出流
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);

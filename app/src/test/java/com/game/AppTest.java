@@ -3,15 +3,13 @@
  */
 package com.game;
 
-import com.tankWar.lobby.ChatServer;
-import com.tankWar.lobby.Client;
+import com.tankWar.server.LobbyServer;
 import org.junit.Test;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class AppTest {
     @Test public void appHasAGreeting() throws UnknownHostException {
-        ChatServer server=new ChatServer(InetAddress.getLocalHost(), 8080);
+        LobbyServer server=new LobbyServer();
     }
 }
