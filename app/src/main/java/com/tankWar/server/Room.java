@@ -16,7 +16,7 @@ public class Room {
 
     // 房主信息
     int curUserNum = 0; //房间的当前人数
-    Vector<UserData> users;
+    Vector<UserInfo> users;
 
     public Room(String roomNum, String roomName, int userNum){
         this.roomNum = roomNum;
@@ -39,9 +39,9 @@ public class Room {
     }
 
     // 添加房间里的玩家昵称、账号、套接字和状态。初始状态是wait
-    public void addOnlineUser(User user, Socket s){
+    public void addOnlineUser(UserInfo user){
         // 第一个玩家就是房主
-        users.add(new UserData(user, s, false));
+        users.add(user);
         curUserNum += 1;
     }
 
@@ -54,33 +54,31 @@ public class Room {
     // 根据下标找到玩家状态
     public String getUserStatus(int i){
 //        System.out.println("[info] "+statusUser.elementAt(i));
-        return users.get(i).isStatus() ? "已准备" : "未准备";
+        String status = "";
+
+        switch (users.get(i).isStatus()){
+            case Ready -> status = "已准备";
+            case NoReady -> status = "未准备";
+        }
+
+        return status;
     }
 
-
     // 切换对应下表的玩家的状态
-    public void changeUserStatus(int index, boolean status) {
-        UserData user = users.get(index);
-        user.setStatus(!user.isStatus());
+    public void changeUserStatus(int index, UserStatus status) {
+        UserInfo user = users.get(index);
+        user.setStatus(status);
 //        System.out.println("[info] 修改后"+statusUser.elementAt(index));
     }
 
-    public void changeUserStatus(String name, boolean status) {
-        for(UserData user: users) {
+    public void changeUserStatus(String name, UserStatus status) {
+        for(UserInfo user: users) {
             if(user.getNickName().equals(name)) {
                 user.setStatus(status);
                 break;
             }
         }
 //        System.out.println("[info] 修改后"+statusUser.elementAt(index));
-    }
-
-    /////////////////////////检查是否房间中的用户都是准备好的///////////////////////////////////
-    public boolean areAllUsersReady() {
-        boolean flag = true;
-        for (UserData user: users)
-            flag &= user.isStatus();
-        return flag;
     }
 
     // 根据账号找到玩家的索引
@@ -167,35 +165,12 @@ public class Room {
     public boolean isHost(String name) {
         return users.get(0).getNickName().equals(name);
     }
-}
 
-class UserData extends User {
-    boolean status;
-    Socket socket;
-
-    public UserData(User user, Socket socket, boolean status) {
-        super(user.nickName, user.account, user.password);
-        this.status = status;
-        this.socket = socket;
-    }
-
-    public UserData(User user, Socket socket) {
-        this(user, socket, false);
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public Socket getSocket() {
-        return socket;
-    }
-
-    public void setSocket(Socket socket) {
-        this.socket = socket;
+    // 检查是否房间中的用户都是准备好的
+    public boolean checkAllUsersReady() {
+        boolean flag = true;
+        for (UserInfo user: users)
+            flag &= user.isStatus() == UserStatus.Ready;
+        return flag;
     }
 }

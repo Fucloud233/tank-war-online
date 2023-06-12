@@ -8,6 +8,6 @@ import java.net.UnknownHostException;
 public class ServerTest {
     @Test public void runServer() throws UnknownHostException {
         LobbyServer server=new LobbyServer();
-        server.run();
+        server.start();
     }
 }
