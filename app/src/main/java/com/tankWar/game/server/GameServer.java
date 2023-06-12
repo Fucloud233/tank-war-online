@@ -71,7 +71,7 @@ public class GameServer {
 //    }
 
     // 运行函数
-    public void run()  {
+    public void run() {
         // 1.建立TCP连接
         try {
 //            serverSocket = new ServerSocket(this.port);
@@ -90,19 +90,21 @@ public class GameServer {
         }
 
         // 2.获取并广播初始化信息
-        try {
-            Thread.sleep(2000);
-            this.sendInitMsg();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        ReceiveThread[] threads = new ReceiveThread[player_num];
 
         // 3. 创建多线程连接业务处理每个客户端连接
         for(int i = 0; i< player_num; i++) {
-            ReceiveThread t = new ReceiveThread(i);
-            t.start();
+            threads[i] = new ReceiveThread(i);
+            threads[i].start();
+        }
+
+        // 4. 等待线程结束
+        for(ReceiveThread thread: threads) {
+            try {
+                thread.join();
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -198,13 +200,19 @@ public class GameServer {
         int count = 0;
         @Override
         public void run() {
+            try {
+                sendInitMsg();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             // 循环接收消息
             while (!isOver) {
                 // 1. socket接收到JSON消息
                 try {
-                    System.out.println(in.available());
+//                    System.out.println(in.available());
                     String msgStr = in.readUTF();
-                    System.out.println("来自客户端的消息: " + msgStr+"  "+ count);
+                    System.out.println("来自客户端的消息: " + id  + ' ' + msgStr+"  "+ count);
                     count++;
 
                     // 2. 进行验证

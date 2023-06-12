@@ -69,8 +69,8 @@ public class LobbyServer {
 
     // 当服务端接受了Socket连接 就会创建一个线程
     class ClientProcess extends Thread {
-        BufferedReader in;// 定义输入流
-        PrintWriter out;// 定义输出流
+        DataInputStream in;// 定义输入流
+        DataOutputStream out;// 定义输出流
 
         String strKey; //保存信息的关键字 login talk init reg
         StringTokenizer st;
@@ -85,10 +85,9 @@ public class LobbyServer {
             curUser.setSocket(client);
 
             Socket curSocket = curUser.getSocket();
-            in = new BufferedReader(new InputStreamReader(curSocket.getInputStream()));
+            in = new DataInputStream(curSocket.getInputStream());
             // 客户端接收
-            out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                    curSocket.getOutputStream())), true);  // 客户端输出
+            out = new DataOutputStream(curSocket.getOutputStream());  // 客户端输出
         }
 
         // 接受线程
@@ -99,9 +98,14 @@ public class LobbyServer {
                 // 1. 从服务端读取信息
                 try {
                     // 从服务器端接收一条信息后拆分、解析，并执行相应操作
-                    String strReceive = in.readLine();
-                    // 初始化分词器
-                    st = new StringTokenizer(strReceive, "|");
+                    if(curRoom == null || !curRoom.getStatus()) {
+                        String strReceive = in.readUTF();
+                        System.out.println("str:" + strReceive);
+                        // 初始化分词器
+                        st = new StringTokenizer(strReceive, "|");
+                    } else {
+                        continue;
+                    }
                 } catch (Exception e) {
 //                    // 用户关闭客户端造成此异常，关闭该用户套接字。
 //                    String leaveUser = null;
@@ -117,7 +121,7 @@ public class LobbyServer {
 //                    } catch (IOException e1) {
 //                        e1.printStackTrace();
 //                    }
-
+                    e.printStackTrace();
                     continue;
                 }
 
@@ -144,7 +148,9 @@ public class LobbyServer {
                         //有用户取消准备
                         case "cancelReady" -> userCancelReady();
                         //检查房间内的用户是否都准备好了
-                        case "check status" -> checkIfAllReady();
+                        case "check status" -> {
+                            checkIfAllReady();
+                        }
 //                        case "gameOver" ->
 //                            // 游戏结束处理
 //                                processGameOver();
@@ -171,7 +177,7 @@ public class LobbyServer {
             for (User user:users){
                 if (account.equals(user.getAccount())){
                     //不能重复登陆的提示
-                    out.println("warning|double");
+                    out.writeUTF("warning|double");
                     return;
                 }
             }
@@ -181,7 +187,7 @@ public class LobbyServer {
 
             // 判断用户名和密码 ->转为在数据库中寻找
             if (!operator.checkLogin(account, password)) {
-                out.println("warning|" + account + "登陆失败，请检查您的输入!");
+                out.writeUTF("warning|" + account + "登陆失败，请检查您的输入!");
                 System.out.println("[error] 用户 "+ account + " 登陆失败！" + t.toString());
             }
 
@@ -196,7 +202,7 @@ public class LobbyServer {
             users.addElement(curUser);
 
             // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
-            out.println("login|succeed" + "|" + nickName);
+            out.writeUTF("login|succeed" + "|" + nickName);
             sendToLobby("talk|>>>欢迎 " + nickName + " 进来与我们一起交谈!");
             sendAllUser();
             sendRooms();
@@ -205,22 +211,22 @@ public class LobbyServer {
         }
 
         // 注册
-        private void register(String name, String account, String password) {
+        private void register(String name, String account, String password) throws IOException {
             if (operator.isExistUserName(name)) {
                 // 验证昵称是否重复
                 System.out.println("[ERROR] " + name + " Register fail!");
-                out.println("register|name");
+                out.writeUTF("register|name");
             } else if (operator.isExistUser(account)) {
                 // 验证账号重复
                 System.out.println("[ERROR] " + account + " Register fail!");
-                out.println("register|account");
+                out.writeUTF("register|account");
             } else {
                 // 创建用户
                 boolean flag = operator.createPlayer(name, account, password);
 
                 if (flag) {
                     System.out.println("[info] User " + name + " 注册成功");
-                    out.println("register|success");
+                    out.writeUTF("register|success");
                 }
             }
         }
@@ -264,15 +270,15 @@ public class LobbyServer {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        out.println("select room|failed");
+                        out.writeUTF("select room|failed");
                     } else if (room.havePassword()) {//提示有密码
-                        out.println("select room|password");
+                        out.writeUTF("select room|password");
                     } else {
                         curRoom = room;
                         curRoom.addOnlineUser(curUser);//加昵称、账号和套接字
 
                         // 成功进入房间
-                        out.println("select room|success");
+                        out.writeUTF("select room|success");
                         // 用户进入房间，大厅里的房间人数会变
                         sendRoomUsers();
                         // 发送欢迎消息
@@ -292,9 +298,9 @@ public class LobbyServer {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        out.println("select room|failed");
+                        out.writeUTF("select room|failed");
                     } else if (!room.checkPassword(password)) {//密码错误
-                        out.println("select room|password error");
+                        out.writeUTF("select room|password error");
                     } else {
                         curRoom = room;
                         curRoom.addOnlineUser(curUser);//加昵称、账号和套接字
@@ -302,7 +308,7 @@ public class LobbyServer {
                         sendToRoom("roomTalk|>>>欢迎 " + curUser.getNickName() + " 加入房间");
 
                         //成功进入房间
-                        out.println("select room|success");
+                        out.writeUTF("select room|success");
                     }
 
                     break;
@@ -332,7 +338,7 @@ public class LobbyServer {
         private void checkIfAllReady() throws IOException {
             curRoom.changeUserStatus(0, UserStatus.Ready);
             if (!curRoom.checkAllUsersReady()) {
-                out.println("begin game|failed");
+                out.writeUTF("begin game|failed");
                 curRoom.changeUserStatus(0, UserStatus.NoReady);
                 return;
             }
@@ -390,7 +396,6 @@ public class LobbyServer {
             String strSender = st.nextToken(); // 得到发消息人
             String strReceiver = st.nextToken(); // 得到接收人
             System.out.println("[TALK_" + strReceiver + "] " + strTalkInfo);
-            PrintWriter outSend;
             Date t = new Date();
 
             // 得到当前时间
@@ -408,25 +413,20 @@ public class LobbyServer {
                 LobbyServer.this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
             } else {
                 if (strSender.equals(strReceiver)) {
-                    out.println("talk|>>>不能自言自语哦!");
+                    out.writeUTF("talk|>>>不能自言自语哦!");
                 } else {
 //                    for (int i = 0; i < nameUser.size(); i++) {
                     for(UserInfo user: users) {
                         Socket socketSend = user.getSocket();
 
                         if (strReceiver.equals(user.getNickName())) {//更新接收方的消息
-
-                            outSend = new PrintWriter(new BufferedWriter(
-                                    new OutputStreamWriter(
-                                            socketSend.getOutputStream())), true);
-                            outSend.println("talk|" + strSender + " 对你说："
+                            DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
+                            outSend.writeUTF("talk|" + strSender + " 对你说："
                                     + strTalkInfo);
 
                         } else if (strSender.equals(user.getNickName())) {//更新发送方的消息
-                            outSend = new PrintWriter(new BufferedWriter(
-                                    new OutputStreamWriter(
-                                            socketSend.getOutputStream())), true);
-                            outSend.println("talk|你对 " + strReceiver + "说："
+                            DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
+                            outSend.writeUTF("talk|你对 " + strReceiver + "说："
                                     + strTalkInfo);
                         }
                     }
@@ -441,7 +441,6 @@ public class LobbyServer {
             String strReceiver = st.nextToken(); // 得到接收人
             System.out.println("[TALK_" + strReceiver + "] " + strTalkInfo);
             Socket socketSend;
-            PrintWriter outSend;
             Date t = new Date();
 
             // 得到当前时间
@@ -459,22 +458,18 @@ public class LobbyServer {
                 sendToRoom("roomTalk|" + strSender + " 对所有人说：" + strTalkInfo);
             } else {
                 if (strSender.equals(strReceiver)) {
-                    out.println("roomTalk|>>>不能自言自语哦!");
+                    out.writeUTF("roomTalk|>>>不能自言自语哦!");
                 } else {
                     for (int j = 0; j < curRoom.getCurUserNum(); j++) {
                         if (strReceiver.equals(curRoom.findNameUser(j))) {//更新接收方的消息
                             socketSend = curRoom.findSocketUser(j);
-                            outSend = new PrintWriter(new BufferedWriter(
-                                    new OutputStreamWriter(
-                                            socketSend.getOutputStream())), true);
-                            outSend.println("roomTalk|" + strSender + " 对你说："
+                            DataOutputStream outSend = new DataOutputStream(socketSend.getOutputStream());
+                            outSend.writeUTF("roomTalk|" + strSender + " 对你说："
                                     + strTalkInfo);
                         } else if (strSender.equals(curRoom.findNameUser(j))) {//更新发送方的消息
                             socketSend = curRoom.findSocketUser(j);
-                            outSend = new PrintWriter(new BufferedWriter(
-                                    new OutputStreamWriter(
-                                            socketSend.getOutputStream())), true);
-                            outSend.println("roomTalk|你对 " + strReceiver + "说："
+                            DataOutputStream outSend = new DataOutputStream(socketSend.getOutputStream());
+                            outSend.writeUTF("roomTalk|你对 " + strReceiver + "说："
                                     + strTalkInfo);
                         }
                     }
@@ -514,7 +509,7 @@ public class LobbyServer {
                 strOnline += "|" + String.valueOf(room.getMaxUserNum());
                 strOnline += "|" + room.getStatus();//房间状态
             }
-            LobbyServer.this.sendToLobby(strOnline);
+            sendToLobby(strOnline);
 
             System.out.println("[info] 在线人数:" + strOnline);
         }
@@ -568,10 +563,8 @@ public class LobbyServer {
         private void sendToRoom(String strSend) {
             try {
                 for (Socket socket : curRoom.getAllSockets()) {
-                    PrintWriter outSend = new PrintWriter(new BufferedWriter(
-                            new OutputStreamWriter(socket.getOutputStream())),
-                            true);
-                    outSend.println(strSend);
+                    DataOutputStream outSend = new DataOutputStream(socket.getOutputStream());
+                    outSend.writeUTF(strSend);
                 }
             } catch (IOException e) {
                 System.out.println("[ERROR] send all fail!");
@@ -594,10 +587,9 @@ public class LobbyServer {
     private void sendToLobby(String strSend) {
         try {
             for (UserInfo user: users) {
-                PrintWriter outSend = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(user.getSocket().getOutputStream())),
-                        true);
-                outSend.println(strSend);
+                System.out.println(strSend);
+                DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
+                outSend.writeUTF(strSend);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -22,12 +22,12 @@ public class SelectRoomWindow {
     private Stage selectroomstage;
 
     private Socket socket=new Socket();
-    PrintWriter out = null;
+    DataOutputStream out = null;
 
     public SelectRoomWindow(Socket s,String a) throws IOException {
         this.socket = s;
         roomNum=a;
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+        out = new DataOutputStream(socket.getOutputStream());
     }
 
     public void ShowWindow(){
@@ -39,7 +39,11 @@ public class SelectRoomWindow {
         vBox.setAlignment(Pos.CENTER);
         button.setOnAction(event -> {
             String s =Password.getText();
-            out.println("password|"+roomNum+"|"+s);
+            try {
+                out.writeUTF("password|"+roomNum+"|"+s);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         });
         selectroomstage=new Stage();
         selectroomstage.setTitle("输入房间密码");

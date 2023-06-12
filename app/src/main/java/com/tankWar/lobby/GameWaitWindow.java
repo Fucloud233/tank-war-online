@@ -20,8 +20,8 @@ public class GameWaitWindow {
     ListView<String> userListView;
     //连接相关
     Socket socket = new Socket();
-    BufferedReader in = null;
-    PrintWriter out = null;
+    DataInputStream in = null;
+    DataOutputStream out = null;
     //聊天框界面的UI
     private TextField txtTalk;
     private TextArea txtViewTalk;
@@ -44,8 +44,8 @@ public class GameWaitWindow {
         this.account = account;
         this.primaryStage = primaryStage;
         this.lobbyScene = lobbyScene;
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+        in = new DataInputStream(socket.getInputStream());
+        out = new DataOutputStream(socket.getOutputStream());
     }
 
     void ShowWindow() {
@@ -75,12 +75,24 @@ public class GameWaitWindow {
         //开始游戏/准备按钮
         PlayGameBtn = new Button(isRoomOwner ? "开始游戏" : "准备");
         PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
-        PlayGameBtn.setOnAction(e -> beginGame()); //退出房间的事件
+        PlayGameBtn.setOnAction(e -> {
+            try {
+                beginGame();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }); //退出房间的事件
 
         //退出房间按钮
         exitRoomBtn = new Button("退出房间");
         exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
-        exitRoomBtn.setOnAction(e -> exitRoom()); //退出房间的事件
+        exitRoomBtn.setOnAction(e -> {
+            try {
+                exitRoom();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }); //退出房间的事件
 
         //装填按钮的盒子
         HBox ButtonBox = new HBox();
@@ -120,7 +132,11 @@ public class GameWaitWindow {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                try {
+                    out.writeUTF("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
                 txtTalk.clear();
             }
         });
@@ -143,7 +159,7 @@ public class GameWaitWindow {
     }
 
     //退出房间的事件
-    public void exitRoom() {
+    public void exitRoom() throws IOException {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("确认退出");
         alert.setHeaderText(null);
@@ -162,7 +178,7 @@ public class GameWaitWindow {
 
         if (result.isPresent() && result.get() == confirmButtonType) {
             //发送给服务器退出房间的信息 在服务器端处理退出房间的逻辑
-            out.println("exitRoom");
+            out.writeUTF("exitRoom");
             primaryStage.setTitle("游戏大厅");
             primaryStage.setScene(lobbyScene);
         }
@@ -170,7 +186,7 @@ public class GameWaitWindow {
     }
 
     //开始游戏  或 进行准备的事件
-    public void beginGame() {
+    public void beginGame() throws IOException {
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             checkAllPlayersReady();
@@ -178,7 +194,7 @@ public class GameWaitWindow {
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if (PlayGameBtn.getText().equals("准备")) {
             //发送一个准备的消息 并传送这个能标识这个用户的键
-            out.println("isReady|" + name);
+            out.writeUTF("isReady|" + name);
             System.out.println("[info] name: "+name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
             PlayGameBtn.setText("已准备");
@@ -186,16 +202,16 @@ public class GameWaitWindow {
         //用户取消准备
         else if (PlayGameBtn.getText().equals("已准备")) {
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
-            out.println("cancelReady|" + name);
+            out.writeUTF("cancelReady|" + name);
             // 非房主用户 切换按钮和对应的状态 已准备-准备
             PlayGameBtn.setText("准备");
         }
     }
 
     //检查是否所有的用户都已经准备好
-    private void checkAllPlayersReady() {
+    private void checkAllPlayersReady() throws IOException {
         //发送给服务器检查房间内用户是否全部准备好的信息
-        out.println("check status");
+        out.writeUTF("check status");
     }
 
     //开始游戏的逻辑！！！！！！！！！！！！！！
@@ -206,7 +222,7 @@ public class GameWaitWindow {
     }
 
     // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
-    public void changeStatus(String status) {
+    public void changeStatus(String status) throws IOException {
         switch (status) {
             case "play" -> {
 //                this.exitRoomBtn.setDisable(true);

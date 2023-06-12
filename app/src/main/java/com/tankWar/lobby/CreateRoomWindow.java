@@ -28,16 +28,16 @@ public class CreateRoomWindow{
     private GameWaitWindow gameWaitWindow;//传递过来的游戏房间
 
     private Socket socket=new Socket();
-    BufferedReader in = null;
-    PrintWriter out = null;
+    DataInputStream in = null;
+    DataOutputStream out = null;
     //在构造函数中加上了初始化传递过来的舞台和场景
     public CreateRoomWindow(Socket s,String name,String account,GameWaitWindow gameWaitWindow) throws IOException{
         this.socket = s;
         this.username=name;
         this.account=account;
         this.gameWaitWindow=gameWaitWindow;
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+        in = new DataInputStream(socket.getInputStream());
+        out = new DataOutputStream(socket.getOutputStream());
     }
     //在布局上添加了输入房间名和选择是否有密码
     public void ShowWindow(){
@@ -70,7 +70,11 @@ public class CreateRoomWindow{
             if (setpw.getValue().equals("是")){
                 if (!roomName.getText().isEmpty()&&!Password.getText().isEmpty()){
                     strsend="Create|password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue()+"|"+Password.getText();
-                    out.println(strsend);
+                    try {
+                        out.writeUTF(strsend);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     createroomStage.close();
                     //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;
@@ -80,7 +84,11 @@ public class CreateRoomWindow{
             }else if (setpw.getValue().equals("否")){
                 if (!roomName.getText().isEmpty()){
                     strsend="Create|no password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
-                    out.println(strsend);
+                    try {
+                        out.writeUTF(strsend);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     createroomStage.close();
                     //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;

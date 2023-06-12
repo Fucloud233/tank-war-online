@@ -26,8 +26,8 @@ public class Client extends Stage {
 
     // 连接相关的 由登录页面进行传入初始值
     Socket socket;
-    BufferedReader in;
-    PrintWriter out;
+    DataInputStream in;
+    DataOutputStream out;
 
     //聊天框界面的UI
     private TextField txtTalk;
@@ -51,7 +51,7 @@ public class Client extends Stage {
     boolean gameStart =false;
 
 
-    public Client(String nickname, String account, Socket socket, BufferedReader in, PrintWriter out) {//因为加上了昵称，所以修改了下传参
+    public Client(String nickname, String account, Socket socket, DataInputStream in, DataOutputStream out) {//因为加上了昵称，所以修改了下传参
         username = nickname;
         this.account = account;
         this.socket = socket;
@@ -122,14 +122,18 @@ public class Client extends Stage {
         btnTalk.setDisable(false);
         //创建一个线程来处理事件
         new Thread(new ClientThread()).start();
-        out.println("init|online");
+        out.writeUTF("init|online");
         primaryStage.show();
 
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
             if (selectedHBox!=null && isHBoxSelected==true){
                 //向服务端传选择的房间内容
-                out.println("Select room|"+roomId);
+                try {
+                    out.writeUTF("Select room|"+roomId);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             } else {
                 new Alert(Alert.AlertType.WARNING, "请选择房间！").showAndWait();
             }
@@ -139,7 +143,11 @@ public class Client extends Stage {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                out.println("talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
+                try {
+                    out.writeUTF("talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
                 txtTalk.clear();
             }
         });
@@ -200,7 +208,7 @@ public class Client extends Stage {
         public void run() {
             while (true&&!gameStart) {
                 try {
-                    String strReceive = in.readLine();
+                    String strReceive = in.readUTF();
                     System.out.println(strReceive);
                     st = new StringTokenizer(strReceive, "|");
                     String strKey = st.nextToken();
@@ -354,7 +362,11 @@ public class Client extends Stage {
                                 Platform.runLater(() -> {
 
                                     // TODO: 添加GamePane
-                                    startGame();
+                                    try {
+                                        startGame();
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
 
                                 });
                             }
@@ -389,7 +401,7 @@ public class Client extends Stage {
     Stage gameStage;
     GamePane gamePane;
     // 开始游戏
-    void startGame(){
+    void startGame() throws IOException {
 //        System.out.println("[info] get port: "+port);
         // 设置游戏状态为Start
         gameStatusChange("start");
@@ -409,7 +421,7 @@ public class Client extends Stage {
         gameStatusChange("end");
     }
 
-    void gameStatusChange(String status){
+    void gameStatusChange(String status) throws IOException {
         switch (status){
             case "start" -> {
                 gameStatus="play";
@@ -428,7 +440,12 @@ public class Client extends Stage {
 //                gamePane.closeCamePane();
                 // 发送游戏结束信息给服务端
                 primaryStage.show();
-                out.println("gameOver");
+                try {
+
+                    out.writeUTF("gameOver");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
         }

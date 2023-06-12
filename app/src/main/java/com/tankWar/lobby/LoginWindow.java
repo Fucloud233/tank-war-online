@@ -20,8 +20,8 @@ import java.util.StringTokenizer;
 public class LoginWindow extends Application {
     // 连接相关的
     Socket socket = null;
-    BufferedReader in = null;
-    PrintWriter out = null;
+    DataInputStream in = null;
+    DataOutputStream out = null;
     String IP;
     // 登陆界面的UI
     private TextField txtName;
@@ -66,7 +66,7 @@ public class LoginWindow extends Application {
                     connectServer();
                     //获取登陆的账号和密码//发送给服务器
                     String strSend = "login|" + txtName.getText() + "|" + txtPassword.getText();
-                    out.println(strSend);
+                    out.writeUTF(strSend);
                     //进行登录
                     initLogin();
                 } catch (IOException ioException) {
@@ -95,7 +95,7 @@ public class LoginWindow extends Application {
                     connectServer();
                     //获取登陆的账号和密码//发送给服务器
                     String strSend = "register|" + txtNickName.getText() + "|" + txtAccount.getText() + "|" + setPassword.getText();
-                    out.println(strSend);
+                    out.writeUTF(strSend);
                     initRegister();
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
@@ -153,7 +153,8 @@ public class LoginWindow extends Application {
 
     //登录的逻辑
     private void initLogin() throws IOException {
-        String strReceive = in.readLine();
+        String strReceive = in.readUTF();
+        System.out.println(strReceive);
         //截断获取关键的信息内容
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
@@ -187,7 +188,7 @@ public class LoginWindow extends Application {
 
     //注册的逻辑
     private void initRegister() throws IOException {
-        String strReceive = in.readLine();
+        String strReceive = in.readUTF();
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
         if (strKey.equals("register")) {
@@ -231,8 +232,8 @@ public class LoginWindow extends Application {
         //创建套接字
         socket = new Socket(this.IP, 8080);
         //输入流和输出流
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+        in = new DataInputStream(socket.getInputStream());
+        out = new DataOutputStream(socket.getOutputStream());
     }
 
     public static void main(String[] args) {
