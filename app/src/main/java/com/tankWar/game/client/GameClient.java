@@ -49,11 +49,11 @@ public class GameClient {
         in = new DataInputStream(clientSocket.getInputStream());
         System.out.println(clientSocket);
         // 获取当前可读取的字节数
-        int availableBytes = in.available();
-        System.out.println("aaaaaaaaaa"+availableBytes);
+//        int availableBytes = in.available();
+//        System.out.println("aaaaaaaaaa"+availableBytes);
         // 跳过可读取的字节数
-        in.skipBytes(availableBytes);
-        System.out.println("bbbbbbbbbb"+in.available());
+//        in.skipBytes(availableBytes);
+//        System.out.println("bbbbbbbbbb"+in.available());
 
 //        System.out.println(in);
     }
@@ -70,22 +70,18 @@ public class GameClient {
         }
     }
 
-//    boolean hasInit = false;
     String receive() {
         try {
-
-//            System.out.println(in.available());
-            if(in.available()<=0) return "";
             return in.readUTF();
         } catch (IOException e) {
-            // 处理异常
+//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
             return "";
         }
     }
 
     // 发送移动消息
-    public void sendMoveMsg(Direction dir) {
-        MoveMsg moveMsg = new MoveMsg(id, dir);
+    public void sendMoveMsg(Direction dir, double x, double y) {
+        MoveMsg moveMsg = new MoveMsg(id, dir, x, y);
         try {
             String msg = mapper.writeValueAsString(moveMsg);
             this.send(msg);
@@ -136,8 +132,6 @@ public class GameClient {
 
             MessageType type = MessageType.valueOf(jsonMsg.get("type").asText());
 
-//            System.out.println("get message");
-
             // 3.1 解析并返回消息
             switch (type) {
                 case Move -> {
@@ -147,13 +141,14 @@ public class GameClient {
                     return mapper.readValue(msg, ShootMsg.class);
                 }
                 case Init->{
-                    // todo Init问题 Id 应该事先分配好
-                    // 这里和原先的receiveInitMsg合并了
-                    System.out.println("get init info");
+                    // InitMsg会给GameClient分配ID
                     InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
                     this.id = initMsg.getId();
                     return initMsg;
 //                    return mapper.readValue(msg, InitMsg.class);
+                }
+                case Reset -> {
+                    return mapper.readValue(msg, ResetMsg.class);
                 }
                 case Over->{
                     return mapper.readValue(msg, OverMsg.class);
@@ -167,6 +162,10 @@ public class GameClient {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public int getId() {
+        return id;
     }
 }
 

@@ -10,6 +10,10 @@ public class GameMap {
     int id = -1;
     int row, col;
     Vector<Building> buildings = new Vector<>();
+    Tank[] tanks;
+
+    // 用于判断地图是否加载成功
+    boolean flag = false;
 
     public GameMap() {
     }
@@ -25,26 +29,44 @@ public class GameMap {
             System.out.println("[error]"+path + "不存在!");
             return false;
         }
-        Scanner scanner = new Scanner(inputStream);
 
-        // 记录建筑方块信息
-        // 逐行读取地图文件内容
-        this.row = this.col = 0;
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            // 处理每行的字符
-            for (int i = 0; i < line.length(); i++) {
-                char c = line.charAt(i);
-                if (c != ' ') {
-                    // 根据字符映射到地图元素
-                    buildings.add(new Building(i * Config.BlockSize + Config.BlockSize / 2, row * Config.BlockSize + Config.BlockSize / 2, c));
-                }
+        try (Scanner scanner = new Scanner(inputStream)) {
+            // 1. 解析玩家信息
+            int playerNum = scanner.nextInt();
+            System.out.println(playerNum);
+            tanks = new Tank[playerNum];
+            for (int i = 0; i < playerNum; i++) {
+                int x = scanner.nextInt(), y = scanner.nextInt();
+                Direction dir = Direction.valueOf(scanner.next().trim());
+//                System.out.println(x + " " + y + " " + dir.toString());
+
+                tanks[i] = new Tank(i, x, y, dir);
             }
 
-            if (col < line.length())
-                col = line.length();
-            row++;
+            // 2. 解析地图信息
+            this.row = scanner.nextInt();
+            this.col = scanner.nextInt();
+
+            // 记录建筑方块信息
+            scanner.nextLine(); // 这里用于达到下一行
+            for (int i = 0; i < row && scanner.hasNextLine(); i++) {
+                // 处理每行的字符
+                String line = scanner.nextLine().trim();
+                for (int j = 0; j < col && j < line.length(); j++) {
+                    char c = line.charAt(j);
+                    if (c != ' ') {
+                        // 根据字符映射到地图元素
+                        buildings.add(new Building(j * Config.BlockSize + Config.BlockSize / 2, i * Config.BlockSize + Config.BlockSize / 2, c));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.flag = false;
+            return false;
         }
+
+        this.flag = true;
         return true;
     }
 
@@ -54,18 +76,25 @@ public class GameMap {
 
     public Vector<Building> getBuildings() {
         // 复制一份建筑信息
-        return (Vector<Building>) buildings.clone();
+        return flag ? (Vector<Building>) buildings.clone() : null;
+    }
+
+    public Tank[] getTanks() {
+        if(!flag) {
+            return null;
+        }
+
+        // 使用这种方法 复制坦克信息
+        int size = this.tanks.length;
+        Tank[] copyTanks = new Tank[size];
+        for(int i=0; i<size; i++) {
+            copyTanks[i] = new Tank(tanks[i]);
+        }
+
+        return copyTanks;
     }
 
     public float getId() {
         return id;
-    }
-
-    public float getMapWidth() {
-        return Config.BlockSize * row ;
-    }
-
-    public float getMapHeight() {
-        return Config.BlockSize * col;
     }
 }

@@ -1,6 +1,6 @@
 package com.tankWar.game.msg;
 
-public class Message {
+public abstract class Message {
     int id = -1;
     MessageType type = MessageType.Empty;
 

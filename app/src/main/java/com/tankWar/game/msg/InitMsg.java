@@ -1,24 +1,19 @@
 package com.tankWar.game.msg;
 
-public class InitMsg extends Message{
-    TankInfo[] tanks = null;
-    int mapId = -1;
+// 游戏开始时 Sever用于初始化游戏信息 玩家会获得一个id
+
+public class InitMsg extends InfoMsg{
+    int totalGameNum = 0;
 
     public InitMsg() {
-        super();
+        super(MessageType.Init);
     }
 
-    public InitMsg(int id, int mapId, TankInfo[] tanks) {
-        super(id, MessageType.Init);
-        this.tanks = tanks;
-        this.mapId = mapId;
+    public InitMsg(int id, int mapId, int playerNum,  int totalGameNum) {
+        super(id, mapId, playerNum, MessageType.Init);
+        this.totalGameNum = totalGameNum;
     }
 
-    public TankInfo[] getTanks() {
-        return tanks;
-    }
+    public int getTotalGameNum() { return totalGameNum; }
 
-    public int getMapId() {
-        return mapId;
-    }
 }

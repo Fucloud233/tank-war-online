@@ -5,7 +5,6 @@ package com.tankWar.game.entity;
  */
 
 import com.tankWar.game.Config;
-import com.tankWar.game.msg.TankInfo;
 import javafx.scene.image.Image;
 import javafx.scene.shape.Rectangle;
 
@@ -45,8 +44,9 @@ public class Tank extends Entity {
         this.setDirection(dir);
     }
 
-    public Tank(TankInfo info) {
-        this(info.getId(), info.getX(), info.getY());
+    // 复制构造函数
+    public Tank(Tank tank) {
+        this(tank.getId(), tank.getX(), tank.getY(), tank.getDir());
     }
 
     // 设置方向

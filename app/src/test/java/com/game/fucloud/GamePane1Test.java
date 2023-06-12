@@ -17,10 +17,7 @@ public class GamePane1Test extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-//        CirclePane circlePane = new CirclePane();
-
-
-        GamePane gamePane = new GamePane();
+        GamePane gamePane = new GamePane(Utils.Port);
 
         Scene scene = new Scene(gamePane);
 
@@ -28,9 +25,5 @@ public class GamePane1Test extends Application {
         primaryStage.setTitle("坦克大战联机版1");
         primaryStage.setResizable(false);
         primaryStage.show();
-
-//        gamePane.requestFocus();
-
-//        circlePane.requestFocus();
     }
 }
