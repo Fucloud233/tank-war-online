@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.msg.InitMsg;
 import com.tankWar.game.msg.MessageType;
 import com.tankWar.game.msg.OverMsg;
-import com.tankWar.game.msg.TankInfo;
+import com.tankWar.game.msg.ResetMsg;
 
 import java.io.*;
 import java.net.*;
@@ -224,7 +224,7 @@ public class GameServer {
                 // 1. socket接收到JSON消息
                 try {
                     String msgStr = in.readUTF();
-                    System.out.println("来自客户端的消息: " + id  + ' ' + msgStr+"  "+ count);
+                    System.out.println("来自客户端的消息: " + id  + ' ' + msgStr+"  ");
 
                     // 2. 进行验证
                     MessageType type = null;

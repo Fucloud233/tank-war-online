@@ -159,7 +159,7 @@ public class GameClient {
                 }
             }
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return null;
         }
     }

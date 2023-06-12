@@ -17,7 +17,7 @@ public class GamePane2Test extends Application{
 
     @Override
     public void start(Stage primaryStage) {
-        GamePane gamePane = new GamePane(Utils.Port);
+        GamePane gamePane = new GamePane();
 
         Scene scene = new Scene(gamePane);
 
