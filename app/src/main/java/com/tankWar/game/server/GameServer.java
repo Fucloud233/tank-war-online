@@ -88,16 +88,13 @@ public class GameServer {
     public void run() {
         // 1.建立TCP连接
         try {
-//            serverSocket = new ServerSocket(this.port);
             ServerPrompt.RunSuccess.print();
 
-            // 建立TCP连接
+            // 创建对应的数据流
             for(int i: totalPlayer) {
-//            System.out.println("正在等待连接");
-//                sockets[i] = serverSocket.accept();
                 // 数据流绑定客户端Socket
                 out[i] = new DataOutputStream(sockets[i].getOutputStream());
-                System.out.println("[info] 服务端已连接" + (i+1));
+//                System.out.println("[info] 服务端已连接" + (i+1));
             }
         } catch(Exception e) {
             e.printStackTrace();

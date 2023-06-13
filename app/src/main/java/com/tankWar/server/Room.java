@@ -75,9 +75,11 @@ public class Room {
         for(UserInfo user: users) {
             if(user.getNickName().equals(name)) {
                 user.setStatus(status);
-                break;
+                return;
             }
         }
+
+        System.out.println("[Error]: 该用户不存在");
 //        System.out.println("[info] 修改后"+statusUser.elementAt(index));
     }
 
@@ -99,6 +101,11 @@ public class Room {
     //根据下标找到玩家套接字
     public Socket findSocketUser(int i){
         return users.get(i).getSocket();
+    }
+
+    // 获得所有用户信息
+    public Vector<UserInfo> getAllUsers() {
+        return users;
     }
 
     public Socket[] getAllSockets() {
@@ -147,9 +154,13 @@ public class Room {
     public boolean getStatus() {
         return status;
     }
-    //改变房间的状态
+
+    // 改变房间的状态 和 玩家状态
     public void setStatus(boolean status){
         status = true;
+        // 设置所有玩家为游戏状态
+        for(UserInfo user: users)
+            user.setStatus(UserStatus.Playing);
     }
 
 

@@ -17,10 +17,15 @@ public class LobbyServer {
     // 服务端监听端口
     int serverPort;
 
-    // rooms 存储所有房间信息
+    /* 只在用户成功登陆后存储 */
     // users 存储所有玩家信息(玩家信息 + Socket + Status)
-    static ArrayList<Room> rooms = new ArrayList<>();//维护的每个房间
     static Vector<UserInfo> users = new Vector<>(10,5);//保存在线用户的用户名
+    // Vector 线程管理 通过玩家映射
+    static HashMap<UserInfo, Thread> threads = new HashMap<>();
+
+    /* 只在房间陈宫创建后存储 */
+    // rooms 存储所有房间信息
+    static ArrayList<Room> rooms = new ArrayList<>();//维护的每个房间
 
     // 数据操作函数
     DBOperator operator = null;
@@ -60,7 +65,9 @@ public class LobbyServer {
             try {
                 // 监听客户端的连接请求，并返回客户端socket
                 Socket socket = serverSocket.accept();
-                new ClientProcess(socket).start(); // 创建一个新线程来处理与该客户的通讯
+                // 创建一个新线程来处理与该客户的通讯
+                ClientThread thread = new ClientThread(socket);
+                thread.start();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -68,7 +75,7 @@ public class LobbyServer {
     }
 
     // 当服务端接受了Socket连接 就会创建一个线程
-    class ClientProcess extends Thread {
+    class ClientThread extends Thread {
         DataInputStream in;// 定义输入流
         DataOutputStream out;// 定义输出流
 
@@ -81,13 +88,11 @@ public class LobbyServer {
 
 
         //处理从客户端Socket接收到的信息
-        public ClientProcess(Socket client) throws IOException {
+        public ClientThread(Socket client) throws IOException {
             curUser.setSocket(client);
-
-            Socket curSocket = curUser.getSocket();
-            in = new DataInputStream(curSocket.getInputStream());
+            in = new DataInputStream(client.getInputStream());
             // 客户端接收
-            out = new DataOutputStream(curSocket.getOutputStream());  // 客户端输出
+            out = new DataOutputStream(client.getOutputStream());  // 客户端输出
         }
 
         // 接受线程
@@ -95,17 +100,22 @@ public class LobbyServer {
         @Override
         public void run() {
             while (true) {
+                // 0. 如果当前玩家在游戏状态 则线程等待
+                try {
+//                    System.out.println(curUser.isStatus().toString());
+                    if(curUser.isStatus() == UserStatus.Playing)
+                        this.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 // 1. 从服务端读取信息
                 try {
                     // 从服务器端接收一条信息后拆分、解析，并执行相应操作
-                    if(curRoom == null || !curRoom.getStatus()) {
-                        String strReceive = in.readUTF();
-                        System.out.println("str:" + strReceive);
-                        // 初始化分词器
-                        st = new StringTokenizer(strReceive, "|");
-                    } else {
-                        continue;
-                    }
+                    String strReceive = in.readUTF();
+                    System.out.println("str:" + strReceive);
+                    // 初始化分词器
+                    st = new StringTokenizer(strReceive, "|");
                 } catch (Exception e) {
 //                    // 用户关闭客户端造成此异常，关闭该用户套接字。
 //                    String leaveUser = null;
@@ -143,18 +153,16 @@ public class LobbyServer {
 
 
                         /* 房间操作 */
-                        //有用户准备
+                        // 有用户准备
                         case "isReady" -> userReady();
-                        //有用户取消准备
+                        // 有用户取消准备
                         case "cancelReady" -> userCancelReady();
-                        //检查房间内的用户是否都准备好了
-                        case "check status" -> {
-                            checkIfAllReady();
-                        }
+                        // 检查房间内的用户是否都准备好了
+                        case "check status" -> checkIfAllReady();
 //                        case "gameOver" ->
 //                            // 游戏结束处理
 //                                processGameOver();
-                        //退出房间
+                        // 退出房间
                         case "exitRoom" -> exitRoom();
 
                         /* 聊天功能 */
@@ -197,9 +205,10 @@ public class LobbyServer {
                 return;
             }
 
-            // 保存用户信息
+            // 保存用户信息 (只有当用户成功登陆时才添加线程)
             this.curUser.setUser(nickName, account);
             users.addElement(curUser);
+            threads.put(curUser, this);
 
             // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
             out.writeUTF("login|succeed" + "|" + nickName);
@@ -359,6 +368,11 @@ public class LobbyServer {
             System.out.println("[info] New game server, port: " + serverPort);
             GameServer server  = new GameServer(sockets);
             server.run();
+
+            // 唤醒所有线程
+            for(UserInfo user :curRoom.getAllUsers())  {
+                threads.get(user).notify();
+            }
         }
 
         //退出房间
