@@ -6,6 +6,9 @@ public class User {
     String nickName;
     String account;
     String password;
+    UserStatus status = UserStatus.Null;
+
+    Room room = null;
 
     public User(String nickName, String account, String password) {
         this.nickName = nickName;
@@ -39,5 +42,25 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public UserStatus getStatus() {
+        return this.status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void joinRoom(Room room) {
+        this.room = room;
+    }
+
+    public void leaveRoom() {
+        this.room = null;
     }
 }
