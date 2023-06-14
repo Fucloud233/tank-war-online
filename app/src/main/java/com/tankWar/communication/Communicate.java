@@ -1,4 +1,4 @@
-package com.tankWar.lobby;
+package com.tankWar.communication;
 
 import com.tankWar.server.Config;
 import java.io.*;

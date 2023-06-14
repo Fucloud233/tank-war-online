@@ -3,10 +3,10 @@ package com.tankWar.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tankWar.game.msg.InitMsg;
-import com.tankWar.game.msg.MessageType;
-import com.tankWar.game.msg.OverMsg;
-import com.tankWar.game.msg.ResetMsg;
+import com.tankWar.communication.msg.InitMsg;
+import com.tankWar.communication.msg.MessageType;
+import com.tankWar.communication.msg.OverMsg;
+import com.tankWar.communication.msg.ResetMsg;
 
 import java.io.*;
 import java.nio.channels.SocketChannel;

@@ -1,4 +1,4 @@
-package com.tankWar.game.msg;
+package com.tankWar.communication.msg;
 
 public abstract class InfoMsg extends Message{
     int mapId = -1;

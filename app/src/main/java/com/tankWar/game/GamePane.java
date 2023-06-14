@@ -1,6 +1,6 @@
 package com.tankWar.game;
 
-import com.tankWar.GameStatusPane;
+import com.tankWar.communication.msg.*;
 import com.tankWar.game.client.GameClient;
 import com.tankWar.game.msg.*;
 import com.tankWar.game.entity.*;

@@ -1,4 +1,4 @@
-package com.tankWar.game.msg;
+package com.tankWar.communication.msg;
 
 public class ResetMsg extends InfoMsg{
     int curGameNum = 0;

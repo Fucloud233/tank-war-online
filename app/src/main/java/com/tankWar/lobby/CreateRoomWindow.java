@@ -1,5 +1,6 @@
 package com.tankWar.lobby;
 
+import com.tankWar.communication.Communicate;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

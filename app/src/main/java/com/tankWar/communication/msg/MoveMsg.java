@@ -1,4 +1,4 @@
-package com.tankWar.game.msg;
+package com.tankWar.communication.msg;
 
 import com.tankWar.game.entity.Direction;
 

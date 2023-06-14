@@ -1,4 +1,4 @@
-package com.tankWar.game.msg;
+package com.tankWar.communication.msg;
 
 // 游戏开始时 Sever用于初始化游戏信息 玩家会获得一个id
 

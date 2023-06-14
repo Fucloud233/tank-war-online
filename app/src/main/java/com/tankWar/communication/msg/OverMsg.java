@@ -1,4 +1,4 @@
-package com.tankWar.game.msg;
+package com.tankWar.communication.msg;
 
 public class OverMsg extends Message{
     int[] scores = null;

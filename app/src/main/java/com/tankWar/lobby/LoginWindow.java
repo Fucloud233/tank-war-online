@@ -1,5 +1,6 @@
 package com.tankWar.lobby;
 
+import com.tankWar.communication.Communicate;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;

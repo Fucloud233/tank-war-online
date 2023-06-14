@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.tankWar.communication.msg.*;
 import com.tankWar.game.entity.Direction;
 import com.tankWar.game.msg.*;
-import com.tankWar.lobby.Communicate;
+import com.tankWar.communication.Communicate;
 
 import java.net.*;
 

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-import com.tankWar.game.msg.Message;
+import com.tankWar.communication.msg.Message;
 import com.tankWar.game.entity.Direction;
 import org.junit.Test;
 

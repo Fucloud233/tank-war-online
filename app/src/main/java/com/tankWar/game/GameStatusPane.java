@@ -1,4 +1,4 @@
-package com.tankWar;
+package com.tankWar.game;
 
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
