@@ -85,10 +85,12 @@ public class Room {
         return null;
     }
 
+    // 获得房间内所有玩家的用户名
     public String[] getAllNickNames() {
         String[] names = new String[users.size()];
-        for(int i=0; i<users.size(); i++)
-            names[i] = users.get(i).getNickName();
+        int i = 0;
+        for(User user: users.values())
+            names[i++] = user.getNickName();
         return names;
     }
 
@@ -100,23 +102,17 @@ public class Room {
         return roomName;
     }
 
-    //返回房主名
+    // 返回房主名 (根据房间号查找 房间号==房主账号)
     public String getHostName(){
-        return users.get(0).getNickName();
+        for(User user: users.values())
+            if(roomNum.equals(user.getAccount()))
+                return user.getNickName();
+        return "";
     }
 
     //返回房间里设置的人数
     public int getMaxUserNum() {
         return maxUserNum;
-    }
-
-    //返回房间是否设置了密码
-    public boolean havePassword() {return havePassword;}
-    //返回房间的密码
-    public String getPassword(){return password;}
-    // 设置密码
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     //返回房间的状态
@@ -129,10 +125,20 @@ public class Room {
         return users.size() >= maxUserNum;
     }
 
-    public boolean isHost(String name) {
-        return users.get(0).getNickName().equals(name);
+    // 根据用户账号判断是否是房主
+    public boolean isHost(String account) {
+        return roomNum.equals(account);
     }
 
+    //返回房间是否设置了密码
+    public boolean havePassword() {return havePassword;}
+
+    // 设置密码
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    // 验证密码
     public boolean checkPassword(String password) {
         return password.equals(this.password);
     }
@@ -146,13 +152,13 @@ public class Room {
     }
 
     // 改变房间的状态 和 玩家状态
-    public void startGame(boolean status){
-        status = true;
+    public void startGame(){
+        this.status = true;
         // 设置所有玩家为游戏状态
         for(User user: users.values())
             user.setStatus(UserStatus.Playing);
 
-        // todo 初始化操作
+        // 初始化操作
         game = new Game(this.users);
     }
 

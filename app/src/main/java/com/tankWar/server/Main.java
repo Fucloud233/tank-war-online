@@ -73,16 +73,15 @@ public class Main {
                 selector.select();
 
                 Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                System.out.println(selectionKeys.size());
                 for (SelectionKey key : selectionKeys) {
                     if (key.isAcceptable()) {
                         // 如果轮询到服务Socket 则建立Socket连接
                         ServerSocketChannel server = (ServerSocketChannel) key.channel();
+                        // 接收客户端的Socket
                         SocketChannel socket = server.accept();
-                        // 如果读取到的socket为空 则跳过
-//                        if(socket == null)
-//                            continue;
+                        // 设置非阻塞IO
                         socket.configureBlocking(false);
+                        // 将该Socket注册在Selector中
                         socket.register(selector, SelectionKey.OP_READ);
                         System.out.println("[info] 客户端连接成功!");
                     } else if (key.isReadable()) {
@@ -95,13 +94,15 @@ public class Main {
                             // 大厅处理对象
                             new LobbyHandler(socketChannel).handle();
                         } else if (user.getStatus().isInRoom()) {
+                            // 房间处理对象
                             new RoomHandler(socketChannel).handle();
                         } else if (user.getStatus().isPlaying()) {
+                            // 游戏处理对象(这个需要传入用户所在的玩家
                             new GameHandler(socketChannel, user.getRoom()).handle();
                         }
                     }
 
-                    // 删除
+                    // 在处理完删除key 防止重复处理
                     selectionKeys.remove(key);
                 }
             } catch (IOException e) {
@@ -122,8 +123,7 @@ public class Main {
         public void handle()  {
             // 1. 读取消息
             String text = receive();
-            System.out.println(text);
-            if(text == null)
+            if(text == null || text.isEmpty())
                 return;
 
             // 2. 解析对应的函数
@@ -138,11 +138,11 @@ public class Main {
 
                     /* 大厅内的操作 */
                     // 创建房间
-                    case "Create" ->  createRoom(st);
+                    case "Create" -> createRoom(st);
                     // 处理用户选择房间的消息   客户端点击选择房间后传来的Select room
-                    case "Select room" ->  returnMsg = selectRoom(st);
+                    case "Select room" -> selectRoom(st);
                     // 选择的房间若设置了密码，需要验证
-                    case "password" -> returnMsg = validPassword(st);
+                    case "password" -> validPassword(st);
                     // 在大厅中聊天
                     case "talk" -> returnMsg = talk(st);
                     // 刷新在线用户列表
@@ -170,11 +170,11 @@ public class Main {
             }
 
             Date t = new Date();
-            System.out.println("[info] 用户 " + account + " 正在登陆..." + "  密码:" + password + t);
+//            System.out.println("[info] 用户 " + account + " 正在登陆..." + "  密码:");
 
             // 判断用户名和密码 ->转为在数据库中寻找
             if (!operator.checkLogin(account, password)) {
-                System.out.println("[error] 用户 "+ account + " 登陆失败！" + t);
+                System.out.println("[error] 用户 "+ account + " 登陆失败！");
                 return "warning|" + account + "登陆失败，请检查您的输入!";
             }
 
@@ -258,24 +258,22 @@ public class Main {
         }
 
         // 进入房间
-        String selectRoom(StringTokenizer st) {
-            String returnMsg = null;
-
+        void selectRoom(StringTokenizer st) {
             // 获取到用户选择的房间号
             String roomNum = st.nextToken();
             for (Room room : rooms.values()) {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        returnMsg = "select room|failed";
+                        send("select room|failed");
                     } else if (room.havePassword()) {//提示有密码
-                        returnMsg = "select room|password";
+                        send("select room|password");
                     } else {
                         // 处理玩家和用户的之间的关联关系
                         User user = users.get(curSocket);
                         room.addOnlineUser(curSocket, user);
                         // 成功进入房间
-                        returnMsg = "select room|success";
+                        send("select room|success");
                         // 发送欢迎消息
                         sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
                         // 用户进入房间，大厅里的房间人数会变
@@ -284,15 +282,10 @@ public class Main {
                     break;
                 }
             }
-
-            // 返回消息
-            return returnMsg;
         }
 
         // 验证进入房间的密码
-        String validPassword(StringTokenizer st) {
-            String returnMsg = null;
-
+        void validPassword(StringTokenizer st) {
             //在获取一次房间号，因为有可能在输入密码期间有其他人进入房间了
             String roomNum = st.nextToken();
             String password = st.nextToken();
@@ -300,25 +293,22 @@ public class Main {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        returnMsg = "select room|failed";
+                        send("select room|failed");
                     } else if (!room.checkPassword(password)) {//密码错误
-                        returnMsg = "select room|password error";
+                        send("select room|password error");
                     } else {
                         // 处理玩家和用户的之间的关联关系
                         User user = users.get(curSocket);
                         room.addOnlineUser(curSocket, user);
-
-                        sendRooms();//用户进入房间，大厅里的房间人数会变
-                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
-
                         //成功进入房间
-                        returnMsg = "select room|success";
+                        send("select room|success");
+                        //用户进入房间，大厅里的房间人数会变
+                        sendRooms();
+                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
                     }
                     break;
                 }
             }
-
-            return returnMsg;
         }
 
         // 大厅发言
@@ -358,11 +348,8 @@ public class Main {
                     }
                 }
             }
-
             return null;
         }
-
-
     }
 
     // 房间处理
@@ -445,18 +432,15 @@ public class Main {
                 return "begin game|failed";
             }
 
-            // 用户全都准备好了 开始游戏  改变房间状态(对接游戏部分)
-            room.startGame(true);
-
-
-            System.out.println("[info] New game server");
-
-            // 把游戏开始信息发送给房间内所有用户
-            sendToRoom(room, "begin game|succeed");
             // 刷新大厅中这个房间的状态
             sendRooms();
-            // 发送初始化信息
+            // 把游戏开始信息发送给房间内所有用户
+            sendToRoom(room, "begin game|succeed");
+
+            // 开始游戏 并发送初始化信息
+            room.startGame();
             new GameHandler(curSocket, room).sendInitMsg();
+            System.out.println("[info] New game server");
 
             return null;
         }
@@ -467,7 +451,7 @@ public class Main {
             Room room = rooms.get(user.getAccount());
 
             // 如果是房主退出了，则解散房间
-            if (room.isHost(user.getNickName())) {
+            if (room.isHost(user.getAccount())) {
                 //调用函数 清空房间内部的所有玩家 并修改状态
                 room.cleanAll();
                 //从总房间列表中将这个房间删除
@@ -491,8 +475,6 @@ public class Main {
 
             sendRooms();//刷新大厅内的房间列表
         }
-
-
 
         // todo 在房间内部发言 (待优化)
         String roomTalk(StringTokenizer st) throws IOException {
@@ -570,7 +552,7 @@ public class Main {
             }
             sendToLobby(strOnline);
 
-            System.out.println("[info] 在线人数:" + strOnline);
+            System.out.println("[info] 在线情况:" + strOnline);
         }
 
 
@@ -580,7 +562,7 @@ public class Main {
             for (User user: users.values()) {
                 strOnline += "|" + user.getNickName();
             }
-            System.out.println("[info] 当前在线人数:" + users.size());
+            System.out.println("[info] 在线情况:" + users.size());
 
             sendToLobby(strOnline);
         }
@@ -613,7 +595,7 @@ public class Main {
     }
 
     // todo 关闭套接字，并将用户信息从在线列表中删除
-    private String closeSocket() throws IOException {
+    private String closeSocket() {
 //            String strUser = "";
 //            for (int i = 0; i < socketUser.size(); i++) {//删除用户信息
 //                if (curSocket.equals((Socket) socketUser.elementAt(i))) {

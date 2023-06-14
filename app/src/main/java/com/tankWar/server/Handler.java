@@ -5,7 +5,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public abstract class Handler {
-    SocketChannel curSocket = null;
+    static final int HeaderLen = Config.getHeaderLength();
+
+    SocketChannel curSocket;
 
     Handler(SocketChannel socket) {
         this.curSocket = socket;
@@ -13,50 +15,71 @@ public abstract class Handler {
 
     // 接收消息的接口
     protected String receive() {
-        // 1. 读取消息
-        String text;
         try {
-            // 1. 读取消息
-            ByteBuffer buffer = ByteBuffer.allocate(128);
-            int len = curSocket.read(buffer);
+            // 1. 读取头部消息
+            ByteBuffer headerBuffer = ByteBuffer.allocate(HeaderLen);
+            byte[] headerBytes = new byte[HeaderLen];
 
-            // 2. 判断消息是否为空
-            if (len == -1) {
-                System.out.println("[warn] 接收到空消息");
-                return null;
+            headerBuffer.rewind();
+            headerBuffer.get(headerBytes, 0, HeaderLen);
+
+            // 2. 读取消息体消息
+            int size = toNum(new String(headerBytes));
+            headerBuffer = ByteBuffer.allocate(size);
+
+            int restSize = size;
+            // 循环读取
+            while(restSize>0) {
+                int temp = curSocket.read(headerBuffer);
+                restSize -= temp;
             }
 
-            // 3. 得到读取到的消息
-            buffer.rewind();
-            byte[] bytes = new byte[len];
-            buffer.get(bytes);
-            text = new String(bytes, 2, len-2);
+            byte[] bodyBytes = new byte[size];
+            headerBuffer.rewind();
+            headerBuffer.get(bodyBytes, 0, size);
 
+            return new String(bodyBytes);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
-        }
-
-        return text;
-    }
-
-    // 发送消息的接口
-    void send(String text) {
-        try {
-            curSocket.write(ByteBuffer.wrap(text.getBytes()));
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
     void send(SocketChannel socket, String text) {
         try {
-            socket.write(ByteBuffer.wrap(text.getBytes()));
+            // 1. 获得消息长度
+            // [important] 注意这里要用字节长度 不能用字符长度
+            // Java中一个汉字1字符, 2字节
+            int size = text.getBytes().length;
+//            System.out.println("len: " +size + " " + text);
+
+            // 2. 将消息长度插入头部
+            String outputText = toText(size) + text;
+            // 3. 发送消息
+            socket.write(ByteBuffer.wrap(outputText.getBytes()));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    // 发送消息的接口
+    void send(String text) {
+        send(curSocket, text);
+    }
+
+    private static String toText(int num) {
+        String format = "%0" + HeaderLen + "d";
+
+        return String.format(format, num);
+    }
+
+    private static int toNum(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch(NumberFormatException e) {
+            return 0;
+        }
+    }
 
     public abstract void handle();
 }

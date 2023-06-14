@@ -9,7 +9,6 @@ import com.tankWar.game.msg.OverMsg;
 import com.tankWar.game.msg.ResetMsg;
 
 import java.io.*;
-import java.net.*;
 import java.nio.channels.SocketChannel;
 import java.util.Vector;
 
@@ -19,7 +18,9 @@ import java.util.Vector;
 public class GameHandler extends Handler{
     // 用于处理json绑定
     ObjectMapper mapper = new ObjectMapper();
-    Game game = null;
+
+    // 用于记录游戏信息
+    Game game;
 
     // 构造函数
     GameHandler(SocketChannel socket, Room room) {
@@ -27,8 +28,8 @@ public class GameHandler extends Handler{
         this.game = room.game;
     }
 
-    // 发送初始化信息
-    void sendInitMsg() throws IOException{
+    // 发送初始化信息 (需要在Room's startGame调用 所以public)
+    public void sendInitMsg() throws IOException{
         // 添加地图信息
         int mapId = 0;
 
@@ -80,7 +81,7 @@ public class GameHandler extends Handler{
     // 广播状态(除了当前Sockets)
     void sendAllWithoutMe(String msg) {
         for (SocketChannel socket: game.getAllSockets())  {
-            if(socket != curSocket)
+            if(socket == curSocket)
                 continue;
             send(socket, msg);
         }
@@ -103,24 +104,14 @@ public class GameHandler extends Handler{
 
     @Override
     public void handle() {
-        // 发送初始消息
-//        sendInitMsg();
-
-        // 1. socket接收到JSON消息
         try {
+            // 1. socket接收到JSON消息
             String msgStr = this.receive();
-//            System.out.println("来自客户端的消息: " + id  + ' ' + msgStr+"  ");
 
             // 2. 进行验证
-            MessageType type = null;
-            int id = -1;
-            try {
-                JsonNode json = mapper.readTree(msgStr);
-                type = MessageType.valueOf(json.get("type").asText());
-                id = json.get("id").asInt();
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
+            JsonNode json = mapper.readTree(msgStr);
+            MessageType type = MessageType.valueOf(json.get("type").asText());
+            int id = json.get("id").asInt();
 
             // 如果是死亡消息 则需要单独处理
             if(type == MessageType.Dead) {
@@ -129,10 +120,10 @@ public class GameHandler extends Handler{
 
             // 3. socket广播消息
             sendAllWithoutMe(msgStr);
-        } catch(SocketException e) {
-            // todo 处理断连情况
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
         } catch(IOException e) {
+            // todo 处理断连情况
             e.printStackTrace();
         }
     }
