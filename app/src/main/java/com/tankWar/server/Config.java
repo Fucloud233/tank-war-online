@@ -1,4 +1,4 @@
-package com.tankWar.game.server;
+package com.tankWar.server;
 
 public class Config {
     public final static String ip = "127.0.0.1";

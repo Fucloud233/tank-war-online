@@ -1,8 +1,6 @@
 package com.tankWar.server;
 
 
-import com.tankWar.game.server.Config;
-
 import java.sql.*;
 
 public class DBOperator {

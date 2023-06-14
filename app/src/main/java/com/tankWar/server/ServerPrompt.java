@@ -1,4 +1,4 @@
-package com.tankWar.game.server;
+package com.tankWar.server;
 
 public enum ServerPrompt {
 

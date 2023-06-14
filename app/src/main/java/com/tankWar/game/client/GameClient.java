@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tankWar.game.entity.Direction;
 import com.tankWar.game.msg.*;
-import com.tankWar.game.server.Config;
 
 import java.io.*;
 import java.net.*;

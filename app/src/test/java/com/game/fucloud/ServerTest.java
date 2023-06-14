@@ -1,6 +1,5 @@
 package com.game.fucloud;
 
-import com.tankWar.game.server.GameServer;
 import org.junit.Test;
 
 public class ServerTest {
