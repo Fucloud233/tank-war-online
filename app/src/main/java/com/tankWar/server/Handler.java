@@ -18,8 +18,11 @@ public abstract class Handler {
         try {
             // 1. 读取头部消息
             ByteBuffer headerBuffer = ByteBuffer.allocate(HeaderLen);
-            byte[] headerBytes = new byte[HeaderLen];
+            int headerLen = curSocket.read(headerBuffer);
+            if(headerLen==-1)
+                return null;
 
+            byte[] headerBytes = new byte[HeaderLen];
             headerBuffer.rewind();
             headerBuffer.get(headerBytes, 0, HeaderLen);
 

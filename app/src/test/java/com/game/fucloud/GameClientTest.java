@@ -19,18 +19,18 @@ public class GameClientTest {
     public void runClient() {
         GameClient client = new GameClient(0);
 
-        // 建立连接
-        try {
-            System.out.println("[error] 正在连接");
-            client.connect();
-            System.out.println("[info] Connection Success!");
-        }
-        catch(TimeoutException e) {
-            System.out.println("连接超时");
-        }
-        catch(IOException e) {
-            System.out.println("[error] Connection failed!");
-        }
+//        // 建立连接
+//        try {
+//            System.out.println("[error] 正在连接");
+//            client.connect();
+//            System.out.println("[info] Connection Success!");
+//        }
+//        catch(TimeoutException e) {
+//            System.out.println("连接超时");
+//        }
+//        catch(IOException e) {
+//            System.out.println("[error] Connection failed!");
+//        }
 
         // 客户端向服务端发送消息
         client.sendMoveMsg(Direction.LEFT, 0, 0);
@@ -46,21 +46,21 @@ public class GameClientTest {
         for(int i=0; i<size; i++)
             clients[i] = new GameClient(i);
 
-        // 建立连接
-        try {
-            System.out.println("[info] 正在连接");
-            for(int i=0; i<size; i++) {
-                clients[i].connect();
-//                Thread.sleep(100);
-            }
-            System.out.println("Connection Success!");
-        }
-        catch(TimeoutException e) {
-            System.out.println("[error] 连接超时");
-        }
-        catch(IOException e) {
-            System.out.println("[error] Connection failed!");
-        }
+//        // 建立连接
+//        try {
+//            System.out.println("[info] 正在连接");
+//            for(int i=0; i<size; i++) {
+//                clients[i].connect();
+////                Thread.sleep(100);
+//            }
+//            System.out.println("Connection Success!");
+//        }
+//        catch(TimeoutException e) {
+//            System.out.println("[error] 连接超时");
+//        }
+//        catch(IOException e) {
+//            System.out.println("[error] Connection failed!");
+//        }
 
         // 测试内容：随机选择客户端想服务端发送消息
         for(int i=0; i<10; i++) {
@@ -76,21 +76,21 @@ public class GameClientTest {
 
         GameClient clientA = new GameClient(0), clientB = new GameClient(1);
 
-        // 建立连接
-        try {
-            System.out.println("[info] 正在连接");
-            clientA.connect();
-            clientB.connect();
-            System.out.println("[info] Connection Success!");
-        }
-        catch(TimeoutException e) {
-            System.out.println("[error] 连接超时");
-        }
-        catch(IOException e) {
-            System.out.println("[error] Connection failed!");
-            e.printStackTrace();
-            return;
-        }
+//        // 建立连接
+//        try {
+//            System.out.println("[info] 正在连接");
+//            clientA.connect();
+//            clientB.connect();
+//            System.out.println("[info] Connection Success!");
+//        }
+//        catch(TimeoutException e) {
+//            System.out.println("[error] 连接超时");
+//        }
+//        catch(IOException e) {
+//            System.out.println("[error] Connection failed!");
+//            e.printStackTrace();
+//            return;
+//        }
         // 测试内容：随机选择客户端想服务端发送消息
         clientA.sendMoveMsg(Direction.LEFT, 0, 0);
 

@@ -123,6 +123,8 @@ public class Main {
         public void handle()  {
             // 1. 读取消息
             String text = receive();
+//            System.out.println("[info] recv:" + text);
+
             if(text == null || text.isEmpty())
                 return;
 

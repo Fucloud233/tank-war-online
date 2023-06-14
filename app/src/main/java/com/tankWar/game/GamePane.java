@@ -2,8 +2,8 @@ package com.tankWar.game;
 
 import com.tankWar.communication.msg.*;
 import com.tankWar.game.client.GameClient;
-import com.tankWar.game.msg.*;
 import com.tankWar.game.entity.*;
+
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -17,10 +17,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 public class GamePane extends HBox {
     // 与客户端交互
@@ -73,20 +71,6 @@ public class GamePane extends HBox {
         client = new GameClient();
         // 指定服务端的端口号
         client.setSocket(clientSocket);
-        try {
-            System.out.println("[info] 正在连接服务端");
-            // 与服务端连接
-            client.connect();
-        }
-        catch (TimeoutException e) {
-            System.out.println("[Error] 连接超时!");
-            return;
-        }
-        catch (IOException e) {
-            System.out.println("[Error] 连接失败!\n"+e);
-            return;
-        }
-
         // 连接成功后创建处理连接的线程
         Thread connectThread = new Thread(connectTask);
         connectThread.start();
