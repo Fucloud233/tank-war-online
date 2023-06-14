@@ -129,11 +129,7 @@ public class GameWaitWindow {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                try {
-                    out.writeUTF("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                 txtTalk.clear();
             }
         });
@@ -175,7 +171,7 @@ public class GameWaitWindow {
 
         if (result.isPresent() && result.get() == confirmButtonType) {
             //发送给服务器退出房间的信息 在服务器端处理退出房间的逻辑
-            out.writeUTF("exitRoom");
+            Communicate.send(socket, "exitRoom");
             primaryStage.setTitle("游戏大厅");
             primaryStage.setScene(lobbyScene);
         }
@@ -191,7 +187,7 @@ public class GameWaitWindow {
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if (PlayGameBtn.getText().equals("准备")) {
             //发送一个准备的消息 并传送这个能标识这个用户的键
-            out.writeUTF("isReady|" + name);
+            Communicate.send(socket, "isReady|" + name);
             System.out.println("[info] name: "+name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
             PlayGameBtn.setText("已准备");
@@ -199,7 +195,7 @@ public class GameWaitWindow {
         //用户取消准备
         else if (PlayGameBtn.getText().equals("已准备")) {
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
-            out.writeUTF("cancelReady|" + name);
+            Communicate.send(socket, "cancelReady|" + name);
             // 非房主用户 切换按钮和对应的状态 已准备-准备
             PlayGameBtn.setText("准备");
         }
@@ -208,7 +204,7 @@ public class GameWaitWindow {
     //检查是否所有的用户都已经准备好
     private void checkAllPlayersReady() throws IOException {
         //发送给服务器检查房间内用户是否全部准备好的信息
-        out.writeUTF("check status");
+        Communicate.send(socket, "check status");
     }
 
     // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
@@ -222,7 +218,7 @@ public class GameWaitWindow {
                     // For example:
                     System.out.println("[info] Game started!");
                     // [important] 发送开始游戏 刷新服务端的接收线程流
-                    out.writeUTF("start game");
+                    Communicate.send(socket, "start game");
                 }
             }
             case "ready" -> {

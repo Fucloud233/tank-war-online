@@ -122,18 +122,14 @@ public class Client extends Stage {
         btnTalk.setDisable(false);
         //创建一个线程来处理事件
         new Thread(new ClientThread()).start();
-        out.writeUTF("init|online");
+        Communicate.send(socket, "init|online");
         primaryStage.show();
 
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
             if (selectedHBox!=null && isHBoxSelected==true){
                 //向服务端传选择的房间内容
-                try {
-                    out.writeUTF("Select room|"+roomId);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                Communicate.send(socket, "Select room|"+roomId);
             } else {
                 new Alert(Alert.AlertType.WARNING, "请选择房间！").showAndWait();
             }
@@ -143,11 +139,7 @@ public class Client extends Stage {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                try {
-                    out.writeUTF("talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                Communicate.send(socket, "talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
                 txtTalk.clear();
             }
         });
@@ -208,7 +200,7 @@ public class Client extends Stage {
         public void run() {
             while (!gameStart) {
                 try {
-                    String strReceive = receive();
+                    String strReceive  = Communicate.receive(socket);
                     System.out.println(strReceive);
                     st = new StringTokenizer(strReceive, "|");
                     String strKey = st.nextToken();
@@ -378,14 +370,13 @@ public class Client extends Stage {
                             }
                         }
                     }
+
                     Thread.sleep(500);
-                } catch (IOException | InterruptedException e) {
+                } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-
-
     }
 
 
@@ -440,21 +431,11 @@ public class Client extends Stage {
 //                gamePane.closeCamePane();
                 // 发送游戏结束信息给服务端
                 primaryStage.show();
-                try {
 
-                    out.writeUTF("gameOver");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Communicate.send(socket, "gameOver");
+
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
         }
-    }
-
-    String receive() throws IOException {
-        byte[] bs = new byte[128];
-        int len = in.read(bs);
-
-        return new String(bs);
     }
 }

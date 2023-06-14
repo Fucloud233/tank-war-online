@@ -66,7 +66,7 @@ public class LoginWindow extends Application {
                     connectServer();
                     //获取登陆的账号和密码//发送给服务器
                     String strSend = "login|" + txtName.getText() + "|" + txtPassword.getText();
-                    out.writeUTF(strSend);
+                    Communicate.send(socket, strSend);
                     //进行登录
                     initLogin();
                 } catch (IOException ioException) {
@@ -95,7 +95,7 @@ public class LoginWindow extends Application {
                     connectServer();
                     //获取登陆的账号和密码//发送给服务器
                     String strSend = "register|" + txtNickName.getText() + "|" + txtAccount.getText() + "|" + setPassword.getText();
-                    out.writeUTF(strSend);
+                    Communicate.send(socket, strSend);
                     initRegister();
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
@@ -153,7 +153,7 @@ public class LoginWindow extends Application {
 
     //登录的逻辑
     private void initLogin() throws IOException {
-        String strReceive = receive();
+        String strReceive = Communicate.receive(socket);
 //        String strReceive = in.readUTF();
         System.out.println(strReceive);
         //截断获取关键的信息内容
@@ -189,7 +189,7 @@ public class LoginWindow extends Application {
 
     //注册的逻辑
     private void initRegister() throws IOException {
-        String strReceive = in.readUTF();
+        String strReceive = Communicate.receive(socket);
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
         if (strKey.equals("register")) {
@@ -235,13 +235,6 @@ public class LoginWindow extends Application {
         //输入流和输出流
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-    }
-
-    String receive() throws IOException {
-        byte[] bs = new byte[128];
-        int len = in.read(bs);
-
-        return new String(bs);
     }
 
     public static void main(String[] args) {

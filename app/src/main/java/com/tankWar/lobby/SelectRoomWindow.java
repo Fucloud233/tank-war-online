@@ -39,11 +39,7 @@ public class SelectRoomWindow {
         vBox.setAlignment(Pos.CENTER);
         button.setOnAction(event -> {
             String s =Password.getText();
-            try {
-                out.writeUTF("password|"+roomNum+"|"+s);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Communicate.send(socket,  "password|"+roomNum+"|"+s);
         });
         selectroomstage=new Stage();
         selectroomstage.setTitle("输入房间密码");

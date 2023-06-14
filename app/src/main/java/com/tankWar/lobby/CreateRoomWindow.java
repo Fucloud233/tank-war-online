@@ -70,11 +70,7 @@ public class CreateRoomWindow{
             if (setpw.getValue().equals("是")){
                 if (!roomName.getText().isEmpty()&&!Password.getText().isEmpty()){
                     strsend="Create|password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue()+"|"+Password.getText();
-                    try {
-                        out.writeUTF(strsend);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    Communicate.send(socket, strsend);
                     createroomStage.close();
                     //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;
@@ -84,11 +80,7 @@ public class CreateRoomWindow{
             }else if (setpw.getValue().equals("否")){
                 if (!roomName.getText().isEmpty()){
                     strsend="Create|no password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
-                    try {
-                        out.writeUTF(strsend);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    Communicate.send(socket, strsend);
                     createroomStage.close();
                     //设置这个人为房主
                     gameWaitWindow.isRoomOwner=true;
