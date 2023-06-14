@@ -3,25 +3,17 @@ package com.tankWar.game.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.tankWar.game.entity.Direction;
 import com.tankWar.game.msg.*;
+import com.tankWar.lobby.Communicate;
 
-import java.io.*;
 import java.net.*;
-import java.util.concurrent.TimeoutException;
 
 public class GameClient {
     int id = -1;
-
     // 客户端Socket
     Socket clientSocket;
-    // 服务端端口号
-    int port;
-
-    // 输入输出数据流
-    DataOutputStream out;
-    DataInputStream in;
-
     // 用于处理JSON绑定
     ObjectMapper mapper = new ObjectMapper();
 
@@ -37,45 +29,13 @@ public class GameClient {
         this.clientSocket = socket;
     }
 
-    // 初始化连接 连接正常就不会抛出异常
-    public void connect() throws IOException, TimeoutException {
-//        System.out.println("[info] New socket, port: " + this.port);
-//        clientSocket = new Socket(Config.ip, this.port);
-//        clientSocket.setSoTimeout(1000);
-
-        // 初始化输入输出端口
-        out = new DataOutputStream(clientSocket.getOutputStream());
-        in = new DataInputStream(clientSocket.getInputStream());
-        System.out.println(clientSocket);
-        // 获取当前可读取的字节数
-//        int availableBytes = in.available();
-//        System.out.println("aaaaaaaaaa"+availableBytes);
-        // 跳过可读取的字节数
-//        in.skipBytes(availableBytes);
-//        System.out.println("bbbbbbbbbb"+in.available());
-
-//        System.out.println(in);
-    }
-    int count=0;
-    // 发送消息
+    // 发送消息和接收 (调用Communicate中的函数)
     void send(String msg) {
-
-        System.out.println("send!!!!!!!!!!!!!!"+msg+"  "+count);
-        count++;
-        try {
-            out.writeUTF(msg);
-        } catch (IOException e) {
-            System.out.printf("[Error] 客户端%d发送失败!\n", id);
-        }
+        Communicate.send(clientSocket, msg);
     }
 
     String receive() {
-        try {
-            return in.readUTF();
-        } catch (IOException e) {
-//            System.out.printf("[Error] 客户端%d接收失败!\n", id);
-            return "";
-        }
+        return Communicate.receive(clientSocket);
     }
 
     // 发送移动消息
@@ -158,7 +118,7 @@ public class GameClient {
                 }
             }
         } catch (JsonProcessingException e) {
-//            e.printStackTrace();
+            e.printStackTrace();
             return null;
         }
     }

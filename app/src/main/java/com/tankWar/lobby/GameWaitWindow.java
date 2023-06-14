@@ -217,8 +217,6 @@ public class GameWaitWindow {
                     // Add your code to start the game here
                     // For example:
                     System.out.println("[info] Game started!");
-                    // [important] 发送开始游戏 刷新服务端的接收线程流
-                    Communicate.send(socket, "start game");
                 }
             }
             case "ready" -> {
