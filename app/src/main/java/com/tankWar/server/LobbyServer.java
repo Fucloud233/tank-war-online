@@ -1,31 +1,33 @@
 package com.tankWar.server;
 
-import com.tankWar.game.server.Config;
-import com.tankWar.game.server.GameServer;
+import javafx.util.Pair;
 
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.sql.*;
 import java.util.Date;
 
 
 //接收到客户端socket发来的信息后进行解析、处理、转发
 public class LobbyServer {
     // 连接相关
-    ServerSocket serverSocket = null; // 创建服务器端套接字
+    // 参考代码: https://blog.csdn.net/hao134838/article/details/113185058
+    // https://www.cnblogs.com/binarylei/p/12643807.html
+    ServerSocketChannel serverSocket = null;
+    Selector selector = null;
     // 服务端监听端口
     int serverPort;
 
     /* 只在用户成功登陆后存储 */
-    // users 存储所有玩家信息(玩家信息 + Socket + Status)
-    static Vector<UserInfo> users = new Vector<>(10,5);//保存在线用户的用户名
-    // Vector 线程管理 通过玩家映射
-    static HashMap<UserInfo, Thread> threads = new HashMap<>();
-
-    /* 只在房间陈宫创建后存储 */
-    // rooms 存储所有房间信息
-    static ArrayList<Room> rooms = new ArrayList<>();//维护的每个房间
+    HashMap<SocketChannel, User> users = new HashMap<>();
+    /* 只在房间成功创建后存储 */
+    // 根据房间来进行索引
+    HashMap<String, Room> rooms = new HashMap<>();
 
     // 数据操作函数
     DBOperator operator = null;
@@ -43,8 +45,14 @@ public class LobbyServer {
     public void start() {
         // 1. 启动服务端套接字
         try {
-            serverSocket = new ServerSocket(this.serverPort); // 启动服务
-//            serverSocket.bind(new InetSocketAddress(serverAddress, this.serverPort));
+            // 启动服务
+            serverSocket = ServerSocketChannel.open();
+            serverSocket.bind(new InetSocketAddress(serverPort));
+            // 设置服务端Socket非阻塞
+            serverSocket.configureBlocking(false);
+            // 设置多路复用器 并注册服务端Socket
+            selector = Selector.open();
+            serverSocket.register(selector, SelectionKey.OP_ACCEPT);
         } catch (BindException e) {
             System.out.println("[error] 端口使用中....");
             System.out.println("[error] 请关掉相关程序并重新运行服务器！");
@@ -59,134 +67,105 @@ public class LobbyServer {
         System.out.println("[info] 服务器端口:" + serverPort);
         System.out.println("[info] 服务器正在运行中...");
 
-
         // 3. 循环启动服务器线程
         while (true) {
             try {
-                // 监听客户端的连接请求，并返回客户端socket
-                Socket socket = serverSocket.accept();
-                // 创建一个新线程来处理与该客户的通讯
-                ClientThread thread = new ClientThread(socket);
-                thread.start();
+                selector.select();
+
+                Set<SelectionKey> selectionKeys = selector.selectedKeys();
+                System.out.println(selectionKeys.size());
+                for (SelectionKey key : selectionKeys) {
+                    if (key.isAcceptable()) {
+                        // 如果轮询到服务Socket 则建立Socket连接
+                        ServerSocketChannel server = (ServerSocketChannel) key.channel();
+                        SocketChannel socket = server.accept();
+                        // 如果读取到的socket为空 则跳过
+//                        if(socket == null)
+//                            continue;
+                        socket.configureBlocking(false);
+                        socket.register(selector, SelectionKey.OP_READ);
+                        System.out.println("[info] 客户端连接成功!");
+                    } else if (key.isReadable()) {
+                        // 如果轮询到Socket 则处理接收连接
+                        SocketChannel socketChannel = (SocketChannel) key.channel();
+                        User user = users.get(socketChannel);
+
+                        // 根据用户状态来选择处理对象
+                        if (user == null || user.getStatus().isInLobby()) {
+                            // 大厅处理对象
+                            new LobbyHandler(socketChannel).receive();
+                        } else if (user.getStatus().isInRoom()) {
+                            new RoomHandler(socketChannel).receive();
+                        } else if (user.getStatus().isPlaying()) {
+                            new GameHandler(socketChannel, user.getRoom()).receive();
+                        }
+                    }
+
+                    // 删除
+                    selectionKeys.remove(key);
+                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         }
     }
 
-    // 当服务端接受了Socket连接 就会创建一个线程
-    class ClientThread extends Thread {
-        DataInputStream in;// 定义输入流
-        DataOutputStream out;// 定义输出流
+    // 大厅接收处理者
+    class LobbyHandler extends Handler{
 
-        String strKey; //保存信息的关键字 login talk init reg
-        StringTokenizer st;
-
-        //维护的与这个服务端套接字连接的用户信息
-        Room curRoom = null;
-        UserInfo curUser = new UserInfo();
-
-
-        //处理从客户端Socket接收到的信息
-        public ClientThread(Socket client) throws IOException {
-            curUser.setSocket(client);
-            in = new DataInputStream(client.getInputStream());
-            // 客户端接收
-            out = new DataOutputStream(client.getOutputStream());  // 客户端输出
+        // 构造函数
+        public LobbyHandler(SocketChannel socketChannel) {
+            super(socketChannel);
         }
 
-        // 接受线程
-        // 使用while循环来连续读取从客户端发送来的信息  根据不同的信息进行不同的操作执行
-        @Override
-        public void run() {
-            while (true) {
-                // 0. 如果当前玩家在游戏状态 则线程等待
-                try {
-//                    System.out.println(curUser.isStatus().toString());
-                    if(curUser.isStatus() == UserStatus.Playing)
-                        this.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        // 用来处理大厅接收到的消息
+        public void receive()  {
+            // 1. 读取消息
+            String text = receiveMsg();
+            System.out.println(text);
+            if(text == null)
+                return;
+
+            // 2. 解析对应的函数
+            // 从服务器端接收一条信息后拆分、解析，并执行相应操作
+            StringTokenizer st = new StringTokenizer(text, "|");
+            String strKey = st.nextToken(), returnMsg = null;
+            try {
+                switch (strKey) {
+                    /* 登陆和注册 */
+                    case "register" -> returnMsg = register(st);
+                    case "login" -> returnMsg = login(st);
+
+                    /* 大厅内的操作 */
+                    // 创建房间
+                    case "Create" ->  createRoom(st);
+                    // 处理用户选择房间的消息   客户端点击选择房间后传来的Select room
+                    case "Select room" ->  returnMsg = selectRoom(st);
+                    // 选择的房间若设置了密码，需要验证
+                    case "password" -> returnMsg = validPassword(st);
+                    // 在大厅中聊天
+                    case "talk" -> returnMsg = talk(st);
+                    // 刷新在线用户列表
+                    case "init" -> sendAllUser();
                 }
-
-                // 1. 从服务端读取信息
-                try {
-                    // 从服务器端接收一条信息后拆分、解析，并执行相应操作
-                    String strReceive = in.readUTF();
-                    System.out.println("str:" + strReceive);
-                    // 初始化分词器
-                    st = new StringTokenizer(strReceive, "|");
-                } catch (Exception e) {
-//                    // 用户关闭客户端造成此异常，关闭该用户套接字。
-//                    String leaveUser = null;
-//                    try {
-//                        leaveUser = closeSocket();
-//                    } catch (IOException ex) {
-//                        throw new RuntimeException(ex);
-//                    }
-//                    Date t = new Date();
-//                    System.out.println("[info] 用户" + leaveUser + "已经退出" + "退出时间" + t.toLocaleString());
-//                    try {
-//                        freshClientsOnline();
-//                    } catch (IOException e1) {
-//                        e1.printStackTrace();
-//                    }
-                    e.printStackTrace();
-                    continue;
-                }
-
-                // 2. 解析对应的函数
-                strKey = st.nextToken();
-                try {
-                    switch (strKey) {
-                        /* 登陆和注册 */
-                        case "register" -> register(st.nextToken(), st.nextToken(), st.nextToken().trim());
-                        case "login" -> login(st.nextToken(), st.nextToken().trim());
-
-                        /* 大厅内的操作 */
-                        // 创建房间
-                        case "Create" -> createRoom();
-                        //处理用户选择房间的消息   客户端点击选择房间后传来的Select room
-                        case "Select room" -> selectRoom();
-                        //选择的房间若设置了密码，需要验证
-                        case "password" -> validPassword();
-
-
-                        /* 房间操作 */
-                        // 有用户准备
-                        case "isReady" -> userReady();
-                        // 有用户取消准备
-                        case "cancelReady" -> userCancelReady();
-                        // 检查房间内的用户是否都准备好了
-                        case "check status" -> checkIfAllReady();
-//                        case "gameOver" ->
-//                            // 游戏结束处理
-//                                processGameOver();
-                        // 退出房间
-                        case "exitRoom" -> exitRoom();
-
-                        /* 聊天功能 */
-                        case "talk" -> talk();
-                        // 房间内发言
-                        case "roomTalk" -> roomTalk();
-                        // 刷新在线用户列表
-                        case "init" -> sendAllUser();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+
+            // 3. 发送返回消息
+            if(returnMsg != null)
+                this.sendMsg(returnMsg);
         }
-
-
         // 登录
-        public void login(String account, String password) throws IOException, SQLException {
+        String login(StringTokenizer st) throws IOException {
+            String account = st.nextToken();
+            String password = st.nextToken().trim();
+
             // 判断该用户是否登陆过了
-            for (User user:users){
+            for(User user: users.values()) {
                 if (account.equals(user.getAccount())){
                     //不能重复登陆的提示
-                    out.writeUTF("warning|double");
-                    return;
+                    return "warning|double";
                 }
             }
 
@@ -195,53 +174,60 @@ public class LobbyServer {
 
             // 判断用户名和密码 ->转为在数据库中寻找
             if (!operator.checkLogin(account, password)) {
-                out.writeUTF("warning|" + account + "登陆失败，请检查您的输入!");
                 System.out.println("[error] 用户 "+ account + " 登陆失败！" + t.toString());
+                return "warning|" + account + "登陆失败，请检查您的输入!";
             }
 
             // 获取用户昵称
             String nickName = operator.getNickName(account);
             if (nickName == null) {
-                return;
+                return "warning|" + account + "登陆失败，请检查您的输入!";
             }
 
             // 保存用户信息 (只有当用户成功登陆时才添加线程)
-            this.curUser.setUser(nickName, account);
-            users.addElement(curUser);
-            threads.put(curUser, this);
+            users.put(curSocket, new User(nickName, account));
 
-            // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
-            out.writeUTF("login|succeed" + "|" + nickName);
+
+            System.out.println("[info] 用户 " + account + " 登录成功，" + "登录时间:" + t.toString());
+
+            sendMsg("login|succeed" + "|" + nickName);
             sendToLobby("talk|>>>欢迎 " + nickName + " 进来与我们一起交谈!");
             sendAllUser();
             sendRooms();
 
-            System.out.println("[info] 用户 " + account + " 登录成功，" + "登录时间:" + t.toString());
+            // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
+            return null;
         }
 
         // 注册
-        private void register(String name, String account, String password) throws IOException {
+        String register(StringTokenizer st)  {
+            String name = st.nextToken();
+            String account = st.nextToken();
+            String password = st.nextToken();
+
             if (operator.isExistUserName(name)) {
                 // 验证昵称是否重复
                 System.out.println("[ERROR] " + name + " Register fail!");
-                out.writeUTF("register|name");
+                return "register|name";
             } else if (operator.isExistUser(account)) {
                 // 验证账号重复
                 System.out.println("[ERROR] " + account + " Register fail!");
-                out.writeUTF("register|account");
+                return "register|account";
             } else {
                 // 创建用户
                 boolean flag = operator.createPlayer(name, account, password);
 
                 if (flag) {
                     System.out.println("[info] User " + name + " 注册成功");
-                    out.writeUTF("register|success");
+                    return "register|success";
                 }
             }
+
+            return null;
         }
 
-        //创建房间,分有密码和无密码的情况
-        public void createRoom() throws IOException {
+        // 创建房间,分有密码和无密码的情况
+        void createRoom(StringTokenizer st) throws IOException {
             // 验证是否存在密码
             String isPassword = st.nextToken();
             boolean havePassword = isPassword.equals("password");
@@ -252,163 +238,266 @@ public class LobbyServer {
             int userNum = Integer.parseInt(st.nextToken());
 
             // 创建房间 (对于房主来说 房号就是他的账号)
+            Room room = new Room(account, roomName, userNum);
             if (havePassword) {
                 String password = st.nextToken();
-                curRoom = new Room(account, roomName, userNum, password);
-            } else {
-                curRoom = new Room(account, roomName, userNum);
+                room.setPassword(password);
             }
 
             // 添加房主的信息 并将房间添加进全局中
-            curRoom.addOnlineUser(curUser);
-            rooms.add(curRoom);
+            User user = users.get(curSocket);
+            room.addOnlineUser(curSocket, user);
+            rooms.put(room.getRoomNum(), room);
 
             // 更新房间里面的信息，并刷新客户端的游戏大厅和游戏房间里的聊天框
             // 用户进入房间，房间里面的人员信息会增加
             // 用户进入房间，大厅里的房间人数会变
-            sendToRoom("roomTalk|>>> 欢迎 " + userName + " 加入房间");
+            sendToRoom(room, "roomTalk|>>> 欢迎 " + userName + " 加入房间");
+            sendAllUsersToRoom(room);
             sendRooms();
-            sendRoomUsers();
-
         }
 
-        //进入房间
-        public void selectRoom() throws IOException {
-            String roomNum = st.nextToken();//获取到用户选择的房间号
-            for (Room room : rooms) {
+        // 进入房间
+        String selectRoom(StringTokenizer st) throws IOException {
+            String returnMsg = null;
+
+            // 获取到用户选择的房间号
+            String roomNum = st.nextToken();
+            for (Room room : rooms.values()) {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        out.writeUTF("select room|failed");
+                        returnMsg = "select room|failed";
                     } else if (room.havePassword()) {//提示有密码
-                        out.writeUTF("select room|password");
+                        returnMsg = "select room|password";
                     } else {
-                        curRoom = room;
-                        curRoom.addOnlineUser(curUser);//加昵称、账号和套接字
-
+                        // 处理玩家和用户的之间的关联关系
+                        User user = users.get(curSocket);
+                        room.addOnlineUser(curSocket, user);
                         // 成功进入房间
-                        out.writeUTF("select room|success");
-                        // 用户进入房间，大厅里的房间人数会变
-                        sendRoomUsers();
+                        returnMsg = "select room|success";
                         // 发送欢迎消息
-                        sendToRoom("roomTalk|>>>欢迎 " + curUser.getNickName() + " 加入房间");
+                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
+                        // 用户进入房间，大厅里的房间人数会变
+                        sendAllUsersToRoom(room);
                     }
                     break;
                 }
             }
+
+            // 返回消息
+            return returnMsg;
         }
 
-        //验证进入房间的密码
-        public void validPassword() throws IOException {
+        // 验证进入房间的密码
+        String validPassword(StringTokenizer st) throws IOException {
+            String returnMsg = null;
+
             //在获取一次房间号，因为有可能在输入密码期间有其他人进入房间了
             String roomNum = st.nextToken();
             String password = st.nextToken();
-            for (Room room : rooms) {
+            for (Room room : rooms.values()) {
                 if (room.getRoomNum().equals(roomNum)) {
                     if (room.isFull() || room.getStatus()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
-                        out.writeUTF("select room|failed");
+                        returnMsg = "select room|failed";
                     } else if (!room.checkPassword(password)) {//密码错误
-                        out.writeUTF("select room|password error");
+                        returnMsg = "select room|password error";
                     } else {
-                        curRoom = room;
-                        curRoom.addOnlineUser(curUser);//加昵称、账号和套接字
+                        // 处理玩家和用户的之间的关联关系
+                        User user = users.get(curSocket);
+                        room.addOnlineUser(curSocket, user);
+
                         sendRooms();//用户进入房间，大厅里的房间人数会变
-                        sendToRoom("roomTalk|>>>欢迎 " + curUser.getNickName() + " 加入房间");
+                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
 
                         //成功进入房间
-                        out.writeUTF("select room|success");
+                        returnMsg = "select room|success";
                     }
-
                     break;
                 }
             }
+
+            return returnMsg;
+        }
+
+        // 大厅发言
+        String talk(StringTokenizer st) throws IOException {
+            String strTalkInfo = st.nextToken(); // 得到聊天内容;
+            String strSender = st.nextToken(); // 得到发消息人d
+            String strReceiver = st.nextToken(); // 得到接收人
+            System.out.println("[TALK_" + strReceiver + "] " + strTalkInfo);
+            Date t = new Date();
+
+            // 得到当前时间
+            GregorianCalendar calendar = new GregorianCalendar();
+            String strTime = "(" + calendar.get(Calendar.HOUR) + ":"
+                    + calendar.get(Calendar.MINUTE) + ":"
+                    + calendar.get(Calendar.SECOND) + ")";
+            strTalkInfo += strTime;
+
+            // 记录事件
+            System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
+                    + t.toString());
+
+            if (strReceiver.equals("All")) {
+                LobbyServer.this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
+            } else if (strSender.equals(strReceiver)) {
+                return "talk|>>>不能自言自语哦!";
+            } else {
+                for(Map.Entry<SocketChannel, User> pair: users.entrySet()) {
+                    User user = pair.getValue();
+                    //更新接收方的消息
+                    if (strReceiver.equals(user.getNickName())) {
+                        SocketChannel socket = pair.getKey();
+                        String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
+                        socket.write(ByteBuffer.wrap(text.getBytes()));
+                        //更新发送方的消息
+                        return "talk|你对 " + strReceiver + "说：" + strTalkInfo;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+    }
+
+    // 房间处理
+    class RoomHandler extends Handler{
+        // 构造函数
+        public RoomHandler(SocketChannel socketChannel) {
+            super(socketChannel);
+        }
+
+        // 用来处理大厅接收到的消息
+        @Override
+        public void receive() {
+            // 1. 读取消息
+            String text = super.receiveMsg();
+            if(text == null)
+                return;
+
+            // 2. 解析对应的函数
+            // 从服务器端接收一条信息后拆分、解析，并执行相应操作
+            StringTokenizer st = new StringTokenizer(text, "|");
+            String strKey = st.nextToken(), receiveMsg = null;
+            try {
+                switch (strKey) {
+                    /* 房间操作 */
+                    // 有用户准备
+                    case "isReady" -> userReady(st);
+                    // 有用户取消准备
+                    case "cancelReady" -> userCancelReady(st);
+                    // 检查房间内的用户是否都准备好了
+                    case "check status" -> receiveMsg = checkIfAllReady();
+//                        case "gameOver" ->
+//                            // 游戏结束处理
+//                                processGameOver();
+                    // 退出房间
+                    case "exitRoom" -> exitRoom();
+
+                    /* 聊天功能 */
+                    // 房间内发言
+                    case "roomTalk" -> roomTalk(st);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // 3. 发送返回消息
+            if(receiveMsg != null)
+                this.sendMsg(receiveMsg);
         }
 
         // 用户选择进行准备
-        private void userReady() {
+        private void userReady(StringTokenizer st) {
             //准备的玩家
             String readyName = st.nextToken();
-            //传递给客户端的房间在线用户
-            sendToRoom("roomTalk|" + readyName + " 已准备");
-            curRoom.changeUserStatus(readyName, UserStatus.Ready);
+            //传递给客户端的房间在线用户\
+            User user = users.get(curSocket);
+            sendToRoom(user.getRoom(), "roomTalk|" + readyName + " 已准备");
+            user.setStatus(UserStatus.Ready);
         }
 
         // 用户取消准备
-        private void userCancelReady() {
+        private void userCancelReady(StringTokenizer st) {
             //取消准备的玩家
             String readyName = st.nextToken();
             //传递给客户端的房间在线用户
-            sendToRoom("roomTalk|" + readyName + " 已取消准备");
-            curRoom.changeUserStatus(readyName, UserStatus.NoReady);
+            User user = users.get(curSocket);
+            sendToRoom(user.getRoom(),"roomTalk|" + readyName + " 已取消准备");
+            user.setStatus(UserStatus.NoReady);
         }
 
         // 验证是否全部用户准备好
-        private void checkIfAllReady() throws IOException {
-            curRoom.changeUserStatus(0, UserStatus.Ready);
-            if (!curRoom.checkAllUsersReady()) {
-                out.writeUTF("begin game|failed");
-                curRoom.changeUserStatus(0, UserStatus.NoReady);
-                return;
+        String checkIfAllReady() throws IOException {
+            User user = users.get(curSocket);
+            Room room = rooms.get(user.getAccount());
+
+            // 切换房主状态
+            user.setStatus(UserStatus.Ready);
+
+            if (!room.checkAllUsersReady()) {
+                user.setStatus(UserStatus.NoReady);
+                return "begin game|failed";
             }
 
-            // 用户全都准备好了 开始游戏  改变房间状态
-            curRoom.setStatus(true);
+            // 用户全都准备好了 开始游戏  改变房间状态(对接游戏部分)
+            room.startGame(true);
+
+
+            System.out.println("[info] New game server");
 
             // 把游戏开始信息发送给房间内所有用户
-            sendToRoom("begin game|succeed");
+            sendToRoom(room, "begin game|succeed");
             // 刷新大厅中这个房间的状态
             sendRooms();
-            // 创建游戏服务端
-            startGameServer(curRoom.getAllSockets());
+            // 发送初始化信息
+            new GameHandler(curSocket, room).sendInitMsg();
+
+            return null;
         }
 
-        // 创建游戏服务端
-        void startGameServer(Socket[] sockets) {
-            System.out.println("[info] New game server, port: " + serverPort);
-            GameServer server  = new GameServer(sockets);
-            server.run();
+        // 退出房间
+        void exitRoom() throws IOException {
+            User user = users.get(curSocket);
+            Room room = rooms.get(user.getAccount());
 
-            // 唤醒所有线程
-            for(UserInfo user :curRoom.getAllUsers())  {
-                threads.get(user).notify();
-            }
-        }
-
-        //退出房间
-        public void exitRoom() throws IOException {
             // 如果是房主退出了，则解散房间
-            if (curRoom.isHost(curUser.nickName)) {
+            if (room.isHost(user.getNickName())) {
+                //调用函数 清空房间内部的所有玩家 并修改状态
+                room.cleanAll();
+                //从总房间列表中将这个房间删除
+                rooms.remove(room.getRoomNum());
+
                 // 先要进行刷新  防止场景切换后出现问题  客户端需要新的Rooms列表进行大厅场景的切换
                 sendRooms();
                 // 向房间内的所有客户端发送 房间解散的信息
-                sendToRoom("Owner exitRoom|" + curRoom.getRoomNum());
-//                // 从房间中移除该用户 使用Room中的函数
-//                curRoom.removeOnlineUser(curRoom.getAccountIndex(account));
-//                //调用函数 清空房间内部的所有内容
-//                curRoom.ClearALL();
-
-                //从总房间列表中将这个房间删除
-                rooms.remove(curRoom);
+                sendToRoom(room, "Owner exitRoom|" + room.getRoomNum());
             }
             //普通用户退出该房间
             else {
-//                // 从房间中移除该用户 使用Room中的函数
-//                curRoom.removeOnlineUser(room.getAccountIndex(account));
-//                //用户退出房间，房间里面的人员信息会修改
-                sendRoomUsers();
+                // 从房间中移除该用户 使用Room中的函数
+                room.removeOnlineUser(curSocket);
+
+                //用户退出房间，房间里面的人员信息会修改
+                sendAllUsersToRoom(room);
                 // 发送退出房间消息给其他用户
-                sendToRoom("roomTalk|>>>再见 " + curUser.getNickName() + " 退出房间");
+                sendToRoom(room,"roomTalk|>>>再见 " + user.getNickName() + " 退出房间");
             }
+
             sendRooms();//刷新大厅内的房间列表
         }
 
 
-        ////////////////////////////////大厅发言///////////////////////////////////////
-        private void talk() throws IOException {
+
+        // todo 在房间内部发言 (待优化)
+        String roomTalk(StringTokenizer st) throws IOException {
             String strTalkInfo = st.nextToken(); // 得到聊天内容;
             String strSender = st.nextToken(); // 得到发消息人
             String strReceiver = st.nextToken(); // 得到接收人
+
             System.out.println("[TALK_" + strReceiver + "] " + strTalkInfo);
             Date t = new Date();
 
@@ -424,112 +513,34 @@ public class LobbyServer {
                     + t.toString());
 
             if (strReceiver.equals("All")) {
-                LobbyServer.this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
+                Room room = users.get(curSocket).getRoom();
+                sendToRoom(room,"roomTalk|" + strSender + " 对所有人说：" + strTalkInfo);
+            } else  if (strSender.equals(strReceiver)) {
+                return "roomTalk|>>>不能自言自语哦!";
             } else {
-                if (strSender.equals(strReceiver)) {
-                    out.writeUTF("talk|>>>不能自言自语哦!");
-                } else {
-//                    for (int i = 0; i < nameUser.size(); i++) {
-                    for(UserInfo user: users) {
-                        Socket socketSend = user.getSocket();
+                // 获得接收方的
+                Room room =  users.get(curSocket).getRoom();
+                Pair<SocketChannel, User> recvPair = room.getUser(strReceiver);
+                if(recvPair==null)
+                    return null;
 
-                        if (strReceiver.equals(user.getNickName())) {//更新接收方的消息
-                            DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
-                            outSend.writeUTF("talk|" + strSender + " 对你说："
-                                    + strTalkInfo);
+                //更新接收方的消息
+                SocketChannel recvSocket = recvPair.getKey();
+                String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
+                recvSocket.write(ByteBuffer.wrap(text.getBytes()));
 
-                        } else if (strSender.equals(user.getNickName())) {//更新发送方的消息
-                            DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
-                            outSend.writeUTF("talk|你对 " + strReceiver + "说："
-                                    + strTalkInfo);
-                        }
-                    }
-                }
-            }
-        }
-
-        ///////////////////////////在房间内部发言////////////////////////
-        private void roomTalk() throws IOException {
-            String strTalkInfo = st.nextToken(); // 得到聊天内容;
-            String strSender = st.nextToken(); // 得到发消息人
-            String strReceiver = st.nextToken(); // 得到接收人
-            System.out.println("[TALK_" + strReceiver + "] " + strTalkInfo);
-            Socket socketSend;
-            Date t = new Date();
-
-            // 得到当前时间
-            GregorianCalendar calendar = new GregorianCalendar();
-            String strTime = "(" + calendar.get(Calendar.HOUR) + ":"
-                    + calendar.get(Calendar.MINUTE) + ":"
-                    + calendar.get(Calendar.SECOND) + ")";
-            strTalkInfo += strTime;
-
-            //记录事件
-            System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
-                    + t.toLocaleString());
-
-            if (strReceiver.equals("All")) {
-                sendToRoom("roomTalk|" + strSender + " 对所有人说：" + strTalkInfo);
-            } else {
-                if (strSender.equals(strReceiver)) {
-                    out.writeUTF("roomTalk|>>>不能自言自语哦!");
-                } else {
-                    for (int j = 0; j < curRoom.getCurUserNum(); j++) {
-                        if (strReceiver.equals(curRoom.findNameUser(j))) {//更新接收方的消息
-                            socketSend = curRoom.findSocketUser(j);
-                            DataOutputStream outSend = new DataOutputStream(socketSend.getOutputStream());
-                            outSend.writeUTF("roomTalk|" + strSender + " 对你说："
-                                    + strTalkInfo);
-                        } else if (strSender.equals(curRoom.findNameUser(j))) {//更新发送方的消息
-                            socketSend = curRoom.findSocketUser(j);
-                            DataOutputStream outSend = new DataOutputStream(socketSend.getOutputStream());
-                            outSend.writeUTF("roomTalk|你对 " + strReceiver + "说："
-                                    + strTalkInfo);
-                        }
-                    }
-                }
-            }
-        }
-
-        // 向客户端发送房间内的所有学生
-        private void sendRoomUsers() throws IOException {
-            //传递给客户端的房间在线用户
-            String strOnline = "room online";
-
-            String[] names = curRoom.getAllNickNames();
-            for (String name : names) {
-                System.out.println("[info] username" + name);
-                System.out.println("[info] roomname" + curRoom.getRoomName());
-                strOnline += "|" + name;
+                //更新发送方的消息
+                return "talk|你对 " + strReceiver + "说：" + strTalkInfo;
             }
 
-            System.out.println("[info] 当前在线人数:" + curRoom.getCurUserNum());
-            //向房间内所有用户发送  发送房间内全部人员的名字
-            sendToRoom(strOnline);
+            return null;
         }
+    }
 
-        ///////////////////////////刷新游戏大厅的在线房间///////////////////
-        private void sendRooms() throws IOException {
-            String strOnline = "lobby";
 
-            int i = 0;
-            for (Room room : rooms) {
-                i++;
-                strOnline += "|" + room.getRoomNum();//房间号
-                strOnline += "|" + String.valueOf(i);//号码
-                strOnline += "|" + room.getRoomName();//房间名
-                strOnline += "|" + room.getHostName();//房主名字
-                strOnline += "|" + String.valueOf(room.getCurUserNum());
-                strOnline += "|" + String.valueOf(room.getMaxUserNum());
-                strOnline += "|" + room.getStatus();//房间状态
-            }
-            sendToLobby(strOnline);
 
-            System.out.println("[info] 在线人数:" + strOnline);
-        }
-
-        // todo 关闭套接字，并将用户信息从在线列表中删除
-        private String closeSocket() throws IOException {
+    // todo 关闭套接字，并将用户信息从在线列表中删除
+    private String closeSocket() throws IOException {
 //            String strUser = "";
 //            for (int i = 0; i < socketUser.size(); i++) {//删除用户信息
 //                if (curSocket.equals((Socket) socketUser.elementAt(i))) {
@@ -570,44 +581,82 @@ public class LobbyServer {
 //            }
 //            return strUser;
 
-            return null;
-        }
-
-        // 向给指定的Sockets发送信息
-        private void sendToRoom(String strSend) {
-            try {
-                for (Socket socket : curRoom.getAllSockets()) {
-                    DataOutputStream outSend = new DataOutputStream(socket.getOutputStream());
-                    outSend.writeUTF(strSend);
-                }
-            } catch (IOException e) {
-                System.out.println("[ERROR] send all fail!");
-            }
-        }
-
+        return null;
     }
 
-    // 刷新大厅内的在线用户
-    private void sendAllUser() throws IOException {
-        String strOnline = "online";
-        for (UserInfo user: users) {
-            strOnline += "|" + user.getNickName();
+    // 向给指定的Sockets发送信息
+    private void sendToRoom(Room room, String strSend) {
+        try {
+            for (SocketChannel socket : room.getAllUsers().keySet()) {
+                socket.write(ByteBuffer.wrap(strSend.getBytes()));
+            }
+        } catch (IOException e) {
+            System.out.println("[ERROR] send all fail!");
         }
-        System.out.println("[info] 当前在线人数:" + users.size());
-        sendToLobby(strOnline);
+    }
+
+
+    // 向客户端发送房间内的所有学生
+    private void sendAllUsersToRoom(Room room) throws IOException {
+        // 传递给客户端的房间在线用户
+        String strOnline = "room online";
+
+        // 生成传输消息
+        String[] names = room.getAllNickNames();
+        for (String name : names) {
+            System.out.println("[info] username" + name);
+            System.out.println("[info] roomname" + room.getRoomName());
+            strOnline += "|" + name;
+        }
+
+        System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
+
+        //向房间内所有用户发送  发送房间内全部人员的名字
+        sendToRoom(room, strOnline);
     }
 
     // 向大厅发送信息
-    private void sendToLobby(String strSend) {
+    void sendToLobby(String strSend) {
         try {
-            for (UserInfo user: users) {
+            for (SocketChannel socket: users.keySet()) {
                 System.out.println(strSend);
-                DataOutputStream outSend = new DataOutputStream(user.getSocket().getOutputStream());
-                outSend.writeUTF(strSend);
+                socket.write(ByteBuffer.wrap(strSend.getBytes()));
             }
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("[ERROR] send all fail!");
         }
+    }
+
+    // 刷新游戏大厅的在线房间
+    void sendRooms() throws IOException {
+        String strOnline = "lobby";
+
+        int i = 0;
+        for (Room room : rooms.values()) {
+            i++;
+            strOnline += "|" + room.getRoomNum();//房间号
+            strOnline += "|" + String.valueOf(i);//号码
+            strOnline += "|" + room.getRoomName();//房间名
+            strOnline += "|" + room.getHostName();//房主名字
+            strOnline += "|" + String.valueOf(room.getOnlineUserNum());
+            strOnline += "|" + String.valueOf(room.getMaxUserNum());
+            strOnline += "|" + room.getStatus();//房间状态
+        }
+        sendToLobby(strOnline);
+
+        System.out.println("[info] 在线人数:" + strOnline);
+    }
+
+
+    // 刷新大厅内的在线用户
+    void sendAllUser() throws IOException {
+        String strOnline = "online";
+        for (User user: users.values()) {
+            strOnline += "|" + user.getNickName();
+        }
+        System.out.println("[info] 当前在线人数:" + users.size());
+
+        sendToLobby(strOnline);
     }
 }
