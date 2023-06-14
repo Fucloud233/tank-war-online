@@ -12,7 +12,7 @@ public abstract class Handler {
     }
 
     // 接收消息的接口
-    protected String receiveMsg() {
+    protected String receive() {
         // 1. 读取消息
         String text;
         try {
@@ -41,7 +41,7 @@ public abstract class Handler {
     }
 
     // 发送消息的接口
-    void sendMsg(String text) {
+    void send(String text) {
         try {
             curSocket.write(ByteBuffer.wrap(text.getBytes()));
         } catch (Exception e) {
@@ -49,7 +49,7 @@ public abstract class Handler {
         }
     }
 
-    void sendMsg(SocketChannel socket, String text) {
+    void send(SocketChannel socket, String text) {
         try {
             socket.write(ByteBuffer.wrap(text.getBytes()));
         } catch (Exception e) {
@@ -58,5 +58,5 @@ public abstract class Handler {
     }
 
 
-    public abstract void receive();
+    public abstract void handle();
 }

@@ -14,7 +14,7 @@ import java.util.Date;
 
 
 //接收到客户端socket发来的信息后进行解析、处理、转发
-public class LobbyServer {
+public class Main {
     // 连接相关
     // 参考代码: https://blog.csdn.net/hao134838/article/details/113185058
     // https://www.cnblogs.com/binarylei/p/12643807.html
@@ -30,15 +30,15 @@ public class LobbyServer {
     HashMap<String, Room> rooms = new HashMap<>();
 
     // 数据操作函数
-    DBOperator operator = null;
+    DBOperator operator;
 
-    public LobbyServer(int port){
+    public Main(int port){
         this.serverPort = port;
         // 初始化数据库操作函数
         operator = new DBOperator();
     }
 
-    public LobbyServer(){
+    public Main(){
         this(Config.port);
     }
 
@@ -93,11 +93,11 @@ public class LobbyServer {
                         // 根据用户状态来选择处理对象
                         if (user == null || user.getStatus().isInLobby()) {
                             // 大厅处理对象
-                            new LobbyHandler(socketChannel).receive();
+                            new LobbyHandler(socketChannel).handle();
                         } else if (user.getStatus().isInRoom()) {
-                            new RoomHandler(socketChannel).receive();
+                            new RoomHandler(socketChannel).handle();
                         } else if (user.getStatus().isPlaying()) {
-                            new GameHandler(socketChannel, user.getRoom()).receive();
+                            new GameHandler(socketChannel, user.getRoom()).handle();
                         }
                     }
 
@@ -111,7 +111,7 @@ public class LobbyServer {
     }
 
     // 大厅接收处理者
-    class LobbyHandler extends Handler{
+    class LobbyHandler extends FrontHandler{
 
         // 构造函数
         public LobbyHandler(SocketChannel socketChannel) {
@@ -119,9 +119,9 @@ public class LobbyServer {
         }
 
         // 用来处理大厅接收到的消息
-        public void receive()  {
+        public void handle()  {
             // 1. 读取消息
-            String text = receiveMsg();
+            String text = receive();
             System.out.println(text);
             if(text == null)
                 return;
@@ -154,7 +154,7 @@ public class LobbyServer {
 
             // 3. 发送返回消息
             if(returnMsg != null)
-                this.sendMsg(returnMsg);
+                this.send(returnMsg);
         }
         // 登录
         String login(StringTokenizer st) throws IOException {
@@ -170,11 +170,11 @@ public class LobbyServer {
             }
 
             Date t = new Date();
-            System.out.println("[info] 用户 " + account + " 正在登陆..." + "  密码:" + password + t.toString());
+            System.out.println("[info] 用户 " + account + " 正在登陆..." + "  密码:" + password + t);
 
             // 判断用户名和密码 ->转为在数据库中寻找
             if (!operator.checkLogin(account, password)) {
-                System.out.println("[error] 用户 "+ account + " 登陆失败！" + t.toString());
+                System.out.println("[error] 用户 "+ account + " 登陆失败！" + t);
                 return "warning|" + account + "登陆失败，请检查您的输入!";
             }
 
@@ -188,9 +188,9 @@ public class LobbyServer {
             users.put(curSocket, new User(nickName, account));
 
 
-            System.out.println("[info] 用户 " + account + " 登录成功，" + "登录时间:" + t.toString());
+            System.out.println("[info] 用户 " + account + " 登录成功，" + "登录时间:" + t);
 
-            sendMsg("login|succeed" + "|" + nickName);
+            send("login|succeed" + "|" + nickName);
             sendToLobby("talk|>>>欢迎 " + nickName + " 进来与我们一起交谈!");
             sendAllUser();
             sendRooms();
@@ -227,7 +227,7 @@ public class LobbyServer {
         }
 
         // 创建房间,分有密码和无密码的情况
-        void createRoom(StringTokenizer st) throws IOException {
+        void createRoom(StringTokenizer st) {
             // 验证是否存在密码
             String isPassword = st.nextToken();
             boolean havePassword = isPassword.equals("password");
@@ -258,7 +258,7 @@ public class LobbyServer {
         }
 
         // 进入房间
-        String selectRoom(StringTokenizer st) throws IOException {
+        String selectRoom(StringTokenizer st) {
             String returnMsg = null;
 
             // 获取到用户选择的房间号
@@ -290,7 +290,7 @@ public class LobbyServer {
         }
 
         // 验证进入房间的密码
-        String validPassword(StringTokenizer st) throws IOException {
+        String validPassword(StringTokenizer st) {
             String returnMsg = null;
 
             //在获取一次房间号，因为有可能在输入密码期间有其他人进入房间了
@@ -338,16 +338,17 @@ public class LobbyServer {
 
             // 记录事件
             System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
-                    + t.toString());
+                    + t);
 
             if (strReceiver.equals("All")) {
-                LobbyServer.this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
+                this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
             } else if (strSender.equals(strReceiver)) {
                 return "talk|>>>不能自言自语哦!";
             } else {
                 for(Map.Entry<SocketChannel, User> pair: users.entrySet()) {
                     User user = pair.getValue();
                     //更新接收方的消息
+                    // todo 封装Write函数
                     if (strReceiver.equals(user.getNickName())) {
                         SocketChannel socket = pair.getKey();
                         String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
@@ -361,10 +362,11 @@ public class LobbyServer {
             return null;
         }
 
+
     }
 
     // 房间处理
-    class RoomHandler extends Handler{
+    class RoomHandler extends FrontHandler{
         // 构造函数
         public RoomHandler(SocketChannel socketChannel) {
             super(socketChannel);
@@ -372,16 +374,16 @@ public class LobbyServer {
 
         // 用来处理大厅接收到的消息
         @Override
-        public void receive() {
+        public void handle() {
             // 1. 读取消息
-            String text = super.receiveMsg();
+            String text = super.receive();
             if(text == null)
                 return;
 
             // 2. 解析对应的函数
             // 从服务器端接收一条信息后拆分、解析，并执行相应操作
             StringTokenizer st = new StringTokenizer(text, "|");
-            String strKey = st.nextToken(), receiveMsg = null;
+            String strKey = st.nextToken(), returnMsg = null;
             try {
                 switch (strKey) {
                     /* 房间操作 */
@@ -390,7 +392,7 @@ public class LobbyServer {
                     // 有用户取消准备
                     case "cancelReady" -> userCancelReady(st);
                     // 检查房间内的用户是否都准备好了
-                    case "check status" -> receiveMsg = checkIfAllReady();
+                    case "check status" -> returnMsg = checkIfAllReady();
 //                        case "gameOver" ->
 //                            // 游戏结束处理
 //                                processGameOver();
@@ -399,15 +401,15 @@ public class LobbyServer {
 
                     /* 聊天功能 */
                     // 房间内发言
-                    case "roomTalk" -> roomTalk(st);
+                    case "roomTalk" -> returnMsg = roomTalk(st);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             // 3. 发送返回消息
-            if(receiveMsg != null)
-                this.sendMsg(receiveMsg);
+            if(returnMsg != null)
+                this.send(returnMsg);
         }
 
         // 用户选择进行准备
@@ -460,7 +462,7 @@ public class LobbyServer {
         }
 
         // 退出房间
-        void exitRoom() throws IOException {
+        void exitRoom() {
             User user = users.get(curSocket);
             Room room = rooms.get(user.getAccount());
 
@@ -510,7 +512,7 @@ public class LobbyServer {
 
             //记录事件
             System.out.println("[info] Constants.USER" + strSender + "对 " + strReceiver + "说:" + strTalkInfo
-                    + t.toString());
+                    + t);
 
             if (strReceiver.equals("All")) {
                 Room room = users.get(curSocket).getRoom();
@@ -537,7 +539,78 @@ public class LobbyServer {
         }
     }
 
+    // 封装向大厅和房间发送消息的函数
+    // 使其能够被Lobby/Room Handler共享
+    abstract class FrontHandler extends Handler{
+        public FrontHandler(SocketChannel socket) {
+            super(socket);
+        }
 
+        // 向大厅发送信息
+        protected void sendToLobby(String strSend) {
+            for (SocketChannel socket: users.keySet()) {
+                this.send(socket, strSend);
+            }
+        }
+
+        // 刷新游戏大厅的在线房间
+        protected void sendRooms() {
+            String strOnline = "lobby";
+
+            int i = 0;
+            for (Room room : rooms.values()) {
+                i++;
+                strOnline += "|" + room.getRoomNum();//房间号
+                strOnline += "|" + String.valueOf(i);//号码
+                strOnline += "|" + room.getRoomName();//房间名
+                strOnline += "|" + room.getHostName();//房主名字
+                strOnline += "|" + String.valueOf(room.getOnlineUserNum());
+                strOnline += "|" + String.valueOf(room.getMaxUserNum());
+                strOnline += "|" + room.getStatus();//房间状态
+            }
+            sendToLobby(strOnline);
+
+            System.out.println("[info] 在线人数:" + strOnline);
+        }
+
+
+        // 刷新大厅内的在线用户
+        protected void sendAllUser() {
+            String strOnline = "online";
+            for (User user: users.values()) {
+                strOnline += "|" + user.getNickName();
+            }
+            System.out.println("[info] 当前在线人数:" + users.size());
+
+            sendToLobby(strOnline);
+        }
+
+        // 向给指定的Sockets发送信息
+        protected void sendToRoom(Room room, String strSend) {
+            for (SocketChannel socket : room.getAllUsers().keySet()) {
+                this.send(socket, strSend);
+            }
+        }
+
+        // 向服务端发送信息
+        protected void sendAllUsersToRoom(Room room) {
+            // 传递给客户端的房间在线用户
+            String strOnline = "room online";
+
+            // 生成传输消息
+            String[] names = room.getAllNickNames();
+            for (String name : names) {
+                System.out.println("[info] username" + name);
+                System.out.println("[info] roomname" + room.getRoomName());
+                strOnline += "|" + name;
+            }
+
+            System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
+
+            //向房间内所有用户发送  发送房间内全部人员的名字
+            sendToRoom(room, strOnline);
+        }
+    }
 
     // todo 关闭套接字，并将用户信息从在线列表中删除
     private String closeSocket() throws IOException {
@@ -583,80 +656,5 @@ public class LobbyServer {
 
         return null;
     }
-
-    // 向给指定的Sockets发送信息
-    private void sendToRoom(Room room, String strSend) {
-        try {
-            for (SocketChannel socket : room.getAllUsers().keySet()) {
-                socket.write(ByteBuffer.wrap(strSend.getBytes()));
-            }
-        } catch (IOException e) {
-            System.out.println("[ERROR] send all fail!");
-        }
-    }
-
-
-    // 向客户端发送房间内的所有学生
-    private void sendAllUsersToRoom(Room room) throws IOException {
-        // 传递给客户端的房间在线用户
-        String strOnline = "room online";
-
-        // 生成传输消息
-        String[] names = room.getAllNickNames();
-        for (String name : names) {
-            System.out.println("[info] username" + name);
-            System.out.println("[info] roomname" + room.getRoomName());
-            strOnline += "|" + name;
-        }
-
-        System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
-
-        //向房间内所有用户发送  发送房间内全部人员的名字
-        sendToRoom(room, strOnline);
-    }
-
-    // 向大厅发送信息
-    void sendToLobby(String strSend) {
-        try {
-            for (SocketChannel socket: users.keySet()) {
-                System.out.println(strSend);
-                socket.write(ByteBuffer.wrap(strSend.getBytes()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("[ERROR] send all fail!");
-        }
-    }
-
-    // 刷新游戏大厅的在线房间
-    void sendRooms() throws IOException {
-        String strOnline = "lobby";
-
-        int i = 0;
-        for (Room room : rooms.values()) {
-            i++;
-            strOnline += "|" + room.getRoomNum();//房间号
-            strOnline += "|" + String.valueOf(i);//号码
-            strOnline += "|" + room.getRoomName();//房间名
-            strOnline += "|" + room.getHostName();//房主名字
-            strOnline += "|" + String.valueOf(room.getOnlineUserNum());
-            strOnline += "|" + String.valueOf(room.getMaxUserNum());
-            strOnline += "|" + room.getStatus();//房间状态
-        }
-        sendToLobby(strOnline);
-
-        System.out.println("[info] 在线人数:" + strOnline);
-    }
-
-
-    // 刷新大厅内的在线用户
-    void sendAllUser() throws IOException {
-        String strOnline = "online";
-        for (User user: users.values()) {
-            strOnline += "|" + user.getNickName();
-        }
-        System.out.println("[info] 当前在线人数:" + users.size());
-
-        sendToLobby(strOnline);
-    }
 }
+

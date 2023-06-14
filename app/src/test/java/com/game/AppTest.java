@@ -3,13 +3,13 @@
  */
 package com.game;
 
-import com.tankWar.server.LobbyServer;
+import com.tankWar.server.Main;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
 
 public class AppTest {
     @Test public void appHasAGreeting() throws UnknownHostException {
-        LobbyServer server=new LobbyServer();
+        Main server = new Main();
     }
 }

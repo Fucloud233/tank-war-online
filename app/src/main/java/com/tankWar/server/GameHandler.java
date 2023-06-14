@@ -41,7 +41,7 @@ public class GameHandler extends Handler{
             // 转换成JSON格式并发送
             String jsonMsg = mapper.writeValueAsString(message);
             // 发送
-            sendMsg(socket, jsonMsg);
+            send(socket, jsonMsg);
 
             id++;
         }
@@ -71,7 +71,7 @@ public class GameHandler extends Handler{
     // 广播状态
     void sendAll(String msg) {
         for (SocketChannel socket: game.getAllSockets())  {
-            sendMsg(socket, msg);
+            send(socket, msg);
         }
 
         ServerPrompt.BroadcastSuccess.print();
@@ -82,7 +82,7 @@ public class GameHandler extends Handler{
         for (SocketChannel socket: game.getAllSockets())  {
             if(socket != curSocket)
                 continue;
-            sendMsg(socket, msg);
+            send(socket, msg);
         }
 
         ServerPrompt.BroadcastSuccess.print();
@@ -102,13 +102,13 @@ public class GameHandler extends Handler{
     }
 
     @Override
-    public void receive() {
+    public void handle() {
         // 发送初始消息
 //        sendInitMsg();
 
         // 1. socket接收到JSON消息
         try {
-            String msgStr = this.receiveMsg();
+            String msgStr = this.receive();
 //            System.out.println("来自客户端的消息: " + id  + ' ' + msgStr+"  ");
 
             // 2. 进行验证
