@@ -1,8 +1,6 @@
 package com.tankWar.lobby;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,7 +10,6 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
@@ -77,7 +74,7 @@ public class GameWaitWindow {
         PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
         PlayGameBtn.setOnAction(e -> {
             try {
-                beginGame();
+                beginGameAction();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -186,7 +183,7 @@ public class GameWaitWindow {
     }
 
     //开始游戏  或 进行准备的事件
-    public void beginGame() throws IOException {
+    public void beginGameAction() throws IOException {
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             checkAllPlayersReady();
@@ -214,13 +211,6 @@ public class GameWaitWindow {
         out.writeUTF("check status");
     }
 
-    //开始游戏的逻辑！！！！！！！！！！！！！！
-    private void startGame() {
-        // Add your code to start the game here
-        // For example:
-        System.out.println("[info] Game started!");
-    }
-
     // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
     public void changeStatus(String status) throws IOException {
         switch (status) {
@@ -228,7 +218,11 @@ public class GameWaitWindow {
 //                this.exitRoomBtn.setDisable(true);
 //                this.PlayGameBtn.setDisable(true);
                 if (!isRoomOwner) {
-                    beginGame();
+                    // Add your code to start the game here
+                    // For example:
+                    System.out.println("[info] Game started!");
+                    // [important] 发送开始游戏 刷新服务端的接收线程流
+                    out.writeUTF("start game");
                 }
             }
             case "ready" -> {

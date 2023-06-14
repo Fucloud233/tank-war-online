@@ -153,12 +153,13 @@ public class LoginWindow extends Application {
 
     //登录的逻辑
     private void initLogin() throws IOException {
-        String strReceive = in.readUTF();
+        String strReceive = receive();
+//        String strReceive = in.readUTF();
         System.out.println(strReceive);
         //截断获取关键的信息内容
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
-        System.out.println("[info] message type" + strKey);
+        System.out.println("[info] message type " + strKey);
 
         if (strKey.equals("login")) {
             String strStatus = st.nextToken();
@@ -234,6 +235,13 @@ public class LoginWindow extends Application {
         //输入流和输出流
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
+    }
+
+    String receive() throws IOException {
+        byte[] bs = new byte[128];
+        int len = in.read(bs);
+
+        return new String(bs);
     }
 
     public static void main(String[] args) {

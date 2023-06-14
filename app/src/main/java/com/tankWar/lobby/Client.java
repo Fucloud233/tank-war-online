@@ -206,9 +206,9 @@ public class Client extends Stage {
         }
 
         public void run() {
-            while (true&&!gameStart) {
+            while (!gameStart) {
                 try {
-                    String strReceive = in.readUTF();
+                    String strReceive = receive();
                     System.out.println(strReceive);
                     st = new StringTokenizer(strReceive, "|");
                     String strKey = st.nextToken();
@@ -449,5 +449,12 @@ public class Client extends Stage {
                 System.out.println("[info] clientStatus: "+gameStatus);
             }
         }
+    }
+
+    String receive() throws IOException {
+        byte[] bs = new byte[128];
+        int len = in.read(bs);
+
+        return new String(bs);
     }
 }
