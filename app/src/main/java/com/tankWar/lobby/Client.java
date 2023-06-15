@@ -324,6 +324,7 @@ public class Client extends Stage {
                         case "Owner exitRoom" -> {
                             //获取到房间号  同当前用户进行比较 以判断是否发送消息
                             String RoomNum = st.nextToken();
+                            System.out.println("owner exit!!!!!!!!!!!!!!!");
                             //只有房间内的普通用户 才会收到对应的提示
                             if (!account.equals(RoomNum)) {
                                 Platform.runLater(() -> {

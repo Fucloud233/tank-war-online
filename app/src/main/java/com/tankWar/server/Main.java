@@ -450,7 +450,7 @@ public class Main {
         // 退出房间
         void exitRoom() {
             User user = users.get(curSocket);
-            Room room = rooms.get(user.getAccount());
+            Room room = user.getRoom();
 
             // 如果是房主退出了，则解散房间
             if (room.isHost(user.getAccount())) {
