@@ -186,18 +186,18 @@ public class Client extends Stage {
             hBox.setId(roomNum);//用房间号做唯一标识
             Label Id = new Label(id);
             Id.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label roomLabel = new Label("房间名："+roomName);
+            Label roomLabel = new Label("房间名：" + roomName);
             roomLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label hostLabel = new Label("房主："+hostName);
+            Label hostLabel = new Label("房主：" + hostName);
             hostLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label enterNumLabel = new Label("房间人数："+enterNum);
+            Label enterNumLabel = new Label("房间人数：" + enterNum);
             enterNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label userNumLabel = new Label("人数上限："+userNum);
+            Label userNumLabel = new Label("人数上限：" + userNum);
             userNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label statusLabel = new Label("房间状态："+status);
+            Label statusLabel = new Label("房间状态：" + status);
             statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
 
-            hBox.getChildren().addAll(Id, roomLabel,  hostLabel,  enterNumLabel,  userNumLabel,  statusLabel);
+            hBox.getChildren().addAll(Id, roomLabel, hostLabel, enterNumLabel, userNumLabel, statusLabel);
             hBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);" +
                     "-fx-border-color: gray;" +
                     "-fx-border-width: 2px;" +
@@ -213,14 +213,14 @@ public class Client extends Stage {
                             "-fx-padding: 10px;" +
                             "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
                 }
-                roomId=hBox.getId();
+                roomId = hBox.getId();
                 selectedHBox = hBox;
                 hBox.setStyle("-fx-background-color: #9C8B56;" +
                         "-fx-border-color: #06280b;" +
                         "-fx-border-width: 2px;" +
                         "-fx-padding: 10px;" +
                         "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
-                isHBoxSelected=true;
+                isHBoxSelected = true;
             });
 
             return hBox;
@@ -229,7 +229,7 @@ public class Client extends Stage {
         public void run() {
             while (!gameStart) {
                 try {
-                    String strReceive  = Communicate.receive(socket);
+                    String strReceive = Communicate.receive(socket);
                     System.out.println(strReceive);
                     st = new StringTokenizer(strReceive, "|");
                     String strKey = st.nextToken();
@@ -276,27 +276,27 @@ public class Client extends Stage {
                                 Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "无法进入房间！").showAndWait());
                             } else if (strSelect.equals("success")) {//进入游戏房间
                                 Platform.runLater(() -> {
-                                    if (selectRoomWindow!=null&&selectRoomWindow.isShowing()){//如果有输入密码的框，就可以关掉了
+                                    if (selectRoomWindow != null && selectRoomWindow.isShowing()) {//如果有输入密码的框，就可以关掉了
                                         selectRoomWindow.CloseWindow();
                                     }
                                     try {
-                                        gameWaitWindow=new GameWaitWindow(socket,username,account,primaryStage,lobbyScene);
+                                        gameWaitWindow = new GameWaitWindow(socket, username, account, primaryStage, lobbyScene);
                                     } catch (IOException e) {
                                         throw new RuntimeException(e);
                                     }
                                     gameWaitWindow.ShowWindow();
                                 });
-                            } else if (strSelect.equals("password")){//提示输入密码
-                                Platform.runLater(()-> {
+                            } else if (strSelect.equals("password")) {//提示输入密码
+                                Platform.runLater(() -> {
                                     try {
-                                        selectRoomWindow=new SelectRoomWindow(socket,roomId);
+                                        selectRoomWindow = new SelectRoomWindow(socket, roomId);
                                     } catch (IOException e) {
                                         throw new RuntimeException(e);
                                     }
                                     selectRoomWindow.ShowWindow();
                                 });
 
-                            }else if (strSelect.equals("password error")){//提示输入密码
+                            } else if (strSelect.equals("password error")) {//提示输入密码
                                 Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "密码错误！").showAndWait());
                             }
                         }
@@ -316,7 +316,6 @@ public class Client extends Stage {
                                 });
                             }
                         }*/
-
 
 
                         //在进入房间后的聊天框的聊天内容
@@ -358,7 +357,7 @@ public class Client extends Stage {
                             //获取到房间号  同当前用户进行比较 以判断是否发送消息
                             String RoomNum = st.nextToken();
                             //只有房间内的普通用户 才会收到对应的提示
-                            if(!account.equals(RoomNum)) {
+                            if (!account.equals(RoomNum)) {
                                 Platform.runLater(() -> {
                                     Alert alert = new Alert(Alert.AlertType.WARNING, "房主已解散该房间，您将返回大厅");
                                     alert.setOnCloseRequest(event -> {
@@ -371,10 +370,10 @@ public class Client extends Stage {
                         }
 
                         /////////////////////////处理是否开始游戏////////////////////////
-                        case"begin game"->{
+                        case "begin game" -> {
                             //获取到是否成功
                             String judge = st.nextToken();
-                            if(judge.equals("succeed")){
+                            if (judge.equals("succeed")) {
 //                                in.close();
 
 //                                System.out.println("game begin!!!!!!!");
@@ -390,8 +389,7 @@ public class Client extends Stage {
                                     }
 
                                 });
-                            }
-                            else{
+                            } else {
                                 Platform.runLater(() -> {
                                     Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
                                     alert.showAndWait();
@@ -408,15 +406,14 @@ public class Client extends Stage {
         }
     }
 
-
     ///////////////////////////////////////////////////////////////////////////////////
     /*
-    * gameStatus:
-    * lobby: 在大厅
-    * play: 已经开始游戏
-    * wait: 进入房间
-    * ready: 准备但没开始游戏
-    * */
+     * gameStatus:
+     * lobby: 在大厅
+     * play: 已经开始游戏
+     * wait: 进入房间
+     * ready: 准备但没开始游戏
+     * */
     String gameStatus;
     Stage gameStage;
     GamePane gamePane;

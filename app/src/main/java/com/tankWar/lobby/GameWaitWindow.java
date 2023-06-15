@@ -17,7 +17,6 @@ import java.net.Socket;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
-
 import static javafx.scene.paint.Color.GREEN;
 
 public class GameWaitWindow {
@@ -312,7 +311,6 @@ public class GameWaitWindow {
             case "ready" -> {
 //                this.exitRoomBtn.setDisable(false);
 //                this.PlayGameBtn.setDisable(false);
-
             }
         }
     }
