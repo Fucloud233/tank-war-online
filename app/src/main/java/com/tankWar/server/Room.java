@@ -89,8 +89,14 @@ public class Room {
     public String[] getAllNickNames() {
         String[] names = new String[users.size()];
         int i = 0;
-        for(User user: users.values())
-            names[i++] = user.getNickName();
+        for(User user: users.values()) {
+            if(user.getAccount().equals(this.roomNum)){
+                names[i++] = user.getNickName()+"*房主";
+            }
+            else {
+                names[i++] = user.getNickName();
+            }
+        }
         return names;
     }
 
