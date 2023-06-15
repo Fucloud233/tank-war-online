@@ -206,9 +206,6 @@ public class GameWaitWindow {
                             Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                         }
                     }
-
-
-
                 }
                 txtTalk.clear();
             }
