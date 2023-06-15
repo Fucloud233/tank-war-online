@@ -7,12 +7,18 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.Optional;
 import java.util.StringTokenizer;
+
+
+import static javafx.scene.paint.Color.GREEN;
 
 public class GameWaitWindow {
     ListView<String> userListView;
@@ -45,8 +51,7 @@ public class GameWaitWindow {
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
     }
-
-    void ShowWindow() {
+    void ShowWindow(){
         //打印是否为房主进行测试
         System.out.println("[info] 是否房主 "+isRoomOwner);
 
@@ -59,6 +64,9 @@ public class GameWaitWindow {
         listOnline = new ComboBox<>();
         listOnline.getItems().add("All");
         txtViewTalk.setEditable(false);  //禁止编辑
+        //调整聊天内容的高度
+        txtViewTalk.setPrefHeight(500);
+
 
         //放置输入聊天内容的盒子
         HBox hBox = new HBox(10);
@@ -112,25 +120,97 @@ public class GameWaitWindow {
         userListView = new ListView<>(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
 
         // 设置ListView的最大显示行数为4行
-        int maxRows = 4;
-        int itemHeight = 30; // 设置每个条目的高度（根据实际情况调整）
+        int maxRows = 5;
+        int itemHeight = 60; // 设置每个条目的高度（根据实际情况调整）
         userListView.setPrefHeight(maxRows * itemHeight);
+        userListView.setPadding(new Insets(5));
+
+
+        txtViewTalk.setPadding(new Insets(5));
+
+        //修改边框颜色
+        userListView.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
+        // 设置txtViewTalk的样式
+        txtViewTalk.setStyle("-fx-control-inner-background: #494f3c; -fx-text-fill: white;-fx-font-size: 15");
+
+        /////////////////////房间内用户——样式的修改/////////////////
+        // 设置userListView的样式——内部颜色
+        userListView.setStyle("-fx-control-inner-background: #494f3c;");
+        // 设置userListView的单元格样式
+        userListView.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item != null) {
+                    setText(item);
+                    //字体的调整
+                    setFont(Font.font("Arial", FontWeight.BOLD, 20));
+                    setTextFill(Color.WHITE);
+                    setBackground(new Background(new BackgroundFill(Color.web("#494f3c"), null, null)));
+                } else {
+                    setText(null);
+                }
+            }
+        });
+        userListView.setDisable(true);
         //将用户列表装进Box中
         userListBox.getChildren().add(userListView);
+        //设置一个新的VBox 装载userList和BottomBox
+        VBox newVBox=new VBox();
+        newVBox.getChildren().add(userListBox);
+        newVBox.getChildren().add(BottomBox);
+        borderPane.setCenter(newVBox);
+        // 设置迷彩背景
+        borderPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
+        // 设置聊天框的输入框样式
+        txtTalk.setStyle("-fx-background-color: #494f3c; -fx-text-fill: white;");
+        txtTalk.setStyle("-fx-prompt-text-fill: white;");
 
-        //最后将组件排布在borderPane上
-        borderPane.setCenter(userListBox);
-        borderPane.setBottom(BottomBox);
+        // 设置聊天框的发送按钮样式
+        btnTalk.setStyle("-fx-base: #b6e7c9; -fx-text-fill: black;");
+
+        // 设置开始游戏/准备按钮样式
+        PlayGameBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9; -fx-text-fill: black;");
+
+        // 设置退出房间按钮样式
+        exitRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9; -fx-text-fill: black;");
+
         //场景切换
         roomScene = new Scene(borderPane, 800, 700);
         primaryStage.setTitle("游戏房间");
+        roomScene.setFill(GREEN);
         primaryStage.setScene(roomScene);
 
         //发送消息按钮的触发
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
-                //获取用户输入的账号
-                Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                if (isRoomOwner){
+                    if(listOnline.getValue()==null) //未选中默认为和全部人说
+                    {
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + "All");
+                    }
+                    else{
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + listOnline.getValue());
+                    }
+                }else {
+                    if(listOnline.getValue()==null) //未选中默认为和全部人说
+                    {
+                        //获取用户输入的账号
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"|" + "All");
+                    }
+                    else{
+                        //获取用户输入的账号
+                        if((name + "*已准备").equals(listOnline.getValue()) || (name + "*未准备").equals(listOnline.getValue())){
+                            Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + name);
+                        }
+                        else{
+                            Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                        }
+                    }
+
+
+
+                }
                 txtTalk.clear();
             }
         });
@@ -183,7 +263,16 @@ public class GameWaitWindow {
     public void beginGameAction() throws IOException {
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
-            checkAllPlayersReady();
+            int playerCount = listOnline.getItems().size() - 1;
+            System.out.println("count"+playerCount);
+            if(playerCount==1){
+                //房主一个人无法开始游戏 进行提示
+                new Alert(Alert.AlertType.WARNING,"您无法一个人开始游戏！").showAndWait();
+            }
+            else {
+                //否则 检查房间中用户的状态是否都准备好
+                checkAllPlayersReady();
+            }
         }
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if (PlayGameBtn.getText().equals("准备")) {
@@ -191,10 +280,10 @@ public class GameWaitWindow {
             Communicate.send(socket, "isReady|" + name);
             System.out.println("[info] name: "+name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
-            PlayGameBtn.setText("已准备");
+            PlayGameBtn.setText("取消准备");
         }
         //用户取消准备
-        else if (PlayGameBtn.getText().equals("已准备")) {
+        else if(PlayGameBtn.getText().equals("取消准备")){
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
             Communicate.send(socket, "cancelReady|" + name);
             // 非房主用户 切换按钮和对应的状态 已准备-准备
@@ -203,7 +292,7 @@ public class GameWaitWindow {
     }
 
     //检查是否所有的用户都已经准备好
-    private void checkAllPlayersReady() throws IOException {
+    private void checkAllPlayersReady() {
         //发送给服务器检查房间内用户是否全部准备好的信息
         Communicate.send(socket, "check status");
     }
