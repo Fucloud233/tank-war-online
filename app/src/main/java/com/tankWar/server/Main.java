@@ -454,15 +454,16 @@ public class Main {
 
             // 如果是房主退出了，则解散房间
             if (room.isHost(user.getAccount())) {
+                // 先要进行刷新  防止场景切换后出现问题  客户端需要新的Rooms列表进行大厅场景的切换
+                sendRooms();
+                System.out.println("send owner exit");
+                // 向房间内的所有客户端发送 房间解散的信息
+                sendToRoom(room, "Owner exitRoom|" + room.getRoomNum());
+
                 //调用函数 清空房间内部的所有玩家 并修改状态
                 room.cleanAll();
                 //从总房间列表中将这个房间删除
                 rooms.remove(room.getRoomNum());
-
-                // 先要进行刷新  防止场景切换后出现问题  客户端需要新的Rooms列表进行大厅场景的切换
-                sendRooms();
-                // 向房间内的所有客户端发送 房间解散的信息
-                sendToRoom(room, "Owner exitRoom|" + room.getRoomNum());
             }
             //普通用户退出该房间
             else {
