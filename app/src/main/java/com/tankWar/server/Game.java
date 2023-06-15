@@ -31,7 +31,7 @@ public class Game {
         int i = 0;
         for(Map.Entry<SocketChannel, User> e: users.entrySet()) {
             sockets.addElement(e.getKey());
-            restPlayer.addElement(i);
+            restPlayer.addElement(i++);
         }
     }
 
@@ -51,7 +51,7 @@ public class Game {
         if(restPlayer.size() != 1)
             return DeadStatus.Null;
 
-        // 2. 当剩下移位玩家则重置游戏
+        // 2. 当剩下一位玩家则重置游戏
         int winnerId = restPlayer.get(0);
 
         // 重置死亡信息
