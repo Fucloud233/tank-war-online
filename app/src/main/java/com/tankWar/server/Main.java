@@ -390,7 +390,7 @@ public class Main {
 
                     /* 聊天功能 */
                     // 房间内发言
-                    case "roomTalk" -> returnMsg = roomTalk(st);
+                    case "roomTalk" ->roomTalk(st);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -480,7 +480,7 @@ public class Main {
         }
 
         // todo 在房间内部发言 (待优化)
-        String roomTalk(StringTokenizer st) throws IOException {
+        void roomTalk(StringTokenizer st) throws IOException {
             String strTalkInfo = st.nextToken(); // 得到聊天内容;
             String strSender = st.nextToken(); // 得到发消息人
             String strReceiver = st.nextToken(); // 得到接收人
@@ -503,24 +503,23 @@ public class Main {
                 Room room = users.get(curSocket).getRoom();
                 sendToRoom(room,"roomTalk|" + strSender + " 对所有人说：" + strTalkInfo);
             } else  if (strSender.equals(strReceiver)) {
-                return "roomTalk|>>>不能自言自语哦!";
+                this.send("roomTalk|>>>不能自言自语哦!");
             } else {
                 // 获得接收方的
                 Room room =  users.get(curSocket).getRoom();
                 Pair<SocketChannel, User> recvPair = room.getUser(strReceiver);
                 if(recvPair==null)
-                    return null;
+                    return ;
 
                 //更新接收方的消息
                 SocketChannel recvSocket = recvPair.getKey();
                 String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
-                recvSocket.write(ByteBuffer.wrap(text.getBytes()));
+                //recvSocket.write(ByteBuffer.wrap(text.getBytes()));
 
                 //更新发送方的消息
-                return "talk|你对 " + strReceiver + "说：" + strTalkInfo;
+                this.send(recvSocket,text);
+                this.send("talk|你对 " + strReceiver + "说：" + strTalkInfo);
             }
-
-            return null;
         }
     }
 

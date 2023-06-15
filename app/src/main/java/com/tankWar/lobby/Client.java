@@ -317,8 +317,6 @@ public class Client extends Stage {
                             }
                         }*/
 
-
-
                         //在进入房间后的聊天框的聊天内容
                         case "roomTalk" -> {
                             String strTalk = st.nextToken();
