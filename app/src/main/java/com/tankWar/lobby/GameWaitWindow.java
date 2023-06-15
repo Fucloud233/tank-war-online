@@ -247,10 +247,10 @@ public class GameWaitWindow {
             out.println("isReady|"+name);
             System.out.println(name);
             // 非房主用户 切换按钮和对应的状态 准备-已准备
-            PlayGameBtn.setText("已准备");
+            PlayGameBtn.setText("取消准备");
         }
         //用户取消准备
-        else if(PlayGameBtn.getText().equals("已准备")){
+        else if(PlayGameBtn.getText().equals("取消准备")){
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
             out.println("cancelReady|"+name);
             // 非房主用户 切换按钮和对应的状态 已准备-准备

@@ -136,7 +136,14 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 //传递给客户端的房间在线用户
                 sendRoomAll("roomTalk|" + cancelReadyname + " 已取消准备");
-                room.changeStatusUser(room.getAccountIndex(account));
+                room.changeStatusUser(room.getAccountIndex(account)); //切换准备的状态
+                room.changeReadyName(cancelReadyname,account,room.getAccountIndex(account));
+                try {
+                    //刷新用户的准备状态
+                    freshClientsRoomOnline();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             }
         }
@@ -152,7 +159,14 @@ public class ServerProcess extends Thread {
             if(room.getRoomNum().equals(RoomNum)){
                 //传递给客户端的房间在线用户
                 sendRoomAll("roomTalk|" + Readyname + " 已准备");
-                room.changeStatusUser(room.getAccountIndex(account));
+                room.changeStatusUser(room.getAccountIndex(account)); //切换准备的状态
+                room.changeReadyName(Readyname,account,room.getAccountIndex(account));
+                try {
+                    //刷新用户的准备状态
+                    freshClientsRoomOnline();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             }
         }

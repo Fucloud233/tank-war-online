@@ -48,8 +48,9 @@ public class Room {
             statusUser.addElement("已准备");
         }
         else{
-            nameUser.addElement(name);
             statusUser.addElement("未准备");
+            //初始进入房间 状态均为未准备
+            nameUser.addElement(name+"*"+statusUser.elementAt(getAccountIndex(account)));
         }
 
     }
@@ -90,6 +91,12 @@ public class Room {
         return (Socket) socketUser.elementAt(i);
     }
 
+    //根据索引 切换玩家的nameUser 更换准备状态
+    public void changeReadyName(String name,String account,int i){
+        //切换对应索引下玩家的状态 用于房间列表内进行状态的渲染
+        nameUser.setElementAt(name+"*"+statusUser.elementAt(getAccountIndex(account)),i);
+
+    }
 
     //根据下标找到玩家状态
     public String findStatusUser(int i){
