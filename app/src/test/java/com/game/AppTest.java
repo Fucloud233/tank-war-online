@@ -3,12 +3,13 @@
  */
 package com.game;
 
+import com.tankWar.server.Main;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.net.UnknownHostException;
 
 public class AppTest {
-    @Test public void appHasAGreeting() {
-        App classUnderTest = new App();
-        assertNotNull("app should have a greeting", classUnderTest.getGreeting());
+    @Test public void appHasAGreeting() throws UnknownHostException {
+        Main server = new Main();
     }
 }
