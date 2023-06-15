@@ -60,6 +60,7 @@ public class GamePane extends HBox {
 
     // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
     public GamePane(Socket clientSocket) {
+        myself=this;
         this.initEntity(clientSocket);
         this.initPane();
         this.initAction();
