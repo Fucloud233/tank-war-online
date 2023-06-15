@@ -12,13 +12,19 @@ public class Game {
     Vector<Integer> restPlayer;
 
 
-    int totalGameNum = 2, curGameNum = 0;
+    int totalGameNum = 2, curGameNum = 1;
     // 记录玩家数量
     // 考虑有人会退出游戏, 保持id的一致性
 //    Vector<Integer> totalPlayer;
 
     // 记录分数
     int[] scores;
+    // 地图id
+    int mapId = 0;
+
+    public int getMapId() {
+        return mapId;
+    }
 
     public Game(HashMap<SocketChannel, User> users) {
         int size = users.size();
@@ -114,4 +120,4 @@ enum DeadStatus{
         return this == MatchOver;
     }
 
-};
+}

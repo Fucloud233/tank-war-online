@@ -31,7 +31,7 @@ public class GameHandler extends Handler{
     // 发送初始化信息 (需要在Room's startGame调用 所以public)
     public void sendInitMsg() throws IOException{
         // 添加地图信息
-        int mapId = 0;
+        int mapId = game.getMapId();
 
         Vector<SocketChannel> sockets  = game.getAllSockets();
         int id = 0;
@@ -52,7 +52,7 @@ public class GameHandler extends Handler{
     // 发送重置信息
     void sendResetMsg() throws IOException{
         // 添加地图信息
-        int mapId = 0;
+        int mapId = game.getMapId();
 
         // 重置消息对于所有人都是相同的
         ResetMsg message = new ResetMsg(mapId, game.getTotalPlayerNum(), game.getCurGameNum());
