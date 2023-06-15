@@ -151,6 +151,7 @@ public class Room {
         return flag;
     }
 
+
     // 改变房间的状态 和 玩家状态
     public void startGame(){
         this.status = true;
@@ -160,6 +161,15 @@ public class Room {
 
         // 初始化操作
         game = new Game(this.users);
+    }
+
+    // 改变房间的状态 和 玩家状态
+    public void endGame(){
+        this.status = false;
+        // 设置所有玩家为游戏状态
+        for(User user: users.values())
+            user.setStatus(UserStatus.NoReady);
+        System.out.println("change user status!!!!!!!!!!!");
     }
 
     public Game getGame() {

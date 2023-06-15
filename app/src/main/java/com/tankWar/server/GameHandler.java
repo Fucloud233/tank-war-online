@@ -21,10 +21,12 @@ public class GameHandler extends Handler{
 
     // 用于记录游戏信息
     Game game;
+    Room room;
 
     // 构造函数
     GameHandler(SocketChannel socket, Room room) {
         super(socket);
+        this.room = room;
         this.game = room.game;
     }
 
@@ -67,6 +69,8 @@ public class GameHandler extends Handler{
         OverMsg msg = new OverMsg(game.getScores());
         String jsonMsg = mapper.writeValueAsString(msg);
         sendAll(jsonMsg);
+        ServerPrompt.GameOver.print();
+        room.endGame();
     }
 
     // 广播状态
@@ -74,7 +78,6 @@ public class GameHandler extends Handler{
         for (SocketChannel socket: game.getAllSockets())  {
             send(socket, msg);
         }
-
         ServerPrompt.BroadcastSuccess.print();
     }
 
@@ -85,7 +88,6 @@ public class GameHandler extends Handler{
                 continue;
             send(socket, msg);
         }
-
         ServerPrompt.BroadcastSuccess.print();
     }
 
@@ -98,7 +100,6 @@ public class GameHandler extends Handler{
             sendResetMsg();
         } else if (flag.shouldOver()) {
             sendOverMsg();
-            ServerPrompt.GameOver.print();
         }
     }
 
@@ -107,7 +108,6 @@ public class GameHandler extends Handler{
         try {
             // 1. socket接收到JSON消息
             String msgStr = this.receive();
-
             // 2. 进行验证
             JsonNode json = mapper.readTree(msgStr);
             MessageType type = MessageType.valueOf(json.get("type").asText());
@@ -116,8 +116,8 @@ public class GameHandler extends Handler{
             // 如果是死亡消息 则需要单独处理
             if(type == MessageType.Dead) {
                 this.handleDeadMsg(id);
+                return;
             }
-
             // 3. socket广播消息
             sendAllWithoutMe(msgStr);
         } catch (JsonProcessingException e) {

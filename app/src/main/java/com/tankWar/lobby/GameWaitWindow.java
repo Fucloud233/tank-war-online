@@ -213,8 +213,8 @@ public class GameWaitWindow {
         switch (status) {
             case "play" -> {
 //                this.exitRoomBtn.setDisable(true);
-//                this.PlayGameBtn.setDisable(true);
                 if (!isRoomOwner) {
+                    this.PlayGameBtn.setText("准备");
                     // Add your code to start the game here
                     // For example:
                     System.out.println("[info] Game started!");
