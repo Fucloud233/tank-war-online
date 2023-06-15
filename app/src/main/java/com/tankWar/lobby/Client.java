@@ -146,7 +146,13 @@ public class Client extends Stage {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                out.println("talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
+                if (listOnline.getValue()==null) {
+                    //没有选择和谁说话 默认为全体成员
+                    out.println("talk|" + txtTalk.getText() + "|" + username + "|" + "All");
+                }
+                else{
+                    out.println("talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
+                }
                 txtTalk.clear();
             }
         });

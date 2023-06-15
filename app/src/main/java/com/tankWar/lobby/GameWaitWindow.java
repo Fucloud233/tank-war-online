@@ -174,10 +174,31 @@ public class GameWaitWindow {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 if (isRoomOwner){
-                    out.println("roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + listOnline.getValue());
+                    if(listOnline.getValue()==null) //未选中默认为和全部人说
+                    {
+                        out.println("roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + "All");
+                    }
+                    else{
+                        out.println("roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + listOnline.getValue());
+                    }
                 }else {
-                    //获取用户输入的账号
-                    out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                    if(listOnline.getValue()==null) //未选中默认为和全部人说
+                    {
+                        //获取用户输入的账号
+                        out.println("roomTalk|" + txtTalk.getText() + "|" + name+"|" + "All");
+                    }
+                    else{
+                        //获取用户输入的账号
+                        if((name + "*已准备").equals(listOnline.getValue()) || (name + "*未准备").equals(listOnline.getValue())){
+                            out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + name);
+                        }
+                        else{
+                            out.println("roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
+                        }
+                    }
+
+
+
                 }
                 txtTalk.clear();
             }
