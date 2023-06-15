@@ -464,7 +464,7 @@ public class Client extends Stage {
                 // 发送游戏结束信息给服务端
                 primaryStage.show();
                 new Thread(new ClientThread()).start();
-//                Communicate.send(socket, "gameOver");
+                Communicate.send(socket, "gameOver");
 
 //                System.out.println("[info] clientStatus: "+gameStatus);
             }

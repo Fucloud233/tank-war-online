@@ -265,7 +265,7 @@ public class Main {
             String roomNum = st.nextToken();
             for (Room room : rooms.values()) {
                 if (room.getRoomNum().equals(roomNum)) {
-                    if (room.isFull() || room.getStatus()) {
+                    if (room.isFull() || room.isPlaying()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
                         send("select room|failed");
                     } else if (room.havePassword()) {//提示有密码
@@ -293,7 +293,7 @@ public class Main {
             String password = st.nextToken();
             for (Room room : rooms.values()) {
                 if (room.getRoomNum().equals(roomNum)) {
-                    if (room.isFull() || room.getStatus()) {
+                    if (room.isFull() || room.isPlaying()) {
                         //房间达到人数上限或者房间正在游戏时，无法进入房间
                         send("select room|failed");
                     } else if (!room.checkPassword(password)) {//密码错误
@@ -382,9 +382,8 @@ public class Main {
                     case "cancelReady" -> userCancelReady(st);
                     // 检查房间内的用户是否都准备好了
                     case "check status" -> returnMsg = checkIfAllReady();
-//                        case "gameOver" ->
-//                            // 游戏结束处理
-//                                processGameOver();
+                    // 游戏结束处理
+                    case "gameOver" -> processGameOver();
                     // 退出房间
                     case "exitRoom" -> exitRoom();
 
@@ -424,7 +423,7 @@ public class Main {
         // 验证是否全部用户准备好
         String checkIfAllReady() throws IOException {
             User user = users.get(curSocket);
-            Room room = rooms.get(user.getAccount());
+            Room room = user.getRoom();
 
             // 切换房主状态
             user.setStatus(UserStatus.Ready);
@@ -434,8 +433,10 @@ public class Main {
                 return "begin game|failed";
             }
 
+            room.setRoomStatus("游戏中");
             // 刷新大厅中这个房间的状态
             sendRooms();
+
             // 把游戏开始信息发送给房间内所有用户
             sendToRoom(room, "begin game|succeed");
 
@@ -477,6 +478,14 @@ public class Main {
             }
 
             sendRooms();//刷新大厅内的房间列表
+        }
+
+        void processGameOver() {
+            User user = users.get(curSocket);
+            Room room = user.getRoom();
+            room.setRoomStatus("等待中");
+            // 刷新大厅中这个房间的状态
+            sendRooms();
         }
 
         // todo 在房间内部发言 (待优化)
