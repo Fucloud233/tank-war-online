@@ -48,7 +48,7 @@ public class GameWaitWindow {
     private Button PlayGameBtn;  //开始游戏/准备按钮
     Button exitRoomBtn;
     private Vector<String> UserNameList= new Vector<>();
-    private Vector<Boolean> UserStatusList= new Vector<>();
+    private Vector<String> UserStatusList= new Vector<>();
     private static TableView<UserInfo> userTableView = new TableView<UserInfo>();
     private ObservableList<UserInfo> data = FXCollections.observableArrayList();
 
@@ -62,9 +62,6 @@ public class GameWaitWindow {
         this.lobbyScene = lobbyScene;
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-
-        UserNameList = new Vector<>();
-        UserStatusList = new Vector<>();
 
     }
 
@@ -287,7 +284,9 @@ public class GameWaitWindow {
         // 添加用户名称到listOnline中
         listOnline.getItems().add(strOnline);
         // 添加数据测试
-        data.add(new UserInfo(1,strOnline,"未准备"));
+        if(!Objects.equals(strOnline, "All")){
+            data.add(new UserInfo(1,strOnline,"未准备"));
+        }
     }
 
     void ClearTalkTo() {
