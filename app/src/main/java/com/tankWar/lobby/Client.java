@@ -341,7 +341,12 @@ public class Client extends Stage {
                                 String status=parts[2];
                                 gameWaitWindow.AddTalkTo(name);
                                 //获取用户的全部信息
-                                gameWaitWindow.newAddTalkTo(ID,name,status);
+                                if(ID.equals("1")){
+                                    gameWaitWindow.newAddTalkTo(ID,name,"房主");
+                                }
+                                else{
+                                    gameWaitWindow.newAddTalkTo(ID,name,status);
+                                }
                             }
                         });
 

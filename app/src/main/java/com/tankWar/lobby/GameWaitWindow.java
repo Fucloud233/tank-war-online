@@ -162,8 +162,17 @@ public class GameWaitWindow {
         usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        usernameColumn.setPrefWidth(150);
-        statusColumn.setPrefWidth(150);
+        // 设置列宽
+        idColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
+        usernameColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
+        statusColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
+
+        // 设置字体样式
+        Font font = Font.font("Arial", FontWeight.BOLD, 12);
+        idColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
+        usernameColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
+        statusColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
+
 
         userTableView.getColumns().addAll(idColumn,usernameColumn, statusColumn);
 
@@ -324,6 +333,10 @@ public class GameWaitWindow {
             Communicate.send(socket, "exitRoom");
             primaryStage.setTitle("游戏大厅");
             primaryStage.setScene(lobbyScene);
+            //清空数据信息
+            data.clear();
+            userTableView.getColumns().clear();
+            userTableView.getItems().clear();
         }
 
     }
