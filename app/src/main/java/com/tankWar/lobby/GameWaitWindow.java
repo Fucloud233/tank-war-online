@@ -217,6 +217,7 @@ public class GameWaitWindow {
         listOnline.getItems().add(strOnline);
         //将用户列表进行放置
         userListView.setItems(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
+        listOnline.setValue("All");
     }
 
     void ClearTalkTo() {

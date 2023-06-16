@@ -14,7 +14,7 @@ public class Game {
     // 记录分数
     int[] scores;
     // 地图id
-    int mapId = 0;
+    int mapId = 2;
 
     public int getMapId() {
         return mapId;

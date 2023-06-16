@@ -21,6 +21,7 @@ public class Room {
     Vector<SocketChannel> sockets;
     HashMap<SocketChannel, User> users = new HashMap<>();
 
+
     public Room(String roomNum, String roomName, int userNum)  {
         this.roomNum = roomNum;
         this.roomName = roomName;
@@ -164,6 +165,7 @@ public class Room {
     // 改变房间的状态 和 玩家状态
     public void startGame(){
         this.status = true;
+
         // 设置所有玩家为游戏状态
         for(User user: users.values())
             user.setStatus(UserStatus.Playing);
