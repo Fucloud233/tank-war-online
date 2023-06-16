@@ -126,7 +126,7 @@ public class Room {
     }
 
     //返回房间的状态
-    public boolean getStatus() {
+    public boolean isPlaying() {
         return status;
     }
 

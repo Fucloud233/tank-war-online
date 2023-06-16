@@ -433,7 +433,6 @@ public class Main {
                 return "begin game|failed";
             }
 
-            room.setRoomStatus("游戏中");
             // 刷新大厅中这个房间的状态
             sendRooms();
 
@@ -483,7 +482,7 @@ public class Main {
         void processGameOver() {
             User user = users.get(curSocket);
             Room room = user.getRoom();
-            room.setRoomStatus("等待中");
+            room.endGame();
             // 刷新大厅中这个房间的状态
             sendRooms();
         }
@@ -559,7 +558,7 @@ public class Main {
                 strOnline += "|" + room.getHostName();//房主名字
                 strOnline += "|" + String.valueOf(room.getOnlineUserNum());
                 strOnline += "|" + String.valueOf(room.getMaxUserNum());
-                strOnline += "|" + room.getStatus();//房间状态
+                strOnline += "|" + room.isPlaying();//房间状态
             }
             sendToLobby(strOnline);
 
