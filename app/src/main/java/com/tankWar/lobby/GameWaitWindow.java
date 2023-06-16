@@ -38,7 +38,7 @@ public class GameWaitWindow {
     private Button btnTalk;
     private ComboBox<String> listOnline;
     //房间里放置玩家信息的UI
-    private String name;//这个就是用户的名字
+    public String name;//这个就是用户的名字
     private String account;//用户的账号
     private StringTokenizer st;
     private Scene roomScene;//自己的场景
@@ -67,15 +67,15 @@ public class GameWaitWindow {
 
     //存储用户的信息
     public  static class UserInfo{
-        private IntegerProperty ID;
+        private StringProperty ID;
         private StringProperty username;
         private StringProperty status;
-        public UserInfo(int ID, String username, String status) {
-            this.ID = new SimpleIntegerProperty(ID);
+        public UserInfo(String ID, String username, String status) {
+            this.ID = new SimpleStringProperty(ID);
             this.username = new SimpleStringProperty(username);
             this.status = new SimpleStringProperty(status);
         }
-        public int getID() {
+        public String getID() {
             return ID.get();
         }
 
@@ -283,10 +283,11 @@ public class GameWaitWindow {
     void AddTalkTo(String strOnline) {
         // 添加用户名称到listOnline中
         listOnline.getItems().add(strOnline);
+    }
+
+    void newAddTalkTo(String id,String name,String status){
         // 添加数据测试
-        if(!Objects.equals(strOnline, "All")){
-            data.add(new UserInfo(1,strOnline,"未准备"));
-        }
+        data.add(new UserInfo(id,name,status));
     }
 
     void ClearTalkTo() {

@@ -326,11 +326,22 @@ public class Client extends Stage {
                         }
                         //在进入房间后的，更新房间里面的在线用户
                         case "room online" -> Platform.runLater(() -> {
+                            //先清空 然后重新获取后重新渲染
                             gameWaitWindow.ClearTalkTo();
                             gameWaitWindow.AddTalkTo("All");
                             while (st.hasMoreTokens()) {
                                 String strOnline = st.nextToken();
-                                gameWaitWindow.AddTalkTo(strOnline);
+                                // 通过*号来截取用户的
+                                String[] parts = strOnline.split("\\*");
+                                // 获取ID
+                                String ID = parts[0];
+                                // 获取昵称
+                                String name = parts[1];
+                                // 获取状态
+                                String status=parts[2];
+                                gameWaitWindow.AddTalkTo(name);
+                                //获取用户的全部信息
+                                gameWaitWindow.newAddTalkTo(ID,name,status);
                             }
                         });
 

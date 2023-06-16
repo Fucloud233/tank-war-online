@@ -408,6 +408,10 @@ public class Main {
             User user = users.get(curSocket);
             sendToRoom(user.getRoom(), "roomTalk|" + readyName + " 已准备");
             user.setStatus(UserStatus.Ready);
+            //重新刷新房间内的列表
+            Room room=user.getRoom();
+            sendAllUsersToRoom(room);
+
         }
 
         // 用户取消准备
@@ -418,6 +422,9 @@ public class Main {
             User user = users.get(curSocket);
             sendToRoom(user.getRoom(),"roomTalk|" + readyName + " 已取消准备");
             user.setStatus(UserStatus.NoReady);
+            //重新刷新房间内的列表
+            Room room=user.getRoom();
+            sendAllUsersToRoom(room);
         }
 
         // 验证是否全部用户准备好
@@ -433,7 +440,6 @@ public class Main {
                 return "begin game|failed";
             }
 
-            room.setRoomStatus("游戏中");
             // 刷新大厅中这个房间的状态
             sendRooms();
 
@@ -483,7 +489,7 @@ public class Main {
         void processGameOver() {
             User user = users.get(curSocket);
             Room room = user.getRoom();
-            room.setRoomStatus("等待中");
+            room.endGame();
             // 刷新大厅中这个房间的状态
             sendRooms();
         }
@@ -559,7 +565,7 @@ public class Main {
                 strOnline += "|" + room.getHostName();//房主名字
                 strOnline += "|" + String.valueOf(room.getOnlineUserNum());
                 strOnline += "|" + String.valueOf(room.getMaxUserNum());
-                strOnline += "|" + room.getStatus();//房间状态
+                strOnline += "|" + room.isPlaying();//房间状态
             }
             sendToLobby(strOnline);
 
@@ -580,7 +586,7 @@ public class Main {
 
         // 向给指定的Sockets发送信息
         protected void sendToRoom(Room room, String strSend) {
-            for (SocketChannel socket : room.getAllUsers().keySet()) {
+            for (SocketChannel socket : room.getAllSockets()) {
                 this.send(socket, strSend);
             }
         }
@@ -588,19 +594,23 @@ public class Main {
         // 向服务端发送信息
         protected void sendAllUsersToRoom(Room room) {
             // 传递给客户端的房间在线用户
-            String strOnline = "room online";
+            StringBuilder strOnline = new StringBuilder("room online");
 
             // 生成传输消息
-            String[] names = room.getAllNickNames();
-            for (String name : names) {
-                System.out.println("[info] username" + name);
+            // todo 生成所有状态
+            Vector<User> users = room.getAllUsers();
+            int userid=1;
+            for (User user : users) {
+                System.out.println("[info] username" + user.getNickName());
                 System.out.println("[info] roomname" + room.getRoomName());
-                strOnline += "|" + name;
+                // 传入序号 昵称 状态
+                strOnline.append("|").append(userid).append("*").append(user.getNickName()).append("*").append(user.getStatus());
+                userid+=1;
             }
             System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
 
             //向房间内所有用户发送  发送房间内全部人员的名字
-            sendToRoom(room, strOnline);
+            sendToRoom(room, strOnline.toString());
         }
     }
 

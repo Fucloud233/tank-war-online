@@ -1,94 +1,193 @@
 package com.tankWar.game;
 
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
+import javafx.util.Pair;
 
-public class GameStatusPane extends GridPane {
-    // 用于记录状态类型
-    public enum StatusType{
-        TotalGameNum(0, "总局数"),
-        CurGameNum(1, "当前局数"),
-        TotalPlayerNum(2, "总玩家数"),
-        RestPlayerNum(3, "剩余玩家数"),
-        LastType(4, "");
+import java.util.HashMap;
+import java.util.Vector;
 
-        final int value;
-        final String text;
+import static com.tankWar.game.StatusType.*;
 
-        StatusType(int value, String text) {
-            this.value = value;
-            this.text = text;
-        }
+public class GameStatusPane extends VBox {
+    // 包含的组件信息
+    Label statusTitle = new Label("游戏状态");
+    TablePane statusTable = new TablePane();
 
-        public int getValue() {
-            return value;
-        }
-
-        public String getText() {
-            return text;
-        }
-    }
-
-    final int StatusNum = StatusType.LastType.value;
-
-    // 初始化数组
-    Label[] fieldLabels = new Label[StatusNum];
-    Label[] valueLabels = new Label[StatusNum];
-    Object[] values = new Object[StatusNum];
 
     public GameStatusPane() {
         init();
     }
 
+    // 初始化上述组件信息
     void init() {
-        for(int i = 0; i<StatusNum; i++) {
-            values[i] = new Object();
+        statusTable.addMultipleStatus(GameNum, 5);
+        statusTable.addMultipleStatus(PlayerNum, 4);
 
-            // 设置字段名
-            fieldLabels[i] = new Label(StatusType.values()[i].getText());
-            // 设置值
-            valueLabels[i] = new Label(values[i].toString());
-        }
+        this.getChildren().addAll(statusTitle, statusTable);
 
-        this.addColumn(0, fieldLabels);
-        this.addColumn(1, valueLabels);
-        this.setHgap(10);
-        this.setVgap(5);
-
-
+        // 设置样式
+        this.setPadding(new Insets(5));
         this.setStyle("-fx-font-size: 16px;");
     }
 
-    public void setValue(StatusType type, Object value) {
-        int i = type.getValue();
-        values[i] = value;
-        valueLabels[i].setText(value.toString());
-    }
-
-    public Object getValue(StatusType type) {
-        return values[type.getValue()];
-    }
-
+    /* 封装好的属性设置函数 */
     public void decResetPlayerNum() {
-        int i = StatusType.RestPlayerNum.value;
-        setValue(StatusType.RestPlayerNum,  (int) values[i] - 1);
+//        MultipleStatusLabel label = (MultipleStatusLabel) this.controls.get(PlayerNum);
+//        int num = label.getRValue();
+//        label.setRValue(num - 1);
     }
 
+
+
+    /* 底层的属性设置函数 */
     // 用于设置属性
     public void setTotalGameNum(int num) {
-        setValue(StatusType.TotalGameNum, num);
+//        statusTable.setMultipleValue(GameNum, num);
     }
 
     public void setCurGameNum(int num) {
-        setValue(StatusType.CurGameNum, num);
-    }
-
-    public void setRestPlayerNum(int num) {
-        setValue(StatusType.RestPlayerNum, num);
+        statusTable.setValue(GameNum, num);
     }
 
     public void setTotalPlayerNum(int num) {
-        setValue(StatusType.TotalPlayerNum, num);
+//        MultipleStatusLabel label = (MultipleStatusLabel) controls.get(PlayerNum);
+//        label.setLValue(num);
     }
 
+    public void setRestPlayerNum(int num) {
+        statusTable.setValue(PlayerNum, num);
+    }
+}
+
+// 双列的的表示视窗
+class TablePane extends GridPane {
+    Vector<StatusType> types = new Vector<>();
+    HashMap<StatusType, Pair<Label, NumberLabel>> labels = new HashMap<>();
+
+    public TablePane() {
+        this.setHgap(10);
+    }
+
+    // 添加状态 (只添加不删除)
+    public void addStatus(StatusType type) {
+        addStatus(type, 0);
+    }
+
+    // 添加状态 (只添加不删除)
+    public void addStatus(StatusType type, int value) {
+        if(checkExist(type)) {
+            System.out.println("[info] Type exists");
+            return;
+        }
+
+        Label nameLabel = new Label(type.getText());
+        NumberLabel valueLabel = new NumberLabel(value);
+
+        types.add(type);
+        labels.put(type, new Pair<>(nameLabel, valueLabel));
+
+        // 将Label添加到组件中
+        this.addRow(this.getRowCount(), nameLabel, valueLabel);
+    }
+
+    public void addMultipleStatus(StatusType type, int totalValue) {
+        if(checkExist(type)) {
+            System.out.println("[info] Type exists");
+            return;
+        }
+
+        Label nameLabel = new Label(type.getText());
+        MultiNumberLabel valueLabel = new MultiNumberLabel(totalValue);
+
+        types.add(type);
+        labels.put(type, new Pair<>(nameLabel, valueLabel));
+
+        // 将Label添加到组件中
+        this.addRow(this.getRowCount(), nameLabel, valueLabel);
+    }
+
+    // 修改label中的值
+    public void setValue(StatusType type, int value) {
+        Pair<Label, NumberLabel> labelPair = labels.get(type);
+        labelPair.getValue().setValue(value);
+    }
+
+    // 修改label中的值
+    public void setMultipleValue(StatusType type, int value, int totalValue) {
+        Pair<Label, NumberLabel> labelPair = labels.get(type);
+        MultiNumberLabel label = (MultiNumberLabel) labelPair.getValue();
+        label.setValue(value, totalValue);
+    }
+
+    public boolean checkExist(StatusType type) {
+        return labels.containsKey(type);
+    }
+}
+
+// 包含复合值的存放数字的Label Example: 3 / 5
+class MultiNumberLabel extends NumberLabel {
+    String divSymbol = " / ";
+
+    int totalValue = -1;
+
+    public MultiNumberLabel(int value, int totalValue) {
+        this.setValue(value, totalValue);
+    }
+
+    public MultiNumberLabel(int totalValue) {
+        this.setValue(totalValue, totalValue);
+    }
+
+    public void setValue(int value, int totalValue) {
+        this.totalValue = totalValue;
+        this.value = value;
+        this.refresh();
+    }
+
+    void refresh() {
+        super.setText(value + divSymbol + totalValue);
+    }
+}
+
+// 数字Label
+class NumberLabel extends Label {
+    int value = -1;
+
+    public NumberLabel(){}
+
+    public NumberLabel(int value) {
+        this.setValue(value);
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+        this.refresh();
+    }
+
+    // 更改后刷新Label
+    void refresh() {
+        String text = value==-1 ? null : Integer.toString(value);
+        super.setText(text);
+    }
+
+}
+
+// 用于记录状态类型
+enum StatusType {
+    StatusTitle("游戏状态"),
+    GameNum("局数"),
+    PlayerNum("玩家数"),
+    LastType("");
+
+    final String text;
+
+    StatusType(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
+    }
 }
