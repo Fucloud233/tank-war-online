@@ -571,7 +571,7 @@ public class Main {
 
         // 向给指定的Sockets发送信息
         protected void sendToRoom(Room room, String strSend) {
-            for (SocketChannel socket : room.getAllUsers().keySet()) {
+            for (SocketChannel socket : room.getAllSockets()) {
                 this.send(socket, strSend);
             }
         }
@@ -582,11 +582,13 @@ public class Main {
             String strOnline = "room online";
 
             // 生成传输消息
-            String[] names = room.getAllNickNames();
-            for (String name : names) {
-                System.out.println("[info] username" + name);
+            // todo 生成所有状态
+            Vector<User> users = room.getAllUsers();
+
+            for (User user : users) {
+                System.out.println("[info] username" + user.getNickName());
                 System.out.println("[info] roomname" + room.getRoomName());
-                strOnline += "|" + name;
+                strOnline += "|" + user.getNickName();
             }
 
             System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());

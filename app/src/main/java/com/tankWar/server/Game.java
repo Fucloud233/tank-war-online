@@ -1,21 +1,15 @@
 package com.tankWar.server;
 
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Vector;
 
 public class Game {
     // 所有玩家
-//    HashMap<SocketChannel, User> users = new HashMap<>();
     Vector<SocketChannel> sockets;
     Vector<Integer> restPlayer;
 
-
+    // 记录局数信息
     int totalGameNum = 2, curGameNum = 1;
-    // 记录玩家数量
-    // 考虑有人会退出游戏, 保持id的一致性
-//    Vector<Integer> totalPlayer;
 
     // 记录分数
     int[] scores;
@@ -26,19 +20,16 @@ public class Game {
         return mapId;
     }
 
-    public Game(HashMap<SocketChannel, User> users) {
-        int size = users.size();
+    public Game(Vector<SocketChannel> sockets) {
+        int size = sockets.size();
 
         // 初始化数组
-        sockets = new Vector<>(size);
+        this.sockets = sockets;
         restPlayer = new Vector<>(size);
         scores = new int[size];
 
-        int i = 0;
-        for(Map.Entry<SocketChannel, User> e: users.entrySet()) {
-            sockets.addElement(e.getKey());
+        for(int i=0; i<size; i++)
             restPlayer.addElement(i++);
-        }
     }
 
     void resetRestPlayer() {
@@ -119,5 +110,4 @@ enum DeadStatus{
     public boolean shouldOver() {
         return this == MatchOver;
     }
-
 }
