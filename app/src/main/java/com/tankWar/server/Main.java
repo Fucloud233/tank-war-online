@@ -146,7 +146,7 @@ public class Main {
                     // 选择的房间若设置了密码，需要验证
                     case "password" -> validPassword(st);
                     // 在大厅中聊天
-                    case "talk" -> returnMsg = talk(st);
+                    case "talk" ->talk(st);
                     // 刷新在线用户列表
                     case "init" -> sendAllUser();
                 }
@@ -314,7 +314,7 @@ public class Main {
         }
 
         // 大厅发言
-        String talk(StringTokenizer st) throws IOException {
+        void talk(StringTokenizer st) throws IOException {
             String strTalkInfo = st.nextToken(); // 得到聊天内容;
             String strSender = st.nextToken(); // 得到发消息人d
             String strReceiver = st.nextToken(); // 得到接收人
@@ -335,7 +335,7 @@ public class Main {
             if (strReceiver.equals("All")) {
                 this.sendToLobby("talk|" + strSender + " 对所有人说：" + strTalkInfo);
             } else if (strSender.equals(strReceiver)) {
-                return "talk|>>>不能自言自语哦!";
+                this.send("talk|>>>不能自言自语哦!");
             } else {
                 for(Map.Entry<SocketChannel, User> pair: users.entrySet()) {
                     User user = pair.getValue();
@@ -344,13 +344,13 @@ public class Main {
                     if (strReceiver.equals(user.getNickName())) {
                         SocketChannel socket = pair.getKey();
                         String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
-                        socket.write(ByteBuffer.wrap(text.getBytes()));
                         //更新发送方的消息
-                        return "talk|你对 " + strReceiver + "说：" + strTalkInfo;
+                        this.send(socket,text);
+                        this.send("talk|你对 " + strReceiver + "说：" + strTalkInfo);
+                        break;
                     }
                 }
             }
-            return null;
         }
     }
 
@@ -408,6 +408,10 @@ public class Main {
             User user = users.get(curSocket);
             sendToRoom(user.getRoom(), "roomTalk|" + readyName + " 已准备");
             user.setStatus(UserStatus.Ready);
+            //重新刷新房间内的列表
+            Room room=user.getRoom();
+            sendAllUsersToRoom(room);
+
         }
 
         // 用户取消准备
@@ -418,6 +422,9 @@ public class Main {
             User user = users.get(curSocket);
             sendToRoom(user.getRoom(),"roomTalk|" + readyName + " 已取消准备");
             user.setStatus(UserStatus.NoReady);
+            //重新刷新房间内的列表
+            Room room=user.getRoom();
+            sendAllUsersToRoom(room);
         }
 
         // 验证是否全部用户准备好
@@ -587,22 +594,23 @@ public class Main {
         // 向服务端发送信息
         protected void sendAllUsersToRoom(Room room) {
             // 传递给客户端的房间在线用户
-            String strOnline = "room online";
+            StringBuilder strOnline = new StringBuilder("room online");
 
             // 生成传输消息
             // todo 生成所有状态
             Vector<User> users = room.getAllUsers();
-
+            int userid=1;
             for (User user : users) {
                 System.out.println("[info] username" + user.getNickName());
                 System.out.println("[info] roomname" + room.getRoomName());
-                strOnline += "|" + user.getNickName();
+                // 传入序号 昵称 状态
+                strOnline.append("|").append(userid).append("*").append(user.getNickName()).append("*").append(user.getStatus());
+                userid+=1;
             }
-
             System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
 
             //向房间内所有用户发送  发送房间内全部人员的名字
-            sendToRoom(room, strOnline);
+            sendToRoom(room, strOnline.toString());
         }
     }
 

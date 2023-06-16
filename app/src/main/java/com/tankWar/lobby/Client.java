@@ -149,7 +149,6 @@ public class Client extends Stage {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                Communicate.send(socket, "talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
                 if (listOnline.getValue()==null) {
                     //没有选择和谁说话 默认为全体成员
                     Communicate.send(socket, "talk|" + txtTalk.getText() + "|" + username + "|" + "All");
@@ -166,7 +165,7 @@ public class Client extends Stage {
             try {
                 //创建一个新的房间
                 gameWaitWindow = new GameWaitWindow(socket, username, account, primaryStage, lobbyScene);
-                ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
+                 ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
                 roomWindow = new CreateRoomWindow(socket, username, account, gameWaitWindow);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -327,11 +326,27 @@ public class Client extends Stage {
                         }
                         //在进入房间后的，更新房间里面的在线用户
                         case "room online" -> Platform.runLater(() -> {
+                            //先清空 然后重新获取后重新渲染
                             gameWaitWindow.ClearTalkTo();
                             gameWaitWindow.AddTalkTo("All");
                             while (st.hasMoreTokens()) {
                                 String strOnline = st.nextToken();
-                                gameWaitWindow.AddTalkTo(strOnline);
+                                // 通过*号来截取用户的
+                                String[] parts = strOnline.split("\\*");
+                                // 获取ID
+                                String ID = parts[0];
+                                // 获取昵称
+                                String name = parts[1];
+                                // 获取状态
+                                String status=parts[2];
+                                gameWaitWindow.AddTalkTo(name);
+                                //获取用户的全部信息
+                                if(ID.equals("1")){
+                                    gameWaitWindow.newAddTalkTo(ID,name,"房主");
+                                }
+                                else{
+                                    gameWaitWindow.newAddTalkTo(ID,name,status);
+                                }
                             }
                         });
 
