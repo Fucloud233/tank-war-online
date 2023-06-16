@@ -9,11 +9,8 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -29,7 +26,6 @@ public class GamePane extends HBox {
     boolean isOver = false;
 
     // 1. 信息栏
-    VBox InfoPane = new VBox();
     GameStatusPane statusPane = new GameStatusPane();
     // 2. 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
@@ -79,19 +75,6 @@ public class GamePane extends HBox {
 
     // GamePane初始化函数
     void initPane() {
-        // 设置InfoPane
-        Label titleLabel = new Label("游戏状态");
-        titleLabel.setStyle("-fx-font-style: BOLD");
-        titleLabel.setStyle("-fx-font-family: 黑体;");
-        titleLabel.setStyle("-fx-font-size: 28px;");
-
-        Separator separator = new Separator();
-
-        InfoPane.setSpacing(5);
-        InfoPane.setPrefSize(150, Config.MapMaxHeight);
-        InfoPane.setPadding(new Insets(Config.MapPaddingSize));
-        InfoPane.getChildren().addAll(titleLabel, separator, statusPane);
-
         // 设置Canvas
         this.canvas.requestFocus();
         this.canvas.setFocusTraversable(true);
@@ -106,7 +89,7 @@ public class GamePane extends HBox {
 
         // 添加子Pane
         this.getChildren().add(canvas);
-        this.getChildren().add(InfoPane);
+        this.getChildren().add(statusPane);
 
         // 创建显示游戏的线程
         Thread showThread = new Thread(showTask);

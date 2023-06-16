@@ -2,9 +2,11 @@ package com.tankWar.game;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import javafx.util.Pair;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -15,7 +17,6 @@ public class GameStatusPane extends VBox {
     Label statusTitle = new Label("游戏状态");
     TablePane statusTable = new TablePane();
 
-
     public GameStatusPane() {
         init();
     }
@@ -25,11 +26,22 @@ public class GameStatusPane extends VBox {
         statusTable.addMultipleStatus(GameNum, 5);
         statusTable.addMultipleStatus(PlayerNum, 4);
 
-        this.getChildren().addAll(statusTitle, statusTable);
+        this.getChildren().addAll(statusTitle, new Separator(), statusTable);
 
         // 设置样式
-        this.setPadding(new Insets(5));
-        this.setStyle("-fx-font-size: 16px;");
+        URL styleURL = this.getClass().getResource("/css/label.css");
+        if(styleURL != null)
+            this.getStylesheets().add(styleURL.toExternalForm());
+
+        // 设置Pane属性
+        this.setPrefWidth(150);
+        this.setPadding(new Insets(Config.MapPaddingSize));
+        this.setSpacing(5);
+
+        // 设置statusTitle
+        statusTitle.setStyle("-fx-font-style: BOLD");
+        statusTitle.setStyle("-fx-font-family: 黑体;");
+        statusTitle.setStyle("-fx-font-size: 24px;");
     }
 
     /* 封装好的属性设置函数 */
@@ -67,7 +79,8 @@ class TablePane extends GridPane {
     HashMap<StatusType, Pair<Label, NumberLabel>> labels = new HashMap<>();
 
     public TablePane() {
-        this.setHgap(10);
+        this.setHgap(5);
+        this.setVgap(5);
     }
 
     // 添加状态 (只添加不删除)

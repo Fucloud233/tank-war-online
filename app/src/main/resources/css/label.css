@@ -1,0 +1,7 @@
+@font-face {
+    src: url("../font/Minecraft-AE.ttf");
+}
+.label {
+    -fx-font-family: 'Minecraft AE';
+    -fx-font-size: 14px;
+}
