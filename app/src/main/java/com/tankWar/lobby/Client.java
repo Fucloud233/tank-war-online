@@ -76,6 +76,7 @@ public class Client extends Stage {
         Button btnTalk = new Button("发送");  //发送按钮
         listOnline = new ComboBox<>();  //选择发送的对象
         listOnline.getItems().add("All");  //添加在线人员列表
+        listOnline.setValue("All"); // 设置"ALL"为默认选项
         txtViewTalk.setEditable(false);  //禁止编辑
         //放置输入聊天内容的盒子
         HBox hBox = new HBox(10);
@@ -244,6 +245,7 @@ public class Client extends Stage {
                         case "online" -> Platform.runLater(() -> {
                             listOnline.getItems().clear();
                             listOnline.getItems().add("All");
+                            listOnline.setValue("All"); // 设置"ALL"为默认选项
                             while (st.hasMoreTokens()) {
                                 String strOnline = st.nextToken();
                                 listOnline.getItems().add(strOnline);
@@ -461,7 +463,7 @@ public class Client extends Stage {
                 // 发送游戏结束信息给服务端
                 primaryStage.show();
                 new Thread(new ClientThread()).start();
-//                Communicate.send(socket, "gameOver");
+                Communicate.send(socket, "gameOver");
 
 //                System.out.println("[info] clientStatus: "+gameStatus);
             }

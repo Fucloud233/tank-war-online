@@ -11,7 +11,7 @@ public class Room {
     int maxUserNum;
     boolean havePassword;
     // Room状态
-    boolean status = false;
+    String roomStatus="等待中";
     Game game = null;
 
     // 所有用户
@@ -115,9 +115,14 @@ public class Room {
     }
 
     //返回房间的状态
-    public boolean getStatus() {
-        return status;
+    public String getStatus() {
+        return roomStatus;
     }
+
+    public boolean isPlaying() {
+        return roomStatus == "游戏中";
+    }
+
 
     // 返回是否满了
     public boolean isFull() {
@@ -150,10 +155,12 @@ public class Room {
         return flag;
     }
 
+    public void setRoomStatus(String roomStatus) {
+        this.roomStatus = roomStatus;
+    }
 
     // 改变房间的状态 和 玩家状态
     public void startGame(){
-        this.status = true;
         // 设置所有玩家为游戏状态
         for(User user: users.values())
             user.setStatus(UserStatus.Playing);
@@ -164,7 +171,6 @@ public class Room {
 
     // 改变房间的状态 和 玩家状态
     public void endGame(){
-        this.status = false;
         // 设置所有玩家为游戏状态
         for(User user: users.values())
             user.setStatus(UserStatus.NoReady);
