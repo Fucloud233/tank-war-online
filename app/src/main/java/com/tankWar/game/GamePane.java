@@ -354,7 +354,7 @@ public class GamePane extends HBox {
                     bullet.setAlive(false);
 
                     // 减少玩家数量
-                    Platform.runLater(()->statusPane.decResetPlayerNum());
+                    Platform.runLater(()->statusPane.decRestPlayerNum());
                 }
             }
         }
