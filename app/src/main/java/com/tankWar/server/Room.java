@@ -82,7 +82,8 @@ public class Room {
 
     public Vector<User> getAllUsers() {
         Vector<User> retUsers = new Vector<>(sockets.size());
-        retUsers.addAll(users.values());
+        for(SocketChannel socket: sockets)
+            retUsers.add(users.get(socket));
         return retUsers;
     }
 
