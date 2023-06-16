@@ -1,11 +1,17 @@
 package com.tankWar.lobby;
 
 import com.tankWar.communication.Communicate;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -14,10 +20,11 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Optional;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import static javafx.scene.paint.Color.GREEN;
+
+
 
 public class GameWaitWindow {
     ListView<String> userListView;
@@ -40,6 +47,12 @@ public class GameWaitWindow {
     public Boolean isRoomOwner = false;   //是否为房主 在CreateRoomWindow中将其设置为true
     private Button PlayGameBtn;  //开始游戏/准备按钮
     Button exitRoomBtn;
+    private Vector<String> UserNameList= new Vector<>();
+    private Vector<Boolean> UserStatusList= new Vector<>();
+    private static TableView<UserInfo> userTableView = new TableView<UserInfo>();
+    private ObservableList<UserInfo> data = FXCollections.observableArrayList();
+
+
 
     public GameWaitWindow(Socket s, String name, String account, Stage primaryStage, Scene lobbyScene) throws IOException {
         this.socket = s;
@@ -49,7 +62,36 @@ public class GameWaitWindow {
         this.lobbyScene = lobbyScene;
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
+
+        UserNameList = new Vector<>();
+        UserStatusList = new Vector<>();
+
     }
+
+    //存储用户的信息
+    public  static class UserInfo{
+        private IntegerProperty ID;
+        private StringProperty username;
+        private StringProperty status;
+        public UserInfo(int ID, String username, String status) {
+            this.ID = new SimpleIntegerProperty(ID);
+            this.username = new SimpleStringProperty(username);
+            this.status = new SimpleStringProperty(status);
+        }
+        public int getID() {
+            return ID.get();
+        }
+
+        public String getUsername() {
+            return username.get();
+        }
+
+        public String getStatus() {
+            return status.get();
+        }
+
+    }
+
     void ShowWindow(){
         //打印是否为房主进行测试
         System.out.println("[info] 是否房主 "+isRoomOwner);
@@ -115,6 +157,30 @@ public class GameWaitWindow {
         BottomBox.getChildren().add(vBox);
 
         VBox userListBox = new VBox();
+        TableColumn<UserInfo, String> idColumn = new TableColumn<>("序号");
+        TableColumn<UserInfo, String> usernameColumn = new TableColumn<>("昵称");
+        TableColumn<UserInfo, String> statusColumn = new TableColumn<>("状态");
+
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("ID"));
+        usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        usernameColumn.setPrefWidth(150);
+        statusColumn.setPrefWidth(150);
+
+        userTableView.getColumns().addAll(idColumn,usernameColumn, statusColumn);
+
+
+        //绑定数据
+        userTableView.setItems(data);
+
+        //修改边框颜色
+        userTableView.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
+        // 设置userListView的样式——内部颜色
+        userTableView.setStyle("-fx-control-inner-background: #494f3c;");
+
+
+/*
         // 创建一个ListView来显示房间内的用户   在下面对聊天对象更新的函数中进行更新ListView
         userListView = new ListView<>(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
 
@@ -123,15 +189,8 @@ public class GameWaitWindow {
         int itemHeight = 60; // 设置每个条目的高度（根据实际情况调整）
         userListView.setPrefHeight(maxRows * itemHeight);
         userListView.setPadding(new Insets(5));
-
-
-        txtViewTalk.setPadding(new Insets(5));
-
         //修改边框颜色
         userListView.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
-        // 设置txtViewTalk的样式
-        txtViewTalk.setStyle("-fx-control-inner-background: #494f3c; -fx-text-fill: white;-fx-font-size: 15");
-
         /////////////////////房间内用户——样式的修改/////////////////
         // 设置userListView的样式——内部颜色
         userListView.setStyle("-fx-control-inner-background: #494f3c;");
@@ -152,8 +211,17 @@ public class GameWaitWindow {
             }
         });
         userListView.setDisable(true);
+
+        */
+
+
+        txtViewTalk.setPadding(new Insets(5));
+        // 设置txtViewTalk的样式
+        txtViewTalk.setStyle("-fx-control-inner-background: #494f3c; -fx-text-fill: white;-fx-font-size: 15");
+
+
         //将用户列表装进Box中
-        userListBox.getChildren().add(userListView);
+        userListBox.getChildren().add(userTableView);
         //设置一个新的VBox 装载userList和BottomBox
         VBox newVBox=new VBox();
         newVBox.getChildren().add(userListBox);
@@ -186,10 +254,10 @@ public class GameWaitWindow {
                 if (isRoomOwner){
                     if(listOnline.getValue()==null) //未选中默认为和全部人说
                     {
-                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + "All");
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"*房主" + "|" + "All");
                     }
                     else{
-                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"(房主)" + "|" + listOnline.getValue());
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                     }
                 }else {
                     if(listOnline.getValue()==null) //未选中默认为和全部人说
@@ -199,12 +267,13 @@ public class GameWaitWindow {
                     }
                     else{
                         //获取用户输入的账号
-                        if((name + "*已准备").equals(listOnline.getValue()) || (name + "*未准备").equals(listOnline.getValue())){
+                        /*if((name + "*已准备").equals(listOnline.getValue()) || (name + "*未准备").equals(listOnline.getValue())){
                             Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + name);
                         }
                         else{
                             Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
-                        }
+                        }*/
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                     }
                 }
                 txtTalk.clear();
@@ -213,15 +282,19 @@ public class GameWaitWindow {
 
     }
 
+
     void AddTalkTo(String strOnline) {
+        // 添加用户名称到listOnline中
         listOnline.getItems().add(strOnline);
-        //将用户列表进行放置
-        userListView.setItems(FXCollections.observableArrayList(listOnline.getItems()).filtered(item -> !item.equals("All")));
+        // 添加数据测试
+        data.add(new UserInfo(1,strOnline,"未准备"));
     }
 
     void ClearTalkTo() {
+        // 清空房间内用户
         listOnline.getItems().clear();
-        userListView.setItems(FXCollections.observableArrayList());
+        //清空数据
+        data.clear();
     }
 
     void AddTxt(String strTalk) {

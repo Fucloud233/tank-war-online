@@ -148,7 +148,6 @@ public class Client extends Stage {
         btnTalk.setOnAction(e -> {
             if (!txtTalk.getText().isEmpty()) {
                 //获取用户输入的账号
-                Communicate.send(socket, "talk|" + txtTalk.getText() + "|" + username + "|" + listOnline.getValue());
                 if (listOnline.getValue()==null) {
                     //没有选择和谁说话 默认为全体成员
                     Communicate.send(socket, "talk|" + txtTalk.getText() + "|" + username + "|" + "All");
@@ -165,7 +164,7 @@ public class Client extends Stage {
             try {
                 //创建一个新的房间
                 gameWaitWindow = new GameWaitWindow(socket, username, account, primaryStage, lobbyScene);
-                ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
+                 ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
                 roomWindow = new CreateRoomWindow(socket, username, account, gameWaitWindow);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);

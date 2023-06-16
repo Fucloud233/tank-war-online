@@ -10,7 +10,6 @@ public class Room {
     String roomNum, roomName, password;
     int maxUserNum;
     boolean havePassword;
-
     // Room状态
     boolean status = false;
     Game game = null;
@@ -81,7 +80,6 @@ public class Room {
                 return new Pair<>(e.getKey(), e.getValue());
             }
         }
-
         return null;
     }
 
@@ -90,12 +88,7 @@ public class Room {
         String[] names = new String[users.size()];
         int i = 0;
         for(User user: users.values()) {
-            if(user.getAccount().equals(this.roomNum)){
-                names[i++] = user.getNickName()+"*房主";
-            }
-            else {
-                names[i++] = user.getNickName();
-            }
+            names[i++] = user.getNickName();
         }
         return names;
     }
