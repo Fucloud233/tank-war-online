@@ -14,7 +14,7 @@ public class Game {
     // 记录分数
     int[] scores;
     // 地图id
-    int mapId = 2;
+    int mapId = 1;
 
     public int getMapId() {
         return mapId;
@@ -29,7 +29,7 @@ public class Game {
         scores = new int[size];
 
         for(int i=0; i<size; i++)
-            restPlayer.addElement(i++);
+            restPlayer.addElement(i);
     }
 
     void resetRestPlayer() {
