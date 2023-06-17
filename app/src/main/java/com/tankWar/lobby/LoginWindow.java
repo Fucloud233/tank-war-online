@@ -26,195 +26,152 @@ public class LoginWindow extends Application {
     DataOutputStream out = null;
     String IP;
     // 登陆界面的UI
-    private TextField txtName;
-    private PasswordField txtPassword;
-    private Button btnLogin; //登录按钮
-    private GridPane loginPane;
-    private Scene loginScene;
+    TextField txtAcount;
+    PasswordField txtPassword;
+    Button funcButton; //登录按钮
     //注册界面的UI
-    private TextField txtNickName;
-    private TextField txtAccount;
-    private PasswordField setPassword;
-    private Button btnRegister;
-    private Button btnAck;
-    private GridPane registerPane;
-    private Scene registerScene;
-    //
-    private Stage primaryStage;
+    TextField txtNickName;
+    Button changeStatusButton;
+    VBox mainVBox;
+    Stage primaryStage;
+    String curStatus = "login";
+    VBox inputVbox;
+    Label nickLbl;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.primaryStage = primaryStage;
-        // 初始化登录的UI
-        txtName = new TextField();
-        txtName.setText("1");
+        // 账号输入框
+        Label accountLbl = new Label("账号：");
+        accountLbl.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 16));
+        txtAcount = new TextField();
+        txtAcount.setText("1");
+        txtAcount.setMinSize(210, 30);
+
+        // 密码输入框
+        Label passLbl = new Label("密码：");
+        passLbl.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 16));
         txtPassword = new PasswordField();
         txtPassword.setText("111111"); ///////////固定初始值 方便测试 后续删除
-        //初始化注册的UI
+        txtPassword.setMinSize(210, 30);
+
+        // 昵称输入框
+        nickLbl = new Label("昵称：");
+        nickLbl.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 16));
         txtNickName = new TextField();
-        txtAccount = new TextField();
-        setPassword = new PasswordField();
-        btnAck = new Button("确认注册");
-        btnAck.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
+        txtNickName.setMinSize(210, 30);
 
-
-        //登录按钮
-        btnLogin = new Button("登录");
-        btnLogin.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
+        //功能按钮
+        funcButton = new Button("登录");
+        funcButton.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 14));
+        funcButton.setMinSize(70, 30);
         //点击登录按钮后触发
-        btnLogin.setOnAction(e -> {
-            //输入的信息全不为空
-            if (!txtName.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
-                try {
-                    //连接服务器
-                    connectServer();
-                    //获取登陆的账号和密码//发送给服务器
-                    String strSend = "login|" + txtName.getText() + "|" + txtPassword.getText();
-                    Communicate.send(socket, strSend);
-                    //进行登录
-                    initLogin();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            } else {
-                new Alert(Alert.AlertType.WARNING, "请输入全部的信息").showAndWait();
-            }
+        funcButton.setOnAction(e -> {
+            funcButtonEvent();
         });
 
-        //注册按钮
-        //注册按钮
-        btnRegister = new Button("注册");
-        btnRegister.setFont(Font.font("Cursive", FontWeight.NORMAL, 14));
+        //切换状态按钮
+        changeStatusButton = new Button("注册");
+        changeStatusButton.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 14));
+        changeStatusButton.setMinSize(70, 30);
         //点击注册按钮后触发
-        btnRegister.setOnAction(e -> {
-            primaryStage.setTitle("注册窗口");
-            primaryStage.setScene(registerScene);
-            primaryStage.show();
+        changeStatusButton.setOnAction(e -> {
+            switchStatus();
         });
 
-        //点击确认注册按钮后触发,删除了注册后就登陆的代码
-        btnAck.setOnAction(event -> {
-            if (!txtNickName.getText().isEmpty() && !txtAccount.getText().isEmpty() && !setPassword.getText().isEmpty()) {
-                try {
-                    //连接服务器
-                    connectServer();
-                    //获取登陆的账号和密码//发送给服务器
-                    String strSend = "register|" + txtNickName.getText() + "|" + txtAccount.getText() + "|" + setPassword.getText();
-                    Communicate.send(socket, strSend);
-                    initRegister();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            } else {
-                new Alert(Alert.AlertType.WARNING, "请输入全部的信息").showAndWait();
-            }
-        });
-
-        //登陆界面的网格布局
-        loginPane = new GridPane();
-        loginPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
-        loginPane.setVgap(10);
-        loginPane.setHgap(10);
-        loginPane.setPrefSize(300,200);
-        loginPane.setAlignment(Pos.CENTER);
-        loginPane.setPadding(new Insets(20));
-        Label accountLbl=new Label("账号：");
-        accountLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
-        loginPane.add(accountLbl, 0, 2);
-        loginPane.add(txtName, 1, 2);
-        Label passLbl=new Label("密码：");
-        passLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
-        loginPane.add(passLbl, 0, 3);
-        loginPane.add(txtPassword, 1, 3);
         //加个坦克大战的标题
-        HBox titleBox = new HBox(10);
-        titleBox.setAlignment(Pos.CENTER);
         Label titleLabel = new Label("坦克大战");
-        titleLabel.setAlignment(Pos.CENTER);
-        titleBox.getChildren().add(titleLabel);
-        titleLabel.setFont(Font.font("Bungee", FontWeight.BOLD,30));
+        titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
         titleLabel.setStyle("-fx-text-fill: #0e2a10;");
+        HBox titleBox = new HBox(titleLabel);
+        titleBox.setAlignment(Pos.CENTER);
+
+        // 信息输入框
+        inputVbox = new VBox(accountLbl, txtAcount, passLbl, txtPassword);
+        inputVbox.setAlignment(Pos.CENTER_LEFT);
+        inputVbox.setPadding(new Insets(20));
 
         //放置登录和注册的按钮
-        HBox buttonBox = new HBox(10);
+        HBox buttonBox = new HBox(30, funcButton, changeStatusButton);
         buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.getChildren().addAll(btnLogin, btnRegister);
 
-        loginPane.add(buttonBox, 0, 4,2,1);
-        loginPane.add(titleBox,0,1,2,1);
-        //设置里面组件的大小
-        txtName.setMinSize(200, 30);
-        txtName.setPrefSize(200, 30);
+        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
+        mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
+        mainVBox.setPadding(new Insets(20));
 
-        txtPassword.setMinSize(200, 30);
-        txtPassword.setPrefSize(200, 30);
-
-        btnLogin.setMinSize(100, 30);
-        btnLogin.setPrefSize(100, 30);
-
-        btnRegister.setMinSize(100, 30);
-        btnRegister.setPrefSize(100, 30);
-
-        loginScene=new Scene(loginPane);
-
-        //注册界面的网格布局
-
-        registerPane = new GridPane();
-        registerPane.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
-        registerPane.setVgap(10);
-        registerPane.setHgap(10);
-        registerPane.setPadding(new Insets(20));
-        Label nickLbl = new Label("昵称：");
-        nickLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
-        registerPane.add(nickLbl, 0, 2);
-        registerPane.add(txtNickName, 1, 2);
-        Label accLbl = new Label("账号：");
-        accLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
-        registerPane.add(accLbl, 0, 3);
-        registerPane.add(txtAccount, 1, 3);
-        Label passwordLbl = new Label("密码：");
-        passwordLbl.setFont(Font.font("Cursive", FontWeight.NORMAL, 16));
-        registerPane.add(passwordLbl, 0, 4);
-        registerPane.add(setPassword, 1, 4);
-        registerPane.setPrefSize(300,200);
-        registerPane.setAlignment(Pos.CENTER);
-        HBox buttonBox2 = new HBox(10);
-        buttonBox2.setAlignment(Pos.CENTER);
-        buttonBox2.getChildren().addAll(btnAck);
-        registerPane.add(buttonBox2, 0,5,2,1);
-        //加个坦克大战的标题
-        HBox titleBox_1 = new HBox(10);
-        titleBox_1.setAlignment(Pos.CENTER);
-        Label titleLabel_1 = new Label("坦克大战");
-        titleLabel_1.setAlignment(Pos.CENTER);
-        titleBox_1.getChildren().add(titleLabel_1);
-        titleLabel_1.setFont(Font.font("Bungee", FontWeight.BOLD,30));
-        titleLabel_1.setStyle("-fx-text-fill: #0e2a10;");
-        registerPane.add(titleBox_1,0,1,2,1);
-
-        //设置注册里面的组件大小
-        txtNickName.setMinSize(200, 30);
-        txtNickName.setPrefSize(200, 30);
-        txtAccount.setMinSize(200, 30);
-        txtAccount.setPrefSize(200, 30);
-        setPassword.setMinSize(200, 30);
-        setPassword.setPrefSize(200, 30);
-        btnAck.setMinSize(100, 30);
-        btnAck.setPrefSize(100, 30);
-        registerScene=new Scene(registerPane);
-
-
+        this.primaryStage = primaryStage;
         // 禁用窗口大小调整
-        primaryStage.setResizable(false);
+        this.primaryStage.setResizable(false);
         //初始为登陆界面
-        primaryStage.setTitle("登录窗口");
-        primaryStage.setScene(loginScene);
-        primaryStage.show();
+        this.primaryStage.setTitle("登录窗口");
+        this.primaryStage.setScene(new Scene(mainVBox));
+        this.primaryStage.setHeight(310);
+        this.primaryStage.setWidth(350);
+        this.primaryStage.show();
+    }
+
+    void switchStatus() {
+        switch (curStatus) {
+            case "login" -> {
+                curStatus = "register";
+                primaryStage.setTitle("注册窗口");
+                inputVbox.getChildren().add(nickLbl);
+                inputVbox.getChildren().add(txtNickName);
+                changeStatusButton.setText("回到登录");
+                funcButton.setText("确认注册");
+                primaryStage.setHeight(365);
+            }
+            case "register" -> {
+                curStatus = "login";
+                primaryStage.setTitle("登录窗口");
+                inputVbox.getChildren().remove(txtNickName);
+                inputVbox.getChildren().remove(nickLbl);
+                changeStatusButton.setText("注册");
+                funcButton.setText("登录");
+                primaryStage.setHeight(310);
+            }
+        }
+    }
+
+    void funcButtonEvent() {
+        Boolean infoCorrect = false;
+        //输入的信息全不为空
+        if (!txtAcount.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
+            infoCorrect = true;
+            try {
+                switch (curStatus) {
+                    case "login" -> {
+                        connectServer();
+                        //获取登陆的账号和密码//发送给服务器
+                        String strSend = "login|" + txtAcount.getText() + "|" + txtPassword.getText();
+                        Communicate.send(socket, strSend);
+                        //进行登录
+                        initLogin();
+                    }
+                    case "register" -> {
+                        if (!txtNickName.getText().isEmpty()) {
+                            connectServer();
+                            //获取登陆的账号和密码//发送给服务器
+                            String strSend = "register|" + txtNickName.getText() + "|" + txtAcount.getText() + "|" + txtPassword.getText();
+                            Communicate.send(socket, strSend);
+                            initRegister();
+                        } else {
+                            infoCorrect = false;
+                        }
+                    }
+                }
+
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+        if (!infoCorrect) {
+            new Alert(Alert.AlertType.WARNING, "请输入全部的信息").showAndWait();
+        }
     }
 
 
     //登录的逻辑
-    private void initLogin() throws IOException {
+    void initLogin() throws IOException {
         String strReceive = Communicate.receive(socket);
 //        String strReceive = in.readUTF();
         System.out.println(strReceive);
@@ -230,13 +187,13 @@ public class LoginWindow extends Application {
             if (strStatus.equals("succeed")) {
                 String nickname = st.nextToken();
                 //转到窗口页面 并关闭登录窗口
-                btnLogin.setDisable(true);
+                funcButton.setDisable(true);
                 primaryStage.close();
                 //传入参数并跳转到房间选择页面 connectServer()获取到对应的信息
-                Client client = new Client(nickname, txtName.getText(), socket, in, out);
+                Client client = new Client(nickname, txtAcount.getText(), socket, in, out);
                 client.RunClient();
             }
-//            new Alert(Alert.AlertType.INFORMATION, strKey + " " + strStatus + "!");
+
         }
         if (strKey.equals("warning")) {
             String strStatus = st.nextToken();
@@ -250,24 +207,22 @@ public class LoginWindow extends Application {
     }
 
     //注册的逻辑
-    private void initRegister() throws IOException {
+    void initRegister() throws IOException {
         String strReceive = Communicate.receive(socket);
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
         if (strKey.equals("register")) {
             String strStatus = st.nextToken();
-            if (strStatus.equals("success")) {
-                showRegistrationSuccess();
-            } else if (strStatus.equals("name")) {
-                new Alert(Alert.AlertType.WARNING, "昵称已被使用！").showAndWait();
-            } else if (strStatus.equals("account")) {
-                new Alert(Alert.AlertType.WARNING, "账号已存在！").showAndWait();
+            switch (strStatus) {
+                case "success" -> showRegistrationSuccess();
+                case "name" -> new Alert(Alert.AlertType.WARNING, "昵称已被使用！").showAndWait();
+                case "account" -> new Alert(Alert.AlertType.WARNING, "账号已存在！").showAndWait();
             }
         }
     }
 
     // 创建注册成功提示对话框
-    private void showRegistrationSuccess() {
+    void showRegistrationSuccess() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("注册成功");
         alert.setHeaderText(null);
@@ -276,14 +231,13 @@ public class LoginWindow extends Application {
         // 设置对话框的关闭请求事件处理程序
         alert.setOnCloseRequest(event -> {
             // 返回登录界面
-            primaryStage.setTitle("登录窗口");
-            primaryStage.setScene(loginScene);
-            primaryStage.show();
+            switchStatus();
         });
 
         // 显示对话框
         alert.showAndWait();
     }
+
 
     public LoginWindow(String IP) {
         this.IP = IP;
@@ -291,7 +245,6 @@ public class LoginWindow extends Application {
 
     //连接服务器
     void connectServer() throws IOException {
-//        String IP = ChatServer.getServerIP();
         //创建套接字
         socket = new Socket(this.IP, 8080);
         //输入流和输出流
