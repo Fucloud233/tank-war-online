@@ -260,14 +260,17 @@ public class GameWaitWindow {
                 if (isRoomOwner){
                     if(listOnline.getValue()==null) //未选中默认为和全部人说
                     {
-                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"*房主" + "|" + "All");
+                        System.out.println("3");
+                        Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+ "|" + "All");
                     }
                     else{
+                        System.out.println("4");
                         Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                     }
                 }else {
                     if(listOnline.getValue()==null) //未选中默认为和全部人说
                     {
+                        System.out.println("2");
                         //获取用户输入的账号
                         Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name+"|" + "All");
                     }
@@ -279,6 +282,7 @@ public class GameWaitWindow {
                         else{
                             Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                         }*/
+                        System.out.println("1");
                         Communicate.send(socket,  "roomTalk|" + txtTalk.getText() + "|" + name + "|" + listOnline.getValue());
                     }
                 }

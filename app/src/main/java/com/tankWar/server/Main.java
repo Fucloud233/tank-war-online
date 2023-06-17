@@ -529,12 +529,12 @@ public class Main {
 
                 //更新接收方的消息
                 SocketChannel recvSocket = recvPair.getKey();
-                String text = "talk|" + strSender + " 对你说：" + strTalkInfo;
+//                String text = "roomTalk|" + strSender + " 对你说：" + strTalkInfo;
                 //recvSocket.write(ByteBuffer.wrap(text.getBytes()));
 
                 //更新发送方的消息
-                this.send(recvSocket,text);
-                this.send("talk|你对 " + strReceiver + "说：" + strTalkInfo);
+                this.send(recvSocket,"roomTalk|" + strSender + " 对你说：" + strTalkInfo);
+                this.send("roomTalk|你对 " + strReceiver + "说：" + strTalkInfo);
             }
         }
     }
