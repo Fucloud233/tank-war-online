@@ -292,6 +292,7 @@ public class GameWaitWindow {
     void AddTalkTo(String strOnline) {
         // 添加用户名称到listOnline中
         listOnline.getItems().add(strOnline);
+        listOnline.setValue("All"); // 设置"ALL"为默认选项
     }
 
     void newAddTalkTo(String id,String name,String status){
@@ -304,6 +305,7 @@ public class GameWaitWindow {
         listOnline.getItems().clear();
         //清空数据
         data.clear();
+
     }
 
     void AddTxt(String strTalk) {
