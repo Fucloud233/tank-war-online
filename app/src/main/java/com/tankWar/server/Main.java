@@ -123,7 +123,7 @@ public class Main {
         public void handle()  {
             // 1. 读取消息
             String text = receive();
-//            System.out.println("[info] recv:" + text);
+//            System.out.println("[info] LobbyHandler recv:" + text);
 
             if(text == null || text.isEmpty())
                 return;
@@ -366,6 +366,7 @@ public class Main {
         public void handle() {
             // 1. 读取消息
             String text = super.receive();
+//            System.out.println("[info] RoomHandler recv:" + text);
             if(text == null)
                 return;
 

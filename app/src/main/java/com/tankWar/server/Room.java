@@ -66,6 +66,7 @@ public class Room {
         if(!users.containsKey(socket))
             return;
 
+        users.get(socket).setStatus(UserStatus.Null);
         sockets.remove(socket);
         users.remove(socket);
     }
