@@ -1,6 +1,6 @@
-package com.game.fucloud;
+package com.game.fucloud.component;
 
-import com.tankWar.game.GameStatusPane;
+import com.tankWar.game.component.GameInfoPane;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -19,7 +19,7 @@ public class GameStatusPaneTest extends Application {
                 "Tom", "Jack", "Alex"
         };
 
-        GameStatusPane pane = new GameStatusPane(names);
+        GameInfoPane pane = new GameInfoPane(names);
 
         // 设置状态栏的数值
         pane.setTotalGameNum(5);

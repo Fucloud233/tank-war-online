@@ -5,7 +5,7 @@ import javafx.scene.input.KeyCode;
 
 import java.util.HashMap;
 
-class Utils {
+public class Utils {
     // 用来转换KeyCode 和 Direction
     public static HashMap<KeyCode, Direction> DirMap = new HashMap<KeyCode, Direction>() ;
     static {

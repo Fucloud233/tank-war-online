@@ -1,9 +1,8 @@
 package com.tankWar.game;
 
-import com.tankWar.game.example.CirclePane;
+import com.tankWar.game.component.GamePane;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
 public class Main extends Application{

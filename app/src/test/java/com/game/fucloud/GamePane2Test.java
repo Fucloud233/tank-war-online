@@ -1,6 +1,6 @@
 package com.game.fucloud;
 
-import com.tankWar.game.GamePane;
+import com.tankWar.game.component.GamePane;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
