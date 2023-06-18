@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URL;
 import java.util.*;
 
 import static javafx.scene.paint.Color.GREEN;
@@ -165,13 +166,7 @@ public class GameWaitWindow {
         // 设置列宽
         idColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
         usernameColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
-        statusColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
-
-        // 设置字体样式
-        Font font = Font.font("Arial", FontWeight.BOLD, 12);
-        idColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
-        usernameColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
-        statusColumn.setStyle("-fx-font-family: " + font.getFamily() + "; -fx-font-size: " + font.getSize() + ";");
+        statusColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.34));
 
 
         userTableView.getColumns().addAll(idColumn,usernameColumn, statusColumn);
@@ -250,6 +245,11 @@ public class GameWaitWindow {
 
         //场景切换
         roomScene = new Scene(borderPane, 800, 700);
+        // 添加像素字体
+        URL styleURL = this.getClass().getResource("/css/label.css");
+        if(styleURL != null)
+            roomScene.getStylesheets().add(styleURL.toExternalForm());
+
         primaryStage.setTitle("游戏房间");
         roomScene.setFill(GREEN);
         primaryStage.setScene(roomScene);
