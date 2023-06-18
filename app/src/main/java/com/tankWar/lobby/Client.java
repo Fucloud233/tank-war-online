@@ -2,7 +2,7 @@ package com.tankWar.lobby;
 
 
 import com.tankWar.communication.Communicate;
-import com.tankWar.game.GamePane;
+import com.tankWar.game.component.GamePane;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -17,18 +17,13 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-
 
 import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.util.StringTokenizer;
 
-
 public class Client extends Stage {
-
     // 连接相关的 由登录页面进行传入初始值
     Socket socket;
     DataInputStream in;
@@ -38,7 +33,6 @@ public class Client extends Stage {
     private TextField txtTalk;
     private ComboBox<String> listOnline;
     private TextArea txtViewTalk;
-    private VBox container;
     private StringTokenizer st;
 
     private CreateRoomWindow roomWindow;  //创建房间
@@ -52,6 +46,11 @@ public class Client extends Stage {
     private final String account;  //用户的账号
     private Scene lobbyScene; //游戏大厅的场景，方便切换场景
     private Stage primaryStage;
+
+    // 用来记录服务单发送的房间内的所有玩家名称
+    // 游戏开始时则发送给GamePane以显示计分板
+    String[] playerNames = null;
+    final static int MaxPlayerNum = 4;
 
     boolean gameStart = false;
     ///表格///
@@ -100,7 +99,7 @@ public class Client extends Stage {
         vBox.getChildren().add(hBox); //放入发送框
 
         //带滚轮的房间列表
-        container = new VBox();
+        VBox container = new VBox();
         //设置房间背景颜色
         container.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background: #494f3c");
 
@@ -212,7 +211,7 @@ public class Client extends Stage {
 
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
-            if ( isHBoxSelected==true){
+            if (isHBoxSelected){
                 System.out.println("roomid:"+roomId);
                 //向服务端传选择的房间内容
                 Communicate.send(socket, "Select room|" + roomId);
@@ -357,24 +356,26 @@ public class Client extends Stage {
                             //先清空 然后重新获取后重新渲染
                             gameWaitWindow.ClearTalkTo();
                             gameWaitWindow.AddTalkTo("All");
-                            while (st.hasMoreTokens()) {
+
+                            // 读取首字段 (用户的数量)
+                            int size = Integer.parseInt(st.nextToken());
+                            // 根据实际玩家数初始化
+                            playerNames = new String[size];
+                            for(int i=0; i<size && st.hasMoreTokens(); i++) {
+                                // 通过*号来截取用户的信息
                                 String strOnline = st.nextToken();
-                                // 通过*号来截取用户的
                                 String[] parts = strOnline.split("\\*");
-                                // 获取ID
-                                String ID = parts[0];
-                                // 获取昵称
-                                String name = parts[1];
-                                // 获取状态
-                                String status=parts[2];
+
+                                // 获取昵称 和 状态
+                                String name = parts[0], status = parts[1];
+
+                                // 将玩家名按顺序添加
                                 gameWaitWindow.AddTalkTo(name);
-                                //获取用户的全部信息
-                                if(ID.equals("1")){
-                                    gameWaitWindow.newAddTalkTo(ID,name,"房主");
-                                }
-                                else{
-                                    gameWaitWindow.newAddTalkTo(ID,name,status);
-                                }
+                                playerNames[i] = name;
+
+                                // 设置所有玩家的信息
+                                gameWaitWindow.newAddTalkTo(i, name, i==0 ? "房主" : status);
+
                             }
                         });
 
@@ -417,30 +418,18 @@ public class Client extends Stage {
 
                         /////////////////////////处理是否开始游戏////////////////////////
                         case "begin game" -> {
-                            //获取到是否成功
                             String judge = st.nextToken();
+                            // 获取到是否成功
                             if (judge.equals("succeed")) {
-//                                in.close();
-
-//                                System.out.println("game begin!!!!!!!");
-//                                String port = st.nextToken();
-                                //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
-                                Platform.runLater(() -> {
-
-                                    // TODO: 添加GamePane
-                                    try {
-                                        startGame();
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-
-                                });
-                            } else {
-                                Platform.runLater(() -> {
-                                    Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
-                                    alert.showAndWait();
-                                });
+                                Platform.runLater(this::startGame);
+                                break;
                             }
+
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
+                                alert.showAndWait();
+                            });
+
                         }
                     }
 
@@ -449,6 +438,28 @@ public class Client extends Stage {
                     throw new RuntimeException(e);
                 }
             }
+        }
+
+        // 开始游戏
+        void startGame() {
+//        System.out.println("[info] get port: "+port);
+            // 设置游戏状态为Start
+            gameStatusChange("start");
+
+            // 创建对应端口号的游戏Pane
+            GamePane gamePane = new GamePane(socket, playerNames);
+            Scene scene = new Scene(gamePane);
+
+
+            Stage gameStage = new Stage();
+            gameStage.setTitle("坦克大战联机版");
+            gameStage.setScene(scene);
+            gameStage.setResizable(false);
+
+            gameStage.showAndWait();
+
+            // 设置游戏状态为End
+            gameStatusChange("end");
         }
     }
 
@@ -462,30 +473,9 @@ public class Client extends Stage {
      * ready: 准备但没开始游戏
      * */
 //    String gameStatus;
-    Stage gameStage;
-    GamePane gamePane;
-    // 开始游戏
-    void startGame() throws IOException {
-//        System.out.println("[info] get port: "+port);
-        // 设置游戏状态为Start
-        gameStatusChange("start");
 
-        // 创建对应端口号的游戏Pane
-        gamePane = new GamePane(this.socket);
-        Scene scene = new Scene(gamePane);
 
-        gameStage = new Stage();
-        gameStage.setTitle("坦克大战联机版");
-        gameStage.setScene(scene);
-        gameStage.setResizable(false);
-
-        gameStage.showAndWait();
-
-        // 设置游戏状态为End
-        gameStatusChange("end");
-    }
-
-    void gameStatusChange(String status) throws IOException {
+    void gameStatusChange(String status) {
         switch (status) {
             case "start" -> {
 //                gameStatus="play";

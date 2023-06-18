@@ -28,11 +28,9 @@ import static javafx.scene.paint.Color.GREEN;
 
 
 public class GameWaitWindow {
-    ListView<String> userListView;
     //连接相关
-    Socket socket = new Socket();
-    DataInputStream in = null;
-    DataOutputStream out = null;
+    Socket socket;
+
     //聊天框界面的UI
     private TextField txtTalk;
     private TextArea txtViewTalk;
@@ -48,12 +46,9 @@ public class GameWaitWindow {
     public Boolean isRoomOwner = false;   //是否为房主 在CreateRoomWindow中将其设置为true
     private Button PlayGameBtn;  //开始游戏/准备按钮
     Button exitRoomBtn;
-    private Vector<String> UserNameList= new Vector<>();
-    private Vector<String> UserStatusList= new Vector<>();
-    private static TableView<UserInfo> userTableView = new TableView<UserInfo>();
-    private ObservableList<UserInfo> data = FXCollections.observableArrayList();
 
-
+    TableView<UserInfo> userTableView = new TableView<>();
+    ObservableList<UserInfo> data = FXCollections.observableArrayList();
 
     public GameWaitWindow(Socket s, String name, String account, Stage primaryStage, Scene lobbyScene) throws IOException {
         this.socket = s;
@@ -61,22 +56,20 @@ public class GameWaitWindow {
         this.account = account;
         this.primaryStage = primaryStage;
         this.lobbyScene = lobbyScene;
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
-
     }
 
     //存储用户的信息
-    public  static class UserInfo{
-        private StringProperty ID;
-        private StringProperty username;
-        private StringProperty status;
-        public UserInfo(String ID, String username, String status) {
-            this.ID = new SimpleStringProperty(ID);
+    public static class UserInfo{
+        IntegerProperty ID;
+        StringProperty username;
+        StringProperty status;
+
+        public UserInfo(int ID, String username, String status) {
+            this.ID = new SimpleIntegerProperty(ID);
             this.username = new SimpleStringProperty(username);
             this.status = new SimpleStringProperty(status);
         }
-        public String getID() {
+        public int getID() {
             return ID.get();
         }
 
@@ -155,7 +148,7 @@ public class GameWaitWindow {
         BottomBox.getChildren().add(vBox);
 
         VBox userListBox = new VBox();
-        TableColumn<UserInfo, String> idColumn = new TableColumn<>("序号");
+        TableColumn<UserInfo, Integer> idColumn = new TableColumn<>("序号");
         TableColumn<UserInfo, String> usernameColumn = new TableColumn<>("昵称");
         TableColumn<UserInfo, String> statusColumn = new TableColumn<>("状态");
 
@@ -168,8 +161,7 @@ public class GameWaitWindow {
         usernameColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
         statusColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.34));
 
-
-        userTableView.getColumns().addAll(idColumn,usernameColumn, statusColumn);
+        userTableView.getColumns().addAll(idColumn, usernameColumn, statusColumn);
 
 
         //绑定数据
@@ -294,9 +286,10 @@ public class GameWaitWindow {
         listOnline.getItems().add(strOnline);
     }
 
-    void newAddTalkTo(String id,String name,String status){
+    void newAddTalkTo(int id, String name, String status){
         // 添加数据测试
-        data.add(new UserInfo(id,name,status));
+        data.add(new UserInfo(id, name, status));
+        System.out.println("[test] data len: " + data.size());
     }
 
     void ClearTalkTo() {
@@ -380,7 +373,7 @@ public class GameWaitWindow {
     }
 
     // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
-    public void changeStatus(String status) throws IOException {
+    public void changeStatus(String status)  {
         switch (status) {
             case "play" -> {
 //                this.exitRoomBtn.setDisable(true);

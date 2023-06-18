@@ -243,13 +243,26 @@ public class LoginWindow extends Application {
         this.IP = IP;
     }
 
+    // [test] 用于自动登陆
+    public void login(String account) {
+        //获取登陆的账号和密码//发送给服务器
+        try {
+            // 连接服务器
+            connectServer();
+
+            // 进行登录
+            String strSend = "login|" + account + "|" + "111111";
+            Communicate.send(socket, strSend);
+            initLogin();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     //连接服务器
     void connectServer() throws IOException {
         //创建套接字
         socket = new Socket(this.IP, 8080);
-        //输入流和输出流
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
     }
 
     public static void main(String[] args) {
