@@ -4,7 +4,6 @@ import javafx.util.Pair;
 
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -69,44 +68,68 @@ public class Main {
 
         // 3. 循环启动服务器线程
         while (true) {
-            try {
-                selector.select();
+            // Select
+            try { selector.select(); } catch(IOException e) {
+                System.out.println("[error] Select error!");
+            }
 
-                Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                for (SelectionKey key : selectionKeys) {
+            Set<SelectionKey> selectionKeys = selector.selectedKeys();
+            for (SelectionKey key : selectionKeys) {
+                SocketChannel socket = null;
+                try {
                     if (key.isAcceptable()) {
                         // 如果轮询到服务Socket 则建立Socket连接
                         ServerSocketChannel server = (ServerSocketChannel) key.channel();
                         // 接收客户端的Socket
-                        SocketChannel socket = server.accept();
+                        socket = server.accept();
                         // 设置非阻塞IO
                         socket.configureBlocking(false);
                         // 将该Socket注册在Selector中
                         socket.register(selector, SelectionKey.OP_READ);
+
                         System.out.println("[info] 客户端连接成功!");
                     } else if (key.isReadable()) {
                         // 如果轮询到Socket 则处理接收连接
-                        SocketChannel socketChannel = (SocketChannel) key.channel();
-                        User user = users.get(socketChannel);
+                        socket = (SocketChannel) key.channel();
+                        User user = users.get(socket);
 
                         // 根据用户状态来选择处理对象
                         if (user == null || user.getStatus().isInLobby()) {
                             // 大厅处理对象
-                            new LobbyHandler(socketChannel).handle();
+                            new LobbyHandler(socket).handle();
                         } else if (user.getStatus().isInRoom()) {
                             // 房间处理对象
-                            new RoomHandler(socketChannel).handle();
+                            new RoomHandler(socket).handle();
                         } else if (user.getStatus().isPlaying()) {
                             // 游戏处理对象(这个需要传入用户所在的玩家
-                            new GameHandler(socketChannel, user.getRoom()).handle();
+                            new GameHandler(socket, user.getRoom()).handle();
                         }
                     }
+                } catch (SocketException e) {
+                    // 当发生错误时 则是socket中断连接
+                    String userName = "Somebody";
+                    if(socket!=null) {
+                        // 1. 标记该用户
+                        User user = users.get(socket);
+                        if(user!=null) {
+                            userName = user.getNickName();
+                            // 2. 删除该用户
+                            users.remove(socket);
+                        }
 
-                    // 在处理完删除key 防止重复处理
-                    selectionKeys.remove(key);
+                        // 3. 关闭Socket
+                        try { socket.close(); } catch (IOException ignored) {}
+                    }
+
+                    ServerPrompt.infoPlayLeave(userName);
+                } catch (IOException e) {
+                    // 发生IO错误
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+
+                // 在处理完删除key 防止重复处理
+                selectionKeys.remove(key);
+
             }
         }
     }
@@ -120,7 +143,7 @@ public class Main {
         }
 
         // 用来处理大厅接收到的消息
-        public void handle()  {
+        public void handle() throws IOException {
             // 1. 读取消息
             String text = receive();
 //            System.out.println("[info] LobbyHandler recv:" + text);
@@ -363,7 +386,7 @@ public class Main {
 
         // 用来处理大厅接收到的消息
         @Override
-        public void handle() {
+        public void handle() throws IOException {
             // 1. 读取消息
             String text = super.receive();
 //            System.out.println("[info] RoomHandler recv:" + text);
@@ -598,15 +621,15 @@ public class Main {
             StringBuilder strOnline = new StringBuilder("room online");
 
             // 生成传输消息
-            // todo 生成所有状态
             Vector<User> users = room.getAllUsers();
-            int userid=1;
+            // 1. 首先发送后续用户的数量
+            strOnline.append("|").append(users.size());
             for (User user : users) {
                 System.out.println("[info] username" + user.getNickName());
                 System.out.println("[info] roomname" + room.getRoomName());
-                // 传入序号 昵称 状态
-                strOnline.append("|").append(userid).append("*").append(user.getNickName()).append("*").append(user.getStatus());
-                userid+=1;
+                // 传入--序号-- 昵称 状态
+                // 顺序已经包含潜在的序号 不要脱裤子放屁 再发一遍序号
+                strOnline.append("|").append(user.getNickName()).append("*").append(user.getStatus());
             }
             System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
 

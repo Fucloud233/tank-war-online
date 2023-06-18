@@ -48,20 +48,20 @@ public class GameHandler extends Handler{
 
             id++;
         }
-        ServerPrompt.AllSend.print();
+        ServerPrompt.infoAllSendSuccess();
     }
 
     // 发送重置信息
-    void sendResetMsg() throws IOException{
+    void sendResetMsg(int winnerId) throws IOException{
         // 添加地图信息
         int mapId = game.getMapId();
 
         // 重置消息对于所有人都是相同的
-        ResetMsg message = new ResetMsg(mapId, game.getTotalPlayerNum(), game.getCurGameNum());
+        ResetMsg message = new ResetMsg(winnerId, mapId, game.getTotalPlayerNum(), game.getCurGameNum());
         // 转换成JSON格式并发送
         String jsonMsg = mapper.writeValueAsString(message);
         sendAll(jsonMsg);
-        ServerPrompt.AllSend.print();
+        ServerPrompt.infoAllSendSuccess();
     }
 
     // 发送结束消息
@@ -69,7 +69,7 @@ public class GameHandler extends Handler{
         OverMsg msg = new OverMsg(game.getScores());
         String jsonMsg = mapper.writeValueAsString(msg);
         sendAll(jsonMsg);
-        ServerPrompt.GameOver.print();
+        ServerPrompt.infoGameOver();
         room.endGame();
     }
 
@@ -78,7 +78,7 @@ public class GameHandler extends Handler{
         for (SocketChannel socket: game.getAllSockets())  {
             send(socket, msg);
         }
-        ServerPrompt.BroadcastSuccess.print();
+        ServerPrompt.infoBroadcastSuccess();
     }
 
     // 广播状态(除了当前Sockets)
@@ -88,18 +88,21 @@ public class GameHandler extends Handler{
                 continue;
             send(socket, msg);
         }
-        ServerPrompt.BroadcastSuccess.print();
+        ServerPrompt.infoBroadcastSuccess();
     }
 
     void handleDeadMsg(int id) throws IOException {
         // 1. 记录死亡信息
-        DeadStatus flag = game.dead(id);
+        int winnerId = game.dead(id);
 
         // 2. 根据死亡结果判断要发送的消息类型
-        if(flag.shouldReset()) {
-            sendResetMsg();
-        } else if (flag.shouldOver()) {
-            sendOverMsg();
+        switch (winnerId) {
+            // -1 说明无事发生
+            case -1 -> {}
+            // -2 说明游戏结束(GameOverMsg会直接发送总积分 因此不需要再发送胜者ID)
+            case -2 -> sendOverMsg();
+            // 其他情况: 返回胜者ID
+            default -> sendResetMsg(winnerId);
         }
     }
 
