@@ -302,12 +302,10 @@ public class GamePane extends HBox {
             // 显示结束页面
             isOver = true;
 
-            Platform.runLater(()->{
-                // todo 结算页面
-//                OverDialog dialog = new OverDialog(msg.getScores());
-//                dialog.display();
-//                Stage stage = (Stage) myself.getScene().getWindow();
-//                stage.close();
+            Platform.runLater(()->{OverDialog dialog = new OverDialog(playerNames, msg.getScores());
+                dialog.display();
+                Stage stage = (Stage) myself.getScene().getWindow();
+                stage.close();
             });
         }
     };
@@ -371,9 +369,6 @@ public class GamePane extends HBox {
                 bullet.move();
                 if(processBulletCollide(bullet)) {
                     bullet.setAlive(false);
-
-                    // 减少玩家数量
-                    Platform.runLater(()->statusPane.decRestPlayerNum());
                 }
             }
         }
@@ -429,6 +424,8 @@ public class GamePane extends HBox {
                 if(tank.getId() == myTank.getId())
                     client.sendDeadMsg();
 
+                // 在状态栏中减少玩家数量
+                Platform.runLater(()->statusPane.decRestPlayerNum());
                 tank.setAlive(false);
                 return true;
             }
