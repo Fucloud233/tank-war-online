@@ -21,6 +21,7 @@ public class CreateRoomWindow{
     private TextField roomName;//房间名字
     private ComboBox<String> volumnCB ;//房间人数
     private ComboBox<String> setpw;//是否要密码
+    private Label pw;
     private PasswordField Password;
     private Button ackLogin;
     private GridPane createPane;
@@ -61,11 +62,25 @@ public class CreateRoomWindow{
         createPane.add(volumnCB, 1, 1);
         createPane.add(new Label("是否设置密码："),0,2);
         createPane.add(setpw,1,2);
-        createPane.add(new Label("密码:"), 0, 3);
-        createPane.add(Password, 1, 3);
+//        createPane.add(new Label("密码:"), 0, 3);
+//        createPane.add(Password, 1, 3);
         //列、行、列方向上跨度、行方向上跨度
         HBox hBox=new HBox();
         ackLogin=new Button("确认");
+
+        // 添加值变化监听器，根据选择的值来显示或隐藏密码框
+        setpw.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.equals("否")) {
+                // 选择"否"，隐藏密码框
+                createPane.getChildren().remove(Password);
+                createPane.getChildren().remove(pw);
+            } else {
+                // 选择其他值，显示密码框
+                pw=new Label("密码：");
+                createPane.add(pw, 0, 3);
+                createPane.add(Password, 1, 3);
+            }
+        });
         //分设置密码和没有设置密码的两种情况,信息没填完整会有提示信息
         ackLogin.setOnAction(event ->{
             if (setpw.getValue().equals("是")){
