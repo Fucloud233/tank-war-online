@@ -12,6 +12,8 @@ import java.io.*;
 import java.nio.channels.SocketChannel;
 import java.util.Vector;
 
+import static com.tankWar.server.ServerPrompt.*;
+
 // v1 服务端只提供消息的转发，不负责统一的状态管理
 // v2 服务端能够记录状态，并且定时发送状态同步消息
 
@@ -48,7 +50,6 @@ public class GameHandler extends Handler{
 
             id++;
         }
-        ServerPrompt.infoAllSendSuccess();
     }
 
     // 发送重置信息
@@ -61,7 +62,6 @@ public class GameHandler extends Handler{
         // 转换成JSON格式并发送
         String jsonMsg = mapper.writeValueAsString(message);
         sendAll(jsonMsg);
-        ServerPrompt.infoAllSendSuccess();
     }
 
     // 发送结束消息
@@ -69,7 +69,8 @@ public class GameHandler extends Handler{
         OverMsg msg = new OverMsg(game.getScores());
         String jsonMsg = mapper.writeValueAsString(msg);
         sendAll(jsonMsg);
-        ServerPrompt.infoGameOver();
+
+        infoGameOver(room.getRoomName());
         room.endGame();
     }
 
@@ -78,7 +79,6 @@ public class GameHandler extends Handler{
         for (SocketChannel socket: game.getAllSockets())  {
             send(socket, msg);
         }
-        ServerPrompt.infoBroadcastSuccess();
     }
 
     // 广播状态(除了当前Sockets)
@@ -88,7 +88,7 @@ public class GameHandler extends Handler{
                 continue;
             send(socket, msg);
         }
-        ServerPrompt.infoBroadcastSuccess();
+//        ServerPrompt.infoBroadcastSuccess();
     }
 
     void handleDeadMsg(int id) throws IOException {
