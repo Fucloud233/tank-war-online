@@ -26,8 +26,6 @@ import java.util.StringTokenizer;
 public class Client extends Stage {
     // 连接相关的 由登录页面进行传入初始值
     Socket socket;
-    DataInputStream in;
-    DataOutputStream out;
 
     //聊天框界面的UI
     private TextField txtTalk;
@@ -39,7 +37,6 @@ public class Client extends Stage {
     private SelectRoomWindow selectRoomWindow; //选择房间密码弹窗
     private GameWaitWindow gameWaitWindow; // 房间等待
     private String roomId;//选中的房间号
-    private HBox selectedHBox;//选中的房间条目
     private boolean isHBoxSelected = false;//判断是否有选择房间条目
 
     private final String username;   //登录时传过来的用户名
@@ -50,7 +47,6 @@ public class Client extends Stage {
     // 用来记录服务单发送的房间内的所有玩家名称
     // 游戏开始时则发送给GamePane以显示计分板
     String[] playerNames = null;
-    final static int MaxPlayerNum = 4;
 
     boolean gameStart = false;
     ///表格///
@@ -58,15 +54,13 @@ public class Client extends Stage {
     private ObservableList<RoomItem> roomList;
 
 
-    public Client(String nickname, String account, Socket socket, DataInputStream in, DataOutputStream out) {//因为加上了昵称，所以修改了下传参
+    public Client(String nickname, String account, Socket socket) {//因为加上了昵称，所以修改了下传参
         username = nickname;
         this.account = account;
         this.socket = socket;
-        this.in = in;
-        this.out = out;
     }
 
-    public void RunClient() throws IOException {
+    public void RunClient() {
         //绑定
         //聊天室界面
         primaryStage = new Stage();
@@ -291,9 +285,7 @@ public class Client extends Stage {
                                 if (strCreate.equals("Failed")) {
                                     Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "你已经创建过房间了！").showAndWait());
                                 } else {
-                                    Platform.runLater(() -> {
-                                        roomWindow.CloseWindow();
-                                    });
+                                    Platform.runLater(() -> roomWindow.CloseWindow(); );
                                 }
                             }
                         }
