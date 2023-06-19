@@ -198,8 +198,9 @@ public class GamePane extends HBox {
 
         // 绘制坦克
         for (Tank tank: tanks)
+
             if(tank.isAlive())
-                context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
+                context.drawImage(tank.getImage(tank == myTank), tank.getImageX(), tank.getImageY());
 
         // 绘制子弹
         for (Bullet bullet : bullets)

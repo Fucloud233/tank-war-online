@@ -6,6 +6,10 @@ package com.tankWar.game.entity;
 
 import com.tankWar.game.Config;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.util.HashMap;
@@ -137,9 +141,30 @@ public class Tank extends Entity {
         return false;
     }
 
-    @Override
-    public Image getImage() {
+    public Image getImage(boolean myself) {
+        if(myself) return addBackground(TankImg.ImageMap.get(this.dir));
         return TankImg.ImageMap.get(this.dir);
+    }
+
+    static Image addBackground(final Image sourceImage) {
+
+        final int w = (int) sourceImage.getWidth();
+        final int h = (int) sourceImage.getHeight();
+        final WritableImage outputImage = new WritableImage(w, h);
+        final PixelWriter writer = outputImage.getPixelWriter();
+        final PixelReader reader = sourceImage.getPixelReader();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                double r = reader.getColor(x, y).getRed();
+                double g = reader.getColor(x, y).getGreen();
+                double b = reader.getColor(x, y).getBlue();
+                double o = reader.getColor(x, y).getOpacity();
+
+                // Keeping the opacity of every pixel as it is.
+                writer.setColor(x, y, new Color(g, r, b, o));
+            }
+        }
+        return outputImage;
     }
 
     public int getId() {
