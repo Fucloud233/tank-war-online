@@ -17,6 +17,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.*;
 import java.net.Socket;
@@ -60,16 +61,16 @@ public class GameWaitWindow {
 
     //存储用户的信息
     public static class UserInfo{
-        IntegerProperty ID;
+        StringProperty ID;
         StringProperty username;
         StringProperty status;
 
-        public UserInfo(int ID, String username, String status) {
-            this.ID = new SimpleIntegerProperty(ID);
+        public UserInfo(String ID, String username, String status) {
+            this.ID = new SimpleStringProperty(ID);
             this.username = new SimpleStringProperty(username);
             this.status = new SimpleStringProperty(status);
         }
-        public int getID() {
+        public String getID() {
             return ID.get();
         }
 
@@ -148,7 +149,7 @@ public class GameWaitWindow {
         BottomBox.getChildren().add(vBox);
 
         VBox userListBox = new VBox();
-        TableColumn<UserInfo, Integer> idColumn = new TableColumn<>("序号");
+        TableColumn<UserInfo, String> idColumn = new TableColumn<>("序号");
         TableColumn<UserInfo, String> usernameColumn = new TableColumn<>("昵称");
         TableColumn<UserInfo, String> statusColumn = new TableColumn<>("状态");
 
@@ -160,6 +161,34 @@ public class GameWaitWindow {
         idColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
         usernameColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.33));
         statusColumn.prefWidthProperty().bind(userTableView.widthProperty().multiply(0.34));
+
+        // 设置单元格工厂
+        Callback<TableColumn<UserInfo, String>, TableCell<UserInfo, String>> cellFactory =
+                column -> new TableCell<UserInfo, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item == null || empty) {
+                            setText(null);
+                        } else {
+                            setText(item);
+//                            setFont();
+                            setStyle("-fx-font-size: 18px;");  // 设置字体大小为18像素
+                        }
+                    }
+                };
+
+        idColumn.setCellFactory(cellFactory);
+        usernameColumn.setCellFactory(cellFactory);
+        statusColumn.setCellFactory(cellFactory);
+
+
+        // 设置行工厂，用于自定义行的外观和行为
+        userTableView.setRowFactory(tv -> {
+            TableRow<UserInfo> row = new TableRow<>();
+            row.setPrefHeight(40);  // 设置行高，这里设置为30像素
+            return row;
+        });
 
         userTableView.getColumns().addAll(idColumn, usernameColumn, statusColumn);
 
@@ -293,7 +322,7 @@ public class GameWaitWindow {
 
     void newAddTalkTo(int id, String name, String status){
         // 添加数据测试
-        data.add(new UserInfo(id, name, status));
+        data.add(new UserInfo(String.valueOf(id), name, status));
         System.out.println("[test] data len: " + data.size());
     }
 

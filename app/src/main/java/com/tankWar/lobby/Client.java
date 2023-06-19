@@ -17,6 +17,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.*;
 import java.net.Socket;
@@ -104,7 +105,7 @@ public class Client extends Stage {
         roomList = FXCollections.observableArrayList();
 
         // 创建表格列
-        TableColumn<RoomItem, Integer> idColumn = new TableColumn<>("ID");
+        TableColumn<RoomItem, String> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
 
         TableColumn<RoomItem, String> nameColumn = new TableColumn<>("房间名");
@@ -116,10 +117,10 @@ public class Client extends Stage {
         TableColumn<RoomItem, String> ownerColumn = new TableColumn<>("房主");
         ownerColumn.setCellValueFactory(new PropertyValueFactory<>("owner"));
 
-        TableColumn<RoomItem, Integer> playersColumn = new TableColumn<>("房间人数");
+        TableColumn<RoomItem, String> playersColumn = new TableColumn<>("房间人数");
         playersColumn.setCellValueFactory(new PropertyValueFactory<>("enterNum"));
 
-        TableColumn<RoomItem, Integer> limitColumn = new TableColumn<>("人数上限");
+        TableColumn<RoomItem, String> limitColumn = new TableColumn<>("人数上限");
         limitColumn.setCellValueFactory(new PropertyValueFactory<>("userNum"));
 
         TableColumn<RoomItem, String> statusColumn = new TableColumn<>("房间状态");
@@ -133,6 +134,37 @@ public class Client extends Stage {
         playersColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
         limitColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
         statusColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+
+        // 设置单元格工厂
+        Callback<TableColumn<RoomItem, String>, TableCell<RoomItem, String>> cellFactory =
+                column -> new TableCell<RoomItem, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item == null || empty) {
+                            setText(null);
+                        } else {
+                            setText(item);
+//                            setFont();
+                            setStyle("-fx-font-size: 18px;");  // 设置字体大小为18像素
+                        }
+                    }
+                };
+
+        idColumn.setCellFactory(cellFactory);
+        nameColumn.setCellFactory(cellFactory);
+        accountColumn.setCellFactory(cellFactory);
+        ownerColumn.setCellFactory(cellFactory);
+        playersColumn.setCellFactory(cellFactory);
+        limitColumn.setCellFactory(cellFactory);
+        statusColumn.setCellFactory(cellFactory);
+
+        // 设置行工厂，用于自定义行的外观和行为
+        tableView.setRowFactory(tv -> {
+            TableRow<RoomItem> row = new TableRow<>();
+            row.setPrefHeight(40);  // 设置行高，这里设置为40像素
+            return row;
+        });
 
         // 将列添加到表格视图中
         tableView.getColumns().addAll(idColumn, nameColumn, accountColumn,ownerColumn, playersColumn, limitColumn, statusColumn);
@@ -384,7 +416,7 @@ public class Client extends Stage {
                                         String userNum = st.nextToken();
                                         String status = st.nextToken();
                                         System.out.println('&'+roomNum+' '+Id+' '+roomName+' '+hostName+' '+enterNum+' '+userNum+' '+status);
-                                        RoomItem roomItem = new RoomItem(Integer.parseInt(Id),roomName,roomNum,hostName,Integer.parseInt(enterNum),Integer.parseInt(userNum),status);
+                                        RoomItem roomItem = new RoomItem(Id,roomName,roomNum,hostName,enterNum,userNum,status);
                                         roomList.add(roomItem);
                                     }
 
@@ -499,29 +531,29 @@ public class Client extends Stage {
     }
 
     public static class RoomItem{
-        IntegerProperty id;
+        StringProperty id;
         StringProperty name;
         StringProperty account;
         StringProperty owner;
-        IntegerProperty enterNum;
-        IntegerProperty userNum;
+        StringProperty enterNum;
+        StringProperty userNum;
         StringProperty status;
 
-        public RoomItem(int id, String name, String account,String owner, int players, int limit, String status) {
-            this.id = new SimpleIntegerProperty(id);
+        public RoomItem(String id, String name, String account,String owner, String players, String limit, String status) {
+            this.id = new SimpleStringProperty(id);
             this.name = new SimpleStringProperty(name);
             this.account=new SimpleStringProperty(account);
             this.owner = new SimpleStringProperty(owner);
-            this.enterNum = new SimpleIntegerProperty(players);
-            this.userNum = new SimpleIntegerProperty(limit);
+            this.enterNum = new SimpleStringProperty(players);
+            this.userNum = new SimpleStringProperty(limit);
             this.status = new SimpleStringProperty(status);
         }
 
-        public int getId() {
+        public String getId() {
             return id.get();
         }
 
-        public void setId(int id){
+        public void setId(String id){
             this.id.set(id);
         }
 
@@ -541,19 +573,19 @@ public class Client extends Stage {
             this.owner.set(owner);
         }
 
-        public int getEnterNum() {
+        public String getEnterNum() {
             return enterNum.get();
         }
 
-        public void setEnterNum(int players) {
+        public void setEnterNum(String players) {
             this.enterNum.set(players);
         }
 
-        public int getUserNum() {
+        public String getUserNum() {
             return userNum.get();
         }
 
-        public void setUserNum(int limit) {
+        public void setUserNum(String limit) {
             this.userNum.set(limit);
         }
 
