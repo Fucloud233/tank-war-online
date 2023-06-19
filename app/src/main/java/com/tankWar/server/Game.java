@@ -41,12 +41,15 @@ public class Game {
     }
 
     // 记录死亡 并当只剩下一个人的时候返回true
-    public DeadStatus dead(int id) {
+    // 1. 0 无事发生
+    // 2. >0 一局游戏结束
+    // 3. <0 游戏结束
+    public int dead(int id) {
         // 1. 记录死亡消息
         restPlayer.removeElement(id);
 
         if(restPlayer.size() != 1)
-            return DeadStatus.Null;
+            return -1;
 
         // 2. 当剩下一位玩家则重置游戏
         int winnerId = restPlayer.get(0);
@@ -60,10 +63,11 @@ public class Game {
         // 4. 判断是否是最后场游戏
         if(curGameNum < totalGameNum) {
             curGameNum++;
-            return DeadStatus.GameOver;
+            return winnerId;
         }
 
-        return DeadStatus.MatchOver;
+        // 如果游戏结束返回 1
+        return -2;
     }
 
     public int getTotalPlayerNum() {

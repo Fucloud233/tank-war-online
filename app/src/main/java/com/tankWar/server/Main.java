@@ -4,7 +4,6 @@ import javafx.util.Pair;
 
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -12,8 +11,9 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Date;
 
+import static com.tankWar.server.ServerPrompt.*;
 
-//接收到客户端socket发来的信息后进行解析、处理、转发
+// 接收到客户端socket发来的信息后进行解析、处理、转发
 public class Main {
     // 连接相关
     // 参考代码: https://blog.csdn.net/hao134838/article/details/113185058
@@ -53,60 +53,79 @@ public class Main {
             // 设置多路复用器 并注册服务端Socket
             selector = Selector.open();
             serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+
+            // 2. 输出打印信息
+            infoServerRunning(serverPort);
         } catch (BindException e) {
-            System.out.println("[error] 端口使用中....");
-            System.out.println("[error] 请关掉相关程序并重新运行服务器！");
+            errorPortUsed(serverPort);
             System.exit(0);
         } catch (IOException e) {
-            System.out.println("[error] Cound not start server." + e);
+            errorServerStartFail();
         }
-
-        // 2. 输出打印信息
-//        System.out.println("[info] 服务器名称:"+serverAddress.getHostName());
-//        System.out.println("[info] 服务器IP:" + serverAddress.getHostAddress());
-        System.out.println("[info] 服务器端口:" + serverPort);
-        System.out.println("[info] 服务器正在运行中...");
 
         // 3. 循环启动服务器线程
         while (true) {
-            try {
-                selector.select();
+            // Select
+            try { selector.select(); } catch(IOException e) {
+                warnSelectError();
+            }
 
-                Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                for (SelectionKey key : selectionKeys) {
+            Set<SelectionKey> selectionKeys = selector.selectedKeys();
+            for (SelectionKey key : selectionKeys) {
+                SocketChannel socket = null;
+                try {
                     if (key.isAcceptable()) {
                         // 如果轮询到服务Socket 则建立Socket连接
                         ServerSocketChannel server = (ServerSocketChannel) key.channel();
                         // 接收客户端的Socket
-                        SocketChannel socket = server.accept();
+                        socket = server.accept();
                         // 设置非阻塞IO
                         socket.configureBlocking(false);
                         // 将该Socket注册在Selector中
                         socket.register(selector, SelectionKey.OP_READ);
-                        System.out.println("[info] 客户端连接成功!");
+                        infoClientConnectSuccess(socket.socket().getInetAddress(), socket.socket().getPort());
                     } else if (key.isReadable()) {
                         // 如果轮询到Socket 则处理接收连接
-                        SocketChannel socketChannel = (SocketChannel) key.channel();
-                        User user = users.get(socketChannel);
+                        socket = (SocketChannel) key.channel();
+                        User user = users.get(socket);
 
                         // 根据用户状态来选择处理对象
                         if (user == null || user.getStatus().isInLobby()) {
                             // 大厅处理对象
-                            new LobbyHandler(socketChannel).handle();
+                            new LobbyHandler(socket).handle();
                         } else if (user.getStatus().isInRoom()) {
                             // 房间处理对象
-                            new RoomHandler(socketChannel).handle();
+                            new RoomHandler(socket).handle();
                         } else if (user.getStatus().isPlaying()) {
                             // 游戏处理对象(这个需要传入用户所在的玩家
-                            new GameHandler(socketChannel, user.getRoom()).handle();
+                            new GameHandler(socket, user.getRoom()).handle();
                         }
                     }
+                } catch (SocketException e) {
+                    // 当发生错误时 则是socket中断连接
+                    String userName = "Somebody";
+                    if(socket!=null) {
+                        // 1. 标记该用户
+                        User user = users.get(socket);
+                        if(user!=null) {
+                            userName = user.getNickName();
+                            // 2. 删除该用户
+                            users.remove(socket);
+                        }
 
-                    // 在处理完删除key 防止重复处理
-                    selectionKeys.remove(key);
+                        // 3. 关闭Socket
+                        try { socket.close(); } catch (IOException ignored) {}
+                    }
+
+                    warnPlayerLeave(userName);
+                } catch (IOException e) {
+                    // 发生IO错误
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+
+                // 在处理完删除key 防止重复处理
+                selectionKeys.remove(key);
+
             }
         }
     }
@@ -120,7 +139,7 @@ public class Main {
         }
 
         // 用来处理大厅接收到的消息
-        public void handle()  {
+        public void handle() throws IOException {
             // 1. 读取消息
             String text = receive();
 //            System.out.println("[info] LobbyHandler recv:" + text);
@@ -159,7 +178,7 @@ public class Main {
                 this.send(returnMsg);
         }
         // 登录
-        String login(StringTokenizer st) throws IOException {
+        String login(StringTokenizer st) {
             String account = st.nextToken();
             String password = st.nextToken().trim();
 
@@ -176,7 +195,7 @@ public class Main {
 
             // 判断用户名和密码 ->转为在数据库中寻找
             if (!operator.checkLogin(account, password)) {
-                System.out.println("[error] 用户 "+ account + " 登陆失败！");
+                warnLoginFail(account);
                 return "warning|" + account + "登陆失败，请检查您的输入!";
             }
 
@@ -189,15 +208,14 @@ public class Main {
             // 保存用户信息 (只有当用户成功登陆时才添加线程)
             users.put(curSocket, new User(nickName, account));
 
-
-            System.out.println("[info] 用户 " + account + " 登录成功，" + "登录时间:" + t);
-
+            // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
             send("login|succeed" + "|" + nickName);
             sendToLobby("talk|>>>欢迎 " + nickName + " 进来与我们一起交谈!");
             sendAllUser();
             sendRooms();
 
-            // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
+            infoLoginSuccess(account, users.size());
+
             return null;
         }
 
@@ -209,18 +227,18 @@ public class Main {
 
             if (operator.isExistUserName(name)) {
                 // 验证昵称是否重复
-                System.out.println("[ERROR] " + name + " Register fail!");
+                warnRegisterFail(name);
                 return "register|name";
             } else if (operator.isExistUser(account)) {
                 // 验证账号重复
-                System.out.println("[ERROR] " + account + " Register fail!");
+                warnRegisterFail(account);
                 return "register|account";
             } else {
                 // 创建用户
                 boolean flag = operator.createPlayer(name, account, password);
 
                 if (flag) {
-                    System.out.println("[info] User " + name + " 注册成功");
+                    infoRegisterSuccess(name);
                     return "register|success";
                 }
             }
@@ -257,6 +275,8 @@ public class Main {
             sendToRoom(room, "roomTalk|>>> 欢迎 " + userName + " 加入房间");
             sendAllUsersToRoom(room);
             sendRooms();
+
+            infoCreateRoom(user.getNickName(), room.getRoomName());
         }
 
         // 进入房间
@@ -363,7 +383,7 @@ public class Main {
 
         // 用来处理大厅接收到的消息
         @Override
-        public void handle() {
+        public void handle() throws IOException {
             // 1. 读取消息
             String text = super.receive();
 //            System.out.println("[info] RoomHandler recv:" + text);
@@ -450,7 +470,7 @@ public class Main {
             // 开始游戏 并发送初始化信息
             room.startGame();
             new GameHandler(curSocket, room).sendInitMsg();
-            System.out.println("[info] New game server");
+            infoGameStart(room.getRoomName());
 
             return null;
         }
@@ -464,7 +484,7 @@ public class Main {
             if (room.isHost(user.getAccount())) {
                 // 先要进行刷新  防止场景切换后出现问题  客户端需要新的Rooms列表进行大厅场景的切换
                 sendRooms();
-                System.out.println("send owner exit");
+                infoHostExitRoom(room.getRoomName());
                 // 向房间内的所有客户端发送 房间解散的信息
                 sendToRoom(room, "Owner exitRoom|" + room.getRoomNum());
 
@@ -568,9 +588,8 @@ public class Main {
                 strOnline += "|" + String.valueOf(room.getMaxUserNum());
                 strOnline += "|" + room.isPlaying();//房间状态
             }
-            sendToLobby(strOnline);
 
-            System.out.println("[info] 在线情况:" + strOnline);
+            sendToLobby(strOnline);
         }
 
 
@@ -580,8 +599,6 @@ public class Main {
             for (User user: users.values()) {
                 strOnline += "|" + user.getNickName();
             }
-            System.out.println("[info] 在线情况:" + users.size());
-
             sendToLobby(strOnline);
         }
 
@@ -598,17 +615,15 @@ public class Main {
             StringBuilder strOnline = new StringBuilder("room online");
 
             // 生成传输消息
-            // todo 生成所有状态
             Vector<User> users = room.getAllUsers();
-            int userid=1;
+            // 1. 首先发送后续用户的数量
+            strOnline.append("|").append(users.size());
             for (User user : users) {
-                System.out.println("[info] username" + user.getNickName());
-                System.out.println("[info] roomname" + room.getRoomName());
-                // 传入序号 昵称 状态
-                strOnline.append("|").append(userid).append("*").append(user.getNickName()).append("*").append(user.getStatus());
-                userid+=1;
+                // 传入--序号-- 昵称 状态
+                // 顺序已经包含潜在的序号 不要脱裤子放屁 再发一遍序号
+                strOnline.append("|").append(user.getNickName()).append("*").append(user.getStatus());
             }
-            System.out.println("[info] 当前在线人数:" + room.getOnlineUserNum());
+//            ServerPrompt.infoOnlinePlayerNumber(room.getOnlineUserNum());
 
             //向房间内所有用户发送  发送房间内全部人员的名字
             sendToRoom(room, strOnline.toString());

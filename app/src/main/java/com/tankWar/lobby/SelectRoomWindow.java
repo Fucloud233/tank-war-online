@@ -22,13 +22,11 @@ public class SelectRoomWindow {
     private Button button;
     private Stage selectroomstage;
 
-    private Socket socket=new Socket();
-    DataOutputStream out = null;
+    Socket socket;
 
     public SelectRoomWindow(Socket s,String a) throws IOException {
         this.socket = s;
         roomNum=a;
-        out = new DataOutputStream(socket.getOutputStream());
     }
 
     public void ShowWindow(){

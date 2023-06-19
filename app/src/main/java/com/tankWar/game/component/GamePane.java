@@ -1,6 +1,8 @@
-package com.tankWar.game;
+package com.tankWar.game.component;
 
 import com.tankWar.communication.msg.*;
+import com.tankWar.game.Config;
+import com.tankWar.game.Utils;
 import com.tankWar.game.client.GameClient;
 import com.tankWar.game.entity.*;
 
@@ -26,7 +28,9 @@ public class GamePane extends HBox {
     boolean isOver = false;
 
     // 1. 信息栏
-    GameStatusPane statusPane = new GameStatusPane();
+    GameInfoPane statusPane = null;
+    // 用于记录房间内的游戏名
+    String[] playerNames = null;
     // 2. 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
@@ -62,6 +66,17 @@ public class GamePane extends HBox {
         this.initAction();
     }
 
+    // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
+    public GamePane(Socket clientSocket, String[] playerNames) {
+        myself=this;
+
+        this.playerNames = playerNames;
+
+        this.initEntity(clientSocket);
+        this.initPane();
+        this.initAction();
+    }
+
     // 连接服务器
     void initEntity(Socket clientSocket) {
         System.out.println("[info] socket:"+clientSocket);
@@ -89,6 +104,8 @@ public class GamePane extends HBox {
 
         // 添加子Pane
         this.getChildren().add(canvas);
+
+        this.statusPane = new GameInfoPane(playerNames);
         this.getChildren().add(statusPane);
 
         // 创建显示游戏的线程
@@ -275,6 +292,7 @@ public class GamePane extends HBox {
                 statusPane.setCurGameNum(msg.getCurGameNum());
                 statusPane.setTotalPlayerNum(msg.getPlayerNum());
                 statusPane.setRestPlayerNum(msg.getPlayerNum());
+                statusPane.incPlayerScore(msg.getId());
             });
 
             initEntity(msg.getMapId());
@@ -284,8 +302,7 @@ public class GamePane extends HBox {
             // 显示结束页面
             isOver = true;
 
-            Platform.runLater(()->{
-                OverDialog dialog = new OverDialog(msg.getScores());
+            Platform.runLater(()->{OverDialog dialog = new OverDialog(playerNames, msg.getScores());
                 dialog.display();
                 Stage stage = (Stage) myself.getScene().getWindow();
                 stage.close();
@@ -352,9 +369,6 @@ public class GamePane extends HBox {
                 bullet.move();
                 if(processBulletCollide(bullet)) {
                     bullet.setAlive(false);
-
-                    // 减少玩家数量
-                    Platform.runLater(()->statusPane.decRestPlayerNum());
                 }
             }
         }
@@ -410,6 +424,8 @@ public class GamePane extends HBox {
                 if(tank.getId() == myTank.getId())
                     client.sendDeadMsg();
 
+                // 在状态栏中减少玩家数量
+                Platform.runLater(()->statusPane.decRestPlayerNum());
                 tank.setAlive(false);
                 return true;
             }

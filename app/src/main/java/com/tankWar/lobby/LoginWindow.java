@@ -1,7 +1,9 @@
 package com.tankWar.lobby;
 
 import com.tankWar.communication.Communicate;
+import javafx.beans.binding.Bindings;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -10,7 +12,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -22,9 +28,9 @@ import java.util.StringTokenizer;
 public class LoginWindow extends Application {
     // 连接相关的
     Socket socket = null;
-    DataInputStream in = null;
-    DataOutputStream out = null;
-    String IP;
+    String address;
+    int port;
+
     // 登陆界面的UI
     TextField txtAcount;
     PasswordField txtPassword;
@@ -78,6 +84,44 @@ public class LoginWindow extends Application {
             switchStatus();
         });
 
+        /* 设置设置按钮 */
+        // 参考代码: https://www.jianshu.com/p/a9df3e863c70
+        Button settingButton = new Button();
+        ImageView settingImg = new ImageView(new Image("/icon/setting.png"));
+        settingImg.setFitWidth(20);
+        settingImg.setFitHeight(20);
+
+        // 设置颜色
+        // 参考代码: https://stackoverflow.com/questions/61878752/how-to-change-the-color-of-a-png-image-in-javafx
+        ColorAdjust bright = new ColorAdjust(0, 1, 1, 1);
+        // 不按下时的属性
+        Lighting effect1 = new Lighting(new Light.Distant(45, 90, Color.WHITE));
+        effect1.setContentInput(bright);
+        effect1.setSurfaceScale(0.0);
+        // 按下时的属性
+        Lighting effect2 = new Lighting(new Light.Distant(45, 90, Color.GREY));
+        effect2.setContentInput(bright);
+        effect2.setSurfaceScale(0.0);
+
+        settingButton.setAlignment(Pos.CENTER_RIGHT);
+        settingButton.setGraphic(settingImg);
+        settingButton.setBackground(Background.EMPTY);
+        settingButton.effectProperty().bind(
+                Bindings.when(settingButton.hoverProperty())
+                        .then((Effect)effect2)
+                        .otherwise(effect1));
+        settingButton.setOnAction((e)->{
+            SettingStage settingStage = new SettingStage(this.address, this.port);
+            primaryStage.close();
+            settingStage.showAndWait();
+            primaryStage.show();
+
+            // 重新设置地址和端口
+            this.address = settingStage.getAddress();
+            this.port = settingStage.getPort();
+            this.connectServer();
+        });
+
         //加个坦克大战的标题
         Label titleLabel = new Label("坦克大战");
         titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
@@ -88,15 +132,18 @@ public class LoginWindow extends Application {
         // 信息输入框
         inputVbox = new VBox(accountLbl, txtAcount, passLbl, txtPassword);
         inputVbox.setAlignment(Pos.CENTER_LEFT);
-        inputVbox.setPadding(new Insets(20));
+        inputVbox.setSpacing(8);
 
         //放置登录和注册的按钮
         HBox buttonBox = new HBox(30, funcButton, changeStatusButton);
         buttonBox.setAlignment(Pos.CENTER);
 
-        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
+//        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
+        mainVBox = new VBox(settingButton, titleBox, inputVbox, buttonBox);
         mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
-        mainVBox.setPadding(new Insets(20));
+        mainVBox.setSpacing(10);
+        mainVBox.setPadding(new Insets(8, 20, 8, 20));
+        mainVBox.setPrefSize(LobbyConfig.Width, LobbyConfig.Height);
 
         this.primaryStage = primaryStage;
         // 禁用窗口大小调整
@@ -104,8 +151,6 @@ public class LoginWindow extends Application {
         //初始为登陆界面
         this.primaryStage.setTitle("登录窗口");
         this.primaryStage.setScene(new Scene(mainVBox));
-        this.primaryStage.setHeight(310);
-        this.primaryStage.setWidth(350);
         this.primaryStage.show();
     }
 
@@ -133,35 +178,38 @@ public class LoginWindow extends Application {
     }
 
     void funcButtonEvent() {
-        Boolean infoCorrect = false;
+        boolean infoCorrect = false;
         //输入的信息全不为空
         if (!txtAcount.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
             infoCorrect = true;
-            try {
-                switch (curStatus) {
-                    case "login" -> {
-                        connectServer();
+
+            if(socket == null) {
+                connectServer();
+            }
+
+            if(!socket.isConnected()) {
+                showConnectFail();
+                return;
+            }
+
+            switch (curStatus) {
+                case "login" -> {
+                    //获取登陆的账号和密码//发送给服务器
+                    String strSend = "login|" + txtAcount.getText() + "|" + txtPassword.getText();
+                    Communicate.send(socket, strSend);
+                    //进行登录
+                    initLogin();
+                }
+                case "register" -> {
+                    if (!txtNickName.getText().isEmpty()) {
                         //获取登陆的账号和密码//发送给服务器
-                        String strSend = "login|" + txtAcount.getText() + "|" + txtPassword.getText();
+                        String strSend = "register|" + txtNickName.getText() + "|" + txtAcount.getText() + "|" + txtPassword.getText();
                         Communicate.send(socket, strSend);
-                        //进行登录
-                        initLogin();
-                    }
-                    case "register" -> {
-                        if (!txtNickName.getText().isEmpty()) {
-                            connectServer();
-                            //获取登陆的账号和密码//发送给服务器
-                            String strSend = "register|" + txtNickName.getText() + "|" + txtAcount.getText() + "|" + txtPassword.getText();
-                            Communicate.send(socket, strSend);
-                            initRegister();
-                        } else {
-                            infoCorrect = false;
-                        }
+                        initRegister();
+                    } else {
+                        infoCorrect = false;
                     }
                 }
-
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
             }
         }
         if (!infoCorrect) {
@@ -169,9 +217,8 @@ public class LoginWindow extends Application {
         }
     }
 
-
     //登录的逻辑
-    void initLogin() throws IOException {
+    void initLogin() {
         String strReceive = Communicate.receive(socket);
 //        String strReceive = in.readUTF();
         System.out.println(strReceive);
@@ -190,7 +237,7 @@ public class LoginWindow extends Application {
                 funcButton.setDisable(true);
                 primaryStage.close();
                 //传入参数并跳转到房间选择页面 connectServer()获取到对应的信息
-                Client client = new Client(nickname, txtAcount.getText(), socket, in, out);
+                Client client = new Client(nickname, txtAcount.getText(), socket);
                 client.RunClient();
             }
 
@@ -207,7 +254,7 @@ public class LoginWindow extends Application {
     }
 
     //注册的逻辑
-    void initRegister() throws IOException {
+    void initRegister() {
         String strReceive = Communicate.receive(socket);
         StringTokenizer st = new StringTokenizer(strReceive, "|");
         String strKey = st.nextToken();
@@ -239,17 +286,36 @@ public class LoginWindow extends Application {
     }
 
 
-    public LoginWindow(String IP) {
-        this.IP = IP;
+    public LoginWindow(String address) {
+        this.address = address;
+        this.port = 8080;
+
+        // 连接服务器
+        connectServer();
     }
 
-    //连接服务器
-    void connectServer() throws IOException {
-        //创建套接字
-        socket = new Socket(this.IP, 8080);
-        //输入流和输出流
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
+    // [test] 用于自动登陆
+    public void login(String account) {
+        // 进行登录
+        String strSend = "login|" + account + "|" + "111111";
+        Communicate.send(socket, strSend);
+        initLogin();
+}
+
+    // 在客户端启动时 首先连接服务端
+    void connectServer() {
+        try {
+            //创建套接字
+            socket = new Socket(this.address, this.port);
+        } catch (IOException e) {
+            // 如果连接失败 则需要重新配置
+            showConnectFail();
+        }
+    }
+
+    void showConnectFail() {
+        System.out.println("[error] 连接失败");
+        new Alert(Alert.AlertType.WARNING, "连接服务器失败，请检查连接配置。").showAndWait();
     }
 
     public static void main(String[] args) {

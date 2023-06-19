@@ -2,42 +2,41 @@ package com.tankWar.lobby;
 
 
 import com.tankWar.communication.Communicate;
-import com.tankWar.game.GamePane;
+import com.tankWar.game.component.GamePane;
 import javafx.application.Platform;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URL;
 import java.util.StringTokenizer;
 
-
 public class Client extends Stage {
-
     // 连接相关的 由登录页面进行传入初始值
     Socket socket;
-    DataInputStream in;
-    DataOutputStream out;
 
     //聊天框界面的UI
     private TextField txtTalk;
     private ComboBox<String> listOnline;
     private TextArea txtViewTalk;
-    private VBox container;
     private StringTokenizer st;
 
     private CreateRoomWindow roomWindow;  //创建房间
     private SelectRoomWindow selectRoomWindow; //选择房间密码弹窗
     private GameWaitWindow gameWaitWindow; // 房间等待
     private String roomId;//选中的房间号
-    private HBox selectedHBox;//选中的房间条目
     private boolean isHBoxSelected = false;//判断是否有选择房间条目
 
     private final String username;   //登录时传过来的用户名
@@ -45,18 +44,23 @@ public class Client extends Stage {
     private Scene lobbyScene; //游戏大厅的场景，方便切换场景
     private Stage primaryStage;
 
+    // 用来记录服务单发送的房间内的所有玩家名称
+    // 游戏开始时则发送给GamePane以显示计分板
+    String[] playerNames = null;
+
     boolean gameStart = false;
+    ///表格///
+    private TableView<RoomItem> tableView;
+    private ObservableList<RoomItem> roomList;
 
 
-    public Client(String nickname, String account, Socket socket, DataInputStream in, DataOutputStream out) {//因为加上了昵称，所以修改了下传参
+    public Client(String nickname, String account, Socket socket) {//因为加上了昵称，所以修改了下传参
         username = nickname;
         this.account = account;
         this.socket = socket;
-        this.in = in;
-        this.out = out;
     }
 
-    public void RunClient() throws IOException {
+    public void RunClient() {
         //绑定
         //聊天室界面
         primaryStage = new Stage();
@@ -89,22 +93,80 @@ public class Client extends Stage {
         vBox.getChildren().add(hBox); //放入发送框
 
         //带滚轮的房间列表
-        container = new VBox();
-        container.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background:green");
+        VBox container = new VBox();
+        //设置房间背景颜色
+        container.setStyle("-fx-background-color: #494f3c;-fx-control-inner-background: #494f3c");
 
         container.setMinHeight(380); // 设置容器的固定高度
-        ScrollPane scrollPane = new ScrollPane(container);//房间列表
-        scrollPane.setFitToWidth(true);
+
+        // 创建表格视图和数据列表
+        tableView = new TableView<>();
+        roomList = FXCollections.observableArrayList();
+
+        // 创建表格列
+        TableColumn<RoomItem, Integer> idColumn = new TableColumn<>("ID");
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<RoomItem, String> nameColumn = new TableColumn<>("房间名");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<RoomItem, String> accountColumn = new TableColumn<>("房间号");
+        accountColumn.setCellValueFactory(new PropertyValueFactory<>("account"));
+
+        TableColumn<RoomItem, String> ownerColumn = new TableColumn<>("房主");
+        ownerColumn.setCellValueFactory(new PropertyValueFactory<>("owner"));
+
+        TableColumn<RoomItem, Integer> playersColumn = new TableColumn<>("房间人数");
+        playersColumn.setCellValueFactory(new PropertyValueFactory<>("enterNum"));
+
+        TableColumn<RoomItem, Integer> limitColumn = new TableColumn<>("人数上限");
+        limitColumn.setCellValueFactory(new PropertyValueFactory<>("userNum"));
+
+        TableColumn<RoomItem, String> statusColumn = new TableColumn<>("房间状态");
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // 设置列宽
+        idColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        nameColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        accountColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        ownerColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        playersColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        limitColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+        statusColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
+
+        // 将列添加到表格视图中
+        tableView.getColumns().addAll(idColumn, nameColumn, accountColumn,ownerColumn, playersColumn, limitColumn, statusColumn);
+
+        //绑定数据
+        tableView.setItems(roomList);
+
+
+        // 设置表格的选择模式为单选
+        tableView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+
+        // 监听表格选中项的变化
+        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                RoomItem selectedRoom = tableView.getSelectionModel().getSelectedItem();
+                // 获取选中行的某一字段的信息
+                roomId = selectedRoom.getAccount();
+                isHBoxSelected=true;
+                System.out.println("Selected room account: " + roomId);
+            }
+        });
+        //把表格加入vbox
+        container.getChildren().add(tableView);
 
 
         //创建房间按钮
         //游戏大厅的UI
         Button newRoomBtn = new Button("创建房间");
-        newRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
+        //把原先的字体设置删除掉了
+        newRoomBtn.setStyle(" -fx-base: #b6e7c9;");
 
         //加入房间按钮
         Button enterRoomBtn = new Button("加入房间");
-        enterRoomBtn.setStyle("-fx-font: 16 arial; -fx-base: #b6e7c9;");
+        enterRoomBtn.setStyle(" -fx-base: #b6e7c9;");
 
         //装填按钮的盒子
         HBox ButtonBox = new HBox();
@@ -121,10 +183,17 @@ public class Client extends Stage {
         BottomBox.getChildren().add(vBox);
 
         //最后将组件排布在borderPane上
-        borderPane.setCenter(scrollPane);
+        borderPane.setCenter(container);
         borderPane.setBottom(BottomBox);
+        //设置边距
+        borderPane.setPadding(new Insets(5, 10, 10, 10));
 
         lobbyScene = new Scene(borderPane, 800, 700);
+        //设置像素字体，直接在scene上设置
+        URL styleURL = this.getClass().getResource("/css/label.css");
+        if(styleURL != null)
+            lobbyScene.getStylesheets().add(styleURL.toExternalForm());
+
         primaryStage.setScene(lobbyScene);
         primaryStage.setResizable(false); // 禁用窗口大小调整
         //显示界面
@@ -136,10 +205,11 @@ public class Client extends Stage {
 
         //加入房间的按钮
         enterRoomBtn.setOnAction(e -> {
-            if (selectedHBox!=null && isHBoxSelected==true){
+            if (isHBoxSelected){
                 System.out.println("roomid:"+roomId);
                 //向服务端传选择的房间内容
                 Communicate.send(socket, "Select room|" + roomId);
+                isHBoxSelected=false;
             } else {
                 new Alert(Alert.AlertType.WARNING, "请选择房间！").showAndWait();
             }
@@ -167,6 +237,7 @@ public class Client extends Stage {
                 gameWaitWindow = new GameWaitWindow(socket, username, account, primaryStage, lobbyScene);
                  ///////////////////////////new一个新的创建房间窗口  设置房间的信息////////////////////////
                 roomWindow = new CreateRoomWindow(socket, username, account, gameWaitWindow);
+                isHBoxSelected=false;
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -176,56 +247,6 @@ public class Client extends Stage {
     }
 
     class ClientThread implements Runnable {
-        //这用来创建每一条房间的消息，显示在聊天框上面
-        public HBox createHBox(String roomNum, String id, String roomName, String hostName, String enterNum, String userNum, String status) {
-            HBox hBox = new HBox();
-            hBox.setStyle("-fx-border-color: black; -fx-border-width: 1px");
-            hBox.setAlignment(Pos.CENTER);
-            hBox.setPadding(new Insets(10));
-            hBox.setSpacing(20);
-            hBox.setId(roomNum);//用房间号做唯一标识
-            Label Id = new Label(id);
-            Id.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label roomLabel = new Label("房间名：" + roomName);
-            roomLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label hostLabel = new Label("房主：" + hostName);
-            hostLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label enterNumLabel = new Label("房间人数：" + enterNum);
-            enterNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label userNumLabel = new Label("人数上限：" + userNum);
-            userNumLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-            Label statusLabel = new Label("房间状态：" + status);
-            statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-
-            hBox.getChildren().addAll(Id, roomLabel, hostLabel, enterNumLabel, userNumLabel, statusLabel);
-            hBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);" +
-                    "-fx-border-color: gray;" +
-                    "-fx-border-width: 2px;" +
-                    "-fx-padding: 10px;" +
-                    "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
-
-            //设置hbox的选中事件
-            hBox.setOnMouseClicked(event -> {
-                if (selectedHBox != null) {
-                    selectedHBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);" +
-                            "-fx-border-color: gray;" +
-                            "-fx-border-width: 2px;" +
-                            "-fx-padding: 10px;" +
-                            "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
-                }
-                roomId = hBox.getId();
-                selectedHBox = hBox;
-                hBox.setStyle("-fx-background-color: #9C8B56;" +
-                        "-fx-border-color: #06280b;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-padding: 10px;" +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.5), 10, 0, 0, 0);");
-                isHBoxSelected = true;
-            });
-
-            return hBox;
-        }
-
         public void run() {
             while (!gameStart) {
                 try {
@@ -264,9 +285,7 @@ public class Client extends Stage {
                                 if (strCreate.equals("Failed")) {
                                     Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "你已经创建过房间了！").showAndWait());
                                 } else {
-                                    Platform.runLater(() -> {
-                                        roomWindow.CloseWindow();
-                                    });
+                                    Platform.runLater(() -> roomWindow.CloseWindow());
                                 }
                             }
                         }
@@ -329,31 +348,33 @@ public class Client extends Stage {
                             //先清空 然后重新获取后重新渲染
                             gameWaitWindow.ClearTalkTo();
                             gameWaitWindow.AddTalkTo("All");
-                            while (st.hasMoreTokens()) {
+
+                            // 读取首字段 (用户的数量)
+                            int size = Integer.parseInt(st.nextToken());
+                            // 根据实际玩家数初始化
+                            playerNames = new String[size];
+                            for(int i=0; i<size && st.hasMoreTokens(); i++) {
+                                // 通过*号来截取用户的信息
                                 String strOnline = st.nextToken();
-                                // 通过*号来截取用户的
                                 String[] parts = strOnline.split("\\*");
-                                // 获取ID
-                                String ID = parts[0];
-                                // 获取昵称
-                                String name = parts[1];
-                                // 获取状态
-                                String status=parts[2];
+
+                                // 获取昵称 和 状态
+                                String name = parts[0], status = parts[1];
+
+                                // 将玩家名按顺序添加
                                 gameWaitWindow.AddTalkTo(name);
-                                //获取用户的全部信息
-                                if(ID.equals("1")){
-                                    gameWaitWindow.newAddTalkTo(ID,name,"房主");
-                                }
-                                else{
-                                    gameWaitWindow.newAddTalkTo(ID,name,status);
-                                }
+                                playerNames[i] = name;
+
+                                // 设置所有玩家的信息
+                                gameWaitWindow.newAddTalkTo(i, name, i==0 ? "房主" : status);
+
                             }
                         });
 
                         case "lobby" -> {
                             if (primaryStage.isShowing()) {
                                 Platform.runLater(() -> {
-                                    container.getChildren().clear();
+                                    roomList.clear();
                                     while (st.hasMoreTokens()) {
                                         String roomNum = st.nextToken();
                                         String Id = st.nextToken();
@@ -362,9 +383,11 @@ public class Client extends Stage {
                                         String enterNum = st.nextToken();
                                         String userNum = st.nextToken();
                                         String status = st.nextToken();
-                                        HBox hBox = createHBox(roomNum, Id, roomName, hostName, enterNum, userNum, status);
-                                        container.getChildren().add(hBox);
+                                        System.out.println('&'+roomNum+' '+Id+' '+roomName+' '+hostName+' '+enterNum+' '+userNum+' '+status);
+                                        RoomItem roomItem = new RoomItem(Integer.parseInt(Id),roomName,roomNum,hostName,Integer.parseInt(enterNum),Integer.parseInt(userNum),status);
+                                        roomList.add(roomItem);
                                     }
+
                                 });
                             }
                         }
@@ -387,30 +410,18 @@ public class Client extends Stage {
 
                         /////////////////////////处理是否开始游戏////////////////////////
                         case "begin game" -> {
-                            //获取到是否成功
                             String judge = st.nextToken();
+                            // 获取到是否成功
                             if (judge.equals("succeed")) {
-//                                in.close();
-
-//                                System.out.println("game begin!!!!!!!");
-//                                String port = st.nextToken();
-                                //可以开始游戏了  ///////////////// 进入游戏界面////////////////////////////////////////////
-                                Platform.runLater(() -> {
-
-                                    // TODO: 添加GamePane
-                                    try {
-                                        startGame();
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-
-                                });
-                            } else {
-                                Platform.runLater(() -> {
-                                    Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
-                                    alert.showAndWait();
-                                });
+                                Platform.runLater(this::startGame);
+                                break;
                             }
+
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.WARNING, "还有玩家没有准备，无法开始游戏！");
+                                alert.showAndWait();
+                            });
+
                         }
                     }
 
@@ -419,6 +430,28 @@ public class Client extends Stage {
                     throw new RuntimeException(e);
                 }
             }
+        }
+
+        // 开始游戏
+        void startGame() {
+//        System.out.println("[info] get port: "+port);
+            // 设置游戏状态为Start
+            gameStatusChange("start");
+
+            // 创建对应端口号的游戏Pane
+            GamePane gamePane = new GamePane(socket, playerNames);
+            Scene scene = new Scene(gamePane);
+
+
+            Stage gameStage = new Stage();
+            gameStage.setTitle("坦克大战联机版");
+            gameStage.setScene(scene);
+            gameStage.setResizable(false);
+
+            gameStage.showAndWait();
+
+            // 设置游戏状态为End
+            gameStatusChange("end");
         }
     }
 
@@ -432,30 +465,9 @@ public class Client extends Stage {
      * ready: 准备但没开始游戏
      * */
 //    String gameStatus;
-    Stage gameStage;
-    GamePane gamePane;
-    // 开始游戏
-    void startGame() throws IOException {
-//        System.out.println("[info] get port: "+port);
-        // 设置游戏状态为Start
-        gameStatusChange("start");
 
-        // 创建对应端口号的游戏Pane
-        gamePane = new GamePane(this.socket);
-        Scene scene = new Scene(gamePane);
 
-        gameStage = new Stage();
-        gameStage.setTitle("坦克大战联机版");
-        gameStage.setScene(scene);
-        gameStage.setResizable(false);
-
-        gameStage.showAndWait();
-
-        // 设置游戏状态为End
-        gameStatusChange("end");
-    }
-
-    void gameStatusChange(String status) throws IOException {
+    void gameStatusChange(String status) {
         switch (status) {
             case "start" -> {
 //                gameStatus="play";
@@ -485,4 +497,78 @@ public class Client extends Stage {
             }
         }
     }
+
+    public static class RoomItem{
+        IntegerProperty id;
+        StringProperty name;
+        StringProperty account;
+        StringProperty owner;
+        IntegerProperty enterNum;
+        IntegerProperty userNum;
+        StringProperty status;
+
+        public RoomItem(int id, String name, String account,String owner, int players, int limit, String status) {
+            this.id = new SimpleIntegerProperty(id);
+            this.name = new SimpleStringProperty(name);
+            this.account=new SimpleStringProperty(account);
+            this.owner = new SimpleStringProperty(owner);
+            this.enterNum = new SimpleIntegerProperty(players);
+            this.userNum = new SimpleIntegerProperty(limit);
+            this.status = new SimpleStringProperty(status);
+        }
+
+        public int getId() {
+            return id.get();
+        }
+
+        public void setId(int id){
+            this.id.set(id);
+        }
+
+        public String getName() {
+            return name.get();
+        }
+
+        public void setName(String name) {
+            this.name.set(name);
+        }
+
+        public String getOwner() {
+            return owner.get();
+        }
+
+        public void setOwner(String owner) {
+            this.owner.set(owner);
+        }
+
+        public int getEnterNum() {
+            return enterNum.get();
+        }
+
+        public void setEnterNum(int players) {
+            this.enterNum.set(players);
+        }
+
+        public int getUserNum() {
+            return userNum.get();
+        }
+
+        public void setUserNum(int limit) {
+            this.userNum.set(limit);
+        }
+
+        public String getStatus(){
+            return status.get();
+        }
+
+        public String getAccount(){
+            return account.get();
+        }
+
+        public void setAccount(String account){
+            this.account.set(account);
+        }
+    }
 }
+
+

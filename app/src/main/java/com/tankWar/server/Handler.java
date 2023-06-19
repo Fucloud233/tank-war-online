@@ -14,8 +14,7 @@ public abstract class Handler {
     }
 
     // 接收消息的接口
-    protected String receive() {
-        try {
+    protected String receive() throws IOException {
             // 1. 读取头部消息
             ByteBuffer headerBuffer = ByteBuffer.allocate(HeaderLen);
             int headerLen = curSocket.read(headerBuffer);
@@ -42,10 +41,6 @@ public abstract class Handler {
             headerBuffer.get(bodyBytes, 0, size);
 
             return new String(bodyBytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     void send(SocketChannel socket, String text) {
@@ -84,5 +79,5 @@ public abstract class Handler {
         }
     }
 
-    public abstract void handle();
+    public abstract void handle() throws IOException;
 }
