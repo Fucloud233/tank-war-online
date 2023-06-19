@@ -173,11 +173,9 @@ public class GamePane extends HBox {
         bullets.clear();
 
         // 2. 加载地图 (包括建筑物信息+坦克信息)
-        // 如果地图编号改变则重新加载
-        if(mapId != this.map.getId()) {
-            if(!this.map.loadMap(mapId))
-                System.out.println("[error] 地图加载失败");
-        }
+        // 如果地图编号改变则重新加载(无论是否改变，都需要重新加载，因为方块可能被破坏)
+        if(!this.map.loadMap(mapId))
+            System.out.println("[error] 地图加载失败");
 
         // 设置建筑物信息
         this.buildings = map.getBuildings();
