@@ -285,7 +285,7 @@ public class Client extends Stage {
                                 if (strCreate.equals("Failed")) {
                                     Platform.runLater(() -> new Alert(Alert.AlertType.WARNING, "你已经创建过房间了！").showAndWait());
                                 } else {
-                                    Platform.runLater(() -> roomWindow.CloseWindow(); );
+                                    Platform.runLater(() -> roomWindow.CloseWindow());
                                 }
                             }
                         }
@@ -497,14 +497,15 @@ public class Client extends Stage {
             }
         }
     }
+
     public static class RoomItem{
-        private IntegerProperty id;
-        private StringProperty name;
-        private StringProperty account;
-        private StringProperty owner;
-        private IntegerProperty enterNum;
-        private IntegerProperty userNum;
-        private StringProperty status;
+        IntegerProperty id;
+        StringProperty name;
+        StringProperty account;
+        StringProperty owner;
+        IntegerProperty enterNum;
+        IntegerProperty userNum;
+        StringProperty status;
 
         public RoomItem(int id, String name, String account,String owner, int players, int limit, String status) {
             this.id = new SimpleIntegerProperty(id);
@@ -519,9 +520,11 @@ public class Client extends Stage {
         public int getId() {
             return id.get();
         }
+
         public void setId(int id){
             this.id.set(id);
         }
+
         public String getName() {
             return name.get();
         }
@@ -529,6 +532,7 @@ public class Client extends Stage {
         public void setName(String name) {
             this.name.set(name);
         }
+
         public String getOwner() {
             return owner.get();
         }
@@ -536,6 +540,7 @@ public class Client extends Stage {
         public void setOwner(String owner) {
             this.owner.set(owner);
         }
+
         public int getEnterNum() {
             return enterNum.get();
         }
@@ -551,6 +556,7 @@ public class Client extends Stage {
         public void setUserNum(int limit) {
             this.userNum.set(limit);
         }
+
         public String getStatus(){
             return status.get();
         }
@@ -558,6 +564,7 @@ public class Client extends Stage {
         public String getAccount(){
             return account.get();
         }
+
         public void setAccount(String account){
             this.account.set(account);
         }
