@@ -176,7 +176,7 @@ public class GamePane extends HBox {
         logicThread.start();
     }
 
-    void initEntity(int mapId) {
+    void initEntity(int mapId, int totalPlayerNum) {
         // 1. 清除子弹
         bullets.clear();
 
@@ -189,7 +189,7 @@ public class GamePane extends HBox {
         this.buildings = map.getBuildings();
 
         // 设置坦克初始初始化信息
-        this.tanks = map.getTanks();
+        this.tanks = map.getTanks(totalPlayerNum);
 
         // 3. 设置自己的坦克 (客户端保存玩家id)
         myTank = tanks[client.getId()];
@@ -289,7 +289,7 @@ public class GamePane extends HBox {
                 statusPane.setRestPlayerNum(msg.getPlayerNum());
             });
 
-            initEntity(msg.getMapId());
+            initEntity(msg.getMapId(), msg.getPlayerNum());
         }
 
         private void handleReset(ResetMsg msg) {
@@ -301,7 +301,7 @@ public class GamePane extends HBox {
                 statusPane.incPlayerScore(msg.getId());
             });
 
-            initEntity(msg.getMapId());
+            initEntity(msg.getMapId(), msg.getPlayerNum());
         }
 
         private void handleOver(OverMsg msg) {

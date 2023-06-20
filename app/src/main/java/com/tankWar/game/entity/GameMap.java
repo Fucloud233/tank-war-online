@@ -79,13 +79,13 @@ public class GameMap {
         return flag ? (Vector<Building>) buildings.clone() : null;
     }
 
-    public Tank[] getTanks() {
+    // 感觉玩家数量得到tank数量
+    public Tank[] getTanks(int size) {
         if(!flag) {
             return null;
         }
 
         // 使用这种方法 复制坦克信息
-        int size = this.tanks.length;
         Tank[] copyTanks = new Tank[size];
         for(int i=0; i<size; i++) {
             copyTanks[i] = new Tank(tanks[i]);
