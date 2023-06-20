@@ -1,6 +1,5 @@
 package com.tankWar.game.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import javafx.scene.image.Image;
 
 public abstract class Entity {
@@ -43,17 +42,8 @@ public abstract class Entity {
         return dir;
     }
 
+    public abstract Image getImage();
 
-    public void setImage(Image image) {
-        this.image = image;
-    }
-
-    @JsonIgnore
-    public Image getImage() {
-        return this.image;
-    }
-
-    @JsonIgnore
     public boolean isAlive() {
         return alive;
     }
@@ -78,12 +68,10 @@ public abstract class Entity {
         this.y = y;
     }
 
-    @JsonIgnore
     public double getImageX() {
         return x - width/2;
     }
 
-    @JsonIgnore
     public double getImageY() {
         return y - height/2;
     }

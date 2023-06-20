@@ -16,7 +16,7 @@ public class Building extends Entity{
 
     // 子弹是否能穿过建筑方块
     public boolean canGoThough(){
-        return block.name.equals("empty")||block.name.equals("grass");
+        return block.getCanThrough();
     }
 
     // 子弹是否可击碎
@@ -28,17 +28,23 @@ public class Building extends Entity{
         super(Config.BlockSize, Config.BlockSize, x, y);
         // 根据读入文件字符类型设置方块类型
         switch (id) {
-            case ' ': block = Block.Empty; break;
-            case 'S': block = Block.Stone; break;
-            case 'W': block = Block.Wood; break;
-            case 'G': block = Block.Grass; break;
-            default: {
+            case 'S' -> block = Block.Stone;
+            case 'W' -> block = Block.Wood;
+            case 'G' -> block = Block.Grass;
+            default -> {
                 System.out.println("[error] ID is illegal!");
-                return;
             }
         }
-        // 设置贴图
-        setImage(block.getImg());
+    }
+
+    public Building(Building building) {
+        super(Config.BlockSize, Config.BlockSize, building.x, building.y);
+        this.block = building.block;
+    }
+
+    @Override
+    public Image getImage() {
+        return this.block.getImg();
     }
 
     @Override
@@ -53,36 +59,37 @@ public class Building extends Entity{
 
 // 使用枚举类型来记录不同类型的建筑方块
 enum Block {
-    Empty(' ', "empty", false),
-    Stone('S', "stone", false),
-    Wood('W', "wood", true),
-    Grass('G', "grass", false);
+    // 不需要 Empty
+    Stone('S', false),
+    Wood('W', true),
+    Grass('G', false, true);
 
     final char id;
-    final String name;
     final boolean isFragile;
+    final boolean canThrough;
+    final Image image;
 
-    Block(char id, String name, boolean isFragile) {
+    Block(char id, boolean isFragile, boolean canThrough) {
         this.id = id;
-        this.name = name;
+        this.canThrough = canThrough;
         this.isFragile = isFragile;
+
+        String path = "/image/block/" + this + ".png";
+        System.out.println("[test] Path: " + path);
+
+        this.image = new Image(path);
+
     }
 
-    // todo 获得对应方块的贴图
+    Block(char id, boolean isFragile) {
+        this(id, isFragile, false);
+    }
+
     public Image getImg() {
-        switch(id) {
-            case 'S'->{
-                return new Image("/image/stone.png");
-            }
-            case 'W'->{
-                return new Image("/image/wood.png");
-            }
-            case 'G'->{
-                return new Image("/image/grass.png");
-            }
-            default -> {
-                return null;
-            }
-        }
+        return image;
+    }
+
+    public boolean getCanThrough() {
+        return canThrough;
     }
 }

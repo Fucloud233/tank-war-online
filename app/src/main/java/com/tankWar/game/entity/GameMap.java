@@ -76,7 +76,18 @@ public class GameMap {
 
     public Vector<Building> getBuildings() {
         // 复制一份建筑信息
-        return flag ? (Vector<Building>) buildings.clone() : null;
+        if(!flag) {
+            return null;
+        }
+
+        // 复制一份建筑信息
+        // [important] 在内存中复制 会比IO读取更快
+        Vector<Building> copyBuildings = new Vector<>(this.buildings.size());
+        for(Building building: buildings)
+            // 需要使用构造函数重新复制, 不能只复制数组
+            copyBuildings.addElement(new Building(building));
+
+        return copyBuildings;
     }
 
     // 感觉玩家数量得到tank数量
