@@ -4,8 +4,6 @@ package com.tankWar.lobby;
 import com.tankWar.communication.Communicate;
 import com.tankWar.game.component.GamePane;
 import javafx.application.Platform;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -471,7 +469,7 @@ public class Client extends Stage {
             gameStatusChange("start");
 
             // 创建对应端口号的游戏Pane
-            GamePane gamePane = new GamePane(socket, playerNames);
+            GamePane gamePane = new GamePane(username, playerNames, socket);
             Scene scene = new Scene(gamePane);
 
 

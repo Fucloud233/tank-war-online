@@ -146,6 +146,11 @@ public class Tank extends Entity {
         return TankImg.ImageMap.get(this.dir)[id];
     }
 
+    // 静态函数 直接获取坦克图片
+    public static Image getImage(int id, Direction dir) {
+        return TankImg.ImageMap.get(dir)[id];
+    }
+
     public int getId() {
         return id;
     }

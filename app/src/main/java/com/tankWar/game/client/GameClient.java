@@ -100,11 +100,8 @@ public class GameClient {
                     return mapper.readValue(msg, ShootMsg.class);
                 }
                 case Init->{
-                    // InitMsg会给GameClient分配ID
-                    InitMsg initMsg = mapper.readValue(msg, InitMsg.class);
-                    this.id = initMsg.getId();
-                    return initMsg;
-//                    return mapper.readValue(msg, InitMsg.class);
+                    // 客户端会从房间内种继承ID
+                    return mapper.readValue(msg, InitMsg.class);
                 }
                 case Reset -> {
                     return mapper.readValue(msg, ResetMsg.class);

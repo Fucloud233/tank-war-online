@@ -31,6 +31,8 @@ public class GamePane extends HBox {
     GameInfoPane statusPane = null;
     // 用于记录房间内的游戏名
     String[] playerNames = null;
+    // 用户的ID (来自创建房间窗口, 用于消息通信和Tank显示)
+    int id = -1;
     // 2. 用于绘制的组件 (JavaFX相关内容)
     Canvas canvas = new Canvas();
     GraphicsContext context = canvas.getGraphicsContext2D();
@@ -39,6 +41,7 @@ public class GamePane extends HBox {
     // 当前选择地图信息
     GameMap map = new GameMap();
     // 所有坦克/我的坦克
+    // [important] 不能设置为null, tanks加载在页面初始化之后
     Tank[] tanks = new Tank[0];
     Tank myTank;
     // 子弹列表
@@ -67,10 +70,15 @@ public class GamePane extends HBox {
     }
 
     // 带服务端端口号的构造函数，用于指定该GamePane所连接的端口号
-    public GamePane(Socket clientSocket, String[] playerNames) {
+    public GamePane(String userName, String[] playerNames, Socket clientSocket) {
         myself=this;
 
         this.playerNames = playerNames;
+        // 获得当前用户的ID
+        for(int i=0; i<playerNames.length; i++)
+            if(userName.equals(playerNames[i])) {
+                id = i; break;
+            }
 
         this.initEntity(clientSocket);
         this.initPane();
@@ -80,7 +88,7 @@ public class GamePane extends HBox {
     // 连接服务器
     void initEntity(Socket clientSocket) {
         System.out.println("[info] socket:"+clientSocket);
-        client = new GameClient();
+        client = new GameClient(id);
         // 指定服务端的端口号
         client.setSocket(clientSocket);
         // 连接成功后创建处理连接的线程
@@ -105,7 +113,7 @@ public class GamePane extends HBox {
         // 添加子Pane
         this.getChildren().add(canvas);
 
-        this.statusPane = new GameInfoPane(playerNames);
+        this.statusPane = new GameInfoPane(id, playerNames);
         this.getChildren().add(statusPane);
 
         // 创建显示游戏的线程
@@ -198,7 +206,6 @@ public class GamePane extends HBox {
 
         // 绘制坦克
         for (Tank tank: tanks)
-
             if(tank.isAlive())
                 context.drawImage(tank.getImage(), tank.getImageX(), tank.getImageY());
 

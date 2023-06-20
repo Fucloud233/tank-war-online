@@ -3,7 +3,11 @@ package com.tankWar.game.component;
 import com.tankWar.game.Config;
 import com.tankWar.game.component.basic.ScoreTable;
 import com.tankWar.game.component.basic.StatusTable;
+import com.tankWar.game.component.basic.TitleLabel;
+import com.tankWar.game.entity.Direction;
+import com.tankWar.game.entity.Tank;
 import javafx.geometry.Insets;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
@@ -11,31 +15,51 @@ import java.net.URL;
 import static com.tankWar.game.component.basic.StatusType.*;
 
 public class GameInfoPane extends VBox {
-    // 包含的组件信息
-    StatusTable statusTable = new StatusTable("游戏状态");
+    // 信息
+    int id = -1;
+    String[] playerNames = null;
 
+    // 包含的组件信息
+    ImageView tankView;
+    StatusTable statusTable = new StatusTable("游戏状态");
     ScoreTable scoreTable = new ScoreTable("计分板");
 
     public GameInfoPane() {
         init();
     }
 
-    public GameInfoPane(String[] playerNames) {
-        init();
+    public GameInfoPane(int id, String[] playerNames) {
+        this.id = id;
+        this.playerNames =playerNames;
 
-        // 如果Player不为空
-        if (playerNames != null)
-            for (String name : playerNames)
-                this.scoreTable.addPlayer(name);
+        init();
+    }
+
+    public GameInfoPane(String[] playerNames) {
+        this.playerNames =playerNames;
+
+        init();
     }
 
     // 初始化上述组件信息
     void init() {
+        // TankView配置
+        if(id != -1) {
+            TitleLabel playerNameLabel = new TitleLabel("你的坦克");
+            this.tankView = new ImageView(Tank.getImage(this.id, Direction.RIGHT));
+            this.getChildren().addAll(playerNameLabel, tankView);
+        }
+
         // Status配置
         statusTable.addMultipleStatus(GameNum, 5);
         statusTable.addMultipleStatus(PlayerNum, 4);
 
         this.getChildren().addAll(statusTable, scoreTable);
+
+        // 如果Player不为空
+        if (playerNames != null)
+            for (String name : playerNames)
+                this.scoreTable.addPlayer(name);
 
         // 设置样式
         URL styleURL = this.getClass().getResource("/css/label.css");
@@ -44,6 +68,7 @@ public class GameInfoPane extends VBox {
 
         // 设置Pane属性
         this.setPrefWidth(150);
+        this.setSpacing(10);
         this.setPadding(new Insets(Config.MapPaddingSize));
     }
 
