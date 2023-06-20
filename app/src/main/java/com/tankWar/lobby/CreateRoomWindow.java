@@ -91,8 +91,10 @@ public class CreateRoomWindow{
             }
 
             // 生成发送消息
-            String strSend = "Create|password"+"|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
-            strSend += flag ? "|"+Password.getText() : null;
+            String strSend = "Create|";
+            strSend += flag ? "|password":"no password";
+            strSend += "|"+username+"|"+account+"|"+roomName.getText()+"|"+volumnCB.getValue();
+            strSend += flag ? "|"+Password.getText() : "";
 
             Communicate.send(socket, strSend);
 
