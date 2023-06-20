@@ -296,11 +296,16 @@ public class LoginWindow extends Application {
 
     // [test] 用于自动登陆
     public void login(String account) {
+        // 当服务器后于客户端打开 重复连接
+        while(!socket.isConnected()) {
+            connectServer();
+        }
+
         // 进行登录
         String strSend = "login|" + account + "|" + "111111";
         Communicate.send(socket, strSend);
         initLogin();
-}
+    }
 
     // 在客户端启动时 首先连接服务端
     void connectServer() {

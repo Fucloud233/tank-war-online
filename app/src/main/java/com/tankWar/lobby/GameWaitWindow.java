@@ -374,15 +374,14 @@ public class GameWaitWindow {
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             int playerCount = listOnline.getItems().size() - 1;
-            System.out.println("count"+playerCount);
-            if(playerCount==1){
-                //房主一个人无法开始游戏 进行提示
-                new Alert(Alert.AlertType.WARNING,"您无法一个人开始游戏！").showAndWait();
-            }
-            else {
+
+            // 当在调试模式时 允许房主直接开始游戏
+            if(playerCount > 1 || LobbyConfig.IsDebug)
                 //否则 检查房间中用户的状态是否都准备好
                 checkAllPlayersReady();
-            }
+            else
+                //房主一个人无法开始游戏 进行提示
+                new Alert(Alert.AlertType.WARNING,"您无法一个人开始游戏！").showAndWait();
         }
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if (PlayGameBtn.getText().equals("准备")) {
