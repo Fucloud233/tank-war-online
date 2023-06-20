@@ -12,15 +12,12 @@ import java.util.Vector;
 public abstract class ValueTable extends VBox {
     Vector<Pair<Label, NumberLabel>> labels;
 
-    Label titleLabel = new Label();
+    TitleLabel titleLabel = new TitleLabel();
     GridPane mainGrid = new GridPane();
 
     public ValueTable(String title, int rowNum) {
         // 设置标题
-        this.titleLabel.setText(title);
-        this.titleLabel.setPadding(new Insets(5, 0, 0, 0));
-        this.titleLabel.setStyle("-fx-font-style: BOLD");
-        this.titleLabel.setStyle("-fx-font-size: 24px;");
+        titleLabel.setText(title);
 
         // 设置表格
         this.mainGrid.setHgap(20);
@@ -30,7 +27,7 @@ public abstract class ValueTable extends VBox {
 
         this.setSpacing(5);
 
-        this.getChildren().addAll(titleLabel, new Separator(), mainGrid);
+        this.getChildren().addAll(titleLabel, mainGrid);
     }
 
     public ValueTable(int rowNum) {
