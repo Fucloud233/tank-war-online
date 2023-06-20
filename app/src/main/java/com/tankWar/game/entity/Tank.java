@@ -141,12 +141,12 @@ public class Tank extends Entity {
         return false;
     }
 
-    public Image getImage(boolean myself) {
-        if(myself) return addBackground(TankImg.ImageMap.get(this.dir));
-        return TankImg.ImageMap.get(this.dir);
+    @Override
+    public Image getImage() {
+        return addBackground(TankImg.ImageMap.get(this.dir));
     }
 
-    static Image addBackground(final Image sourceImage) {
+    Image addBackground(final Image sourceImage) {
 
         final int w = (int) sourceImage.getWidth();
         final int h = (int) sourceImage.getHeight();
@@ -159,9 +159,12 @@ public class Tank extends Entity {
                 double g = reader.getColor(x, y).getGreen();
                 double b = reader.getColor(x, y).getBlue();
                 double o = reader.getColor(x, y).getOpacity();
-
-                // Keeping the opacity of every pixel as it is.
-                writer.setColor(x, y, new Color(g, r, b, o));
+                TankColor tankColor = new TankColor(r,g,b,o);
+                if(g > 0){
+                    writer.setColor(x, y, tankColor.setColor(Config.TankColorMap.get(id).getValue0()));
+                    continue;
+                }
+                writer.setColor(x, y, tankColor.setColor("origin"));
             }
         }
         return outputImage;
@@ -195,5 +198,34 @@ class TankImg {
         catch(Exception e) {
 //            e.printStackTrace();
         }
+    }
+}
+
+class TankColor {
+    double r,g,b,o;
+
+    public TankColor(double r, double g, double b, double o) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.o = o;
+    }
+
+    public Color setColor(String color){
+        switch (color) {
+            case "green", "origin" -> {
+                return new Color(r, g, b, o);
+            }
+            case "white" -> {
+                return new Color(g, g, g, o);
+            }
+            case "red" -> {
+                return new Color(g, r, b, o);
+            }
+            case "blue" -> {
+                return new Color(r, b, g, o);
+            }
+        }
+        return null;
     }
 }
