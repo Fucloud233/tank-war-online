@@ -1,10 +1,8 @@
 package com.game.fucloud;
 
-import com.tankWar.game.client.GameClient;
+import com.tankWar.game.GameClient;
 
-import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.TimeoutException;
 
 import com.tankWar.communication.msg.Message;
 import com.tankWar.game.entity.Direction;

@@ -1,4 +1,4 @@
-package com.tankWar.game.client;
+package com.tankWar.game;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

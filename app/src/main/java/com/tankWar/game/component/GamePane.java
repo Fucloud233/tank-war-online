@@ -3,7 +3,7 @@ package com.tankWar.game.component;
 import com.tankWar.communication.msg.*;
 import com.tankWar.game.Config;
 import com.tankWar.game.Utils;
-import com.tankWar.game.client.GameClient;
+import com.tankWar.game.GameClient;
 import com.tankWar.game.entity.*;
 
 import javafx.application.Platform;
