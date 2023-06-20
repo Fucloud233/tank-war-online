@@ -107,10 +107,11 @@ public class GameHandler extends Handler{
     }
 
     @Override
-    public void handle() {
+    public void handle() throws IOException {
+        String msgStr = null;
         try {
             // 1. socket接收到JSON消息
-            String msgStr = this.receive();
+            msgStr = this.receive();
             // 2. 进行验证
             JsonNode json = mapper.readTree(msgStr);
             MessageType type = MessageType.valueOf(json.get("type").asText());
@@ -124,10 +125,8 @@ public class GameHandler extends Handler{
             // 3. socket广播消息
             sendAllWithoutMe(msgStr);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch(IOException e) {
-            // todo 处理断连情况
-            e.printStackTrace();
+//            e.printStackTrace();
+            ServerPrompt.errorInValidMsg(msgStr);
         }
     }
 }

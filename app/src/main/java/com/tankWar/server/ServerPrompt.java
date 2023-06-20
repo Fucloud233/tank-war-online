@@ -24,7 +24,7 @@ public class ServerPrompt {
     }
 
     public static void infoCreateRoom(String userName, String roomName) {
-        info(userName + " 创建房间(Name: " + roomName + ")");
+        info(userName + " 创建房间 (Name: " + roomName + ")");
     }
 
     public static void infoHostExitRoom(String roomName) {
@@ -78,6 +78,9 @@ public class ServerPrompt {
         error("Can not start server.");
     }
 
+    public static void errorInValidMsg(String msg) {
+        error("接收到位置消息: " + msg);
+    }
 
     // 基础函数
     private static void info(String text) {
