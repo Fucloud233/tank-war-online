@@ -143,31 +143,7 @@ public class Tank extends Entity {
 
     @Override
     public Image getImage() {
-        return addBackground(TankImg.ImageMap.get(this.dir));
-    }
-
-    Image addBackground(final Image sourceImage) {
-
-        final int w = (int) sourceImage.getWidth();
-        final int h = (int) sourceImage.getHeight();
-        final WritableImage outputImage = new WritableImage(w, h);
-        final PixelWriter writer = outputImage.getPixelWriter();
-        final PixelReader reader = sourceImage.getPixelReader();
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                double r = reader.getColor(x, y).getRed();
-                double g = reader.getColor(x, y).getGreen();
-                double b = reader.getColor(x, y).getBlue();
-                double o = reader.getColor(x, y).getOpacity();
-                TankColor tankColor = new TankColor(r,g,b,o);
-                if(g > 0){
-                    writer.setColor(x, y, tankColor.setColor(Config.TankColorMap.get(id).getValue0()));
-                    continue;
-                }
-                writer.setColor(x, y, tankColor.setColor("origin"));
-            }
-        }
-        return outputImage;
+        return TankImg.ImageMap.get(this.dir)[id];
     }
 
     public int getId() {
@@ -186,46 +162,90 @@ public class Tank extends Entity {
 // 使用其他类来记录图像 降低数据和资源的耦合度
 class TankImg {
     // 坦克不同方向照片
-    public static final HashMap<Direction, Image> ImageMap = new HashMap<>();
+    public static final HashMap<Direction, Image[]> ImageMap = new HashMap<>();
+
+    // 记录坦克
+    public enum TankColor {
+        Green(0, Color.GREEN),
+        White(1, Color.WHITE),
+        Red(2, Color.RED),
+        Blue(3, Color.BLUE);
+
+        final int value;
+        final Color color;
+
+        TankColor(int value, Color color) {
+            this.value = value;
+            this.color = color;
+        }
+
+        int getValue() {
+            return value;
+        }
+
+        // 获得颜色
+        Color getColor() {
+            return this.color;
+        }
+
+        // 用于修改颜色
+        Color modify(Color color) {
+            double r = color.getRed(), g = color.getGreen(), b = color.getBlue(),
+                    o = color.getOpacity();
+
+            switch (this) {
+                case Green -> {
+                    return new Color(r, g, b, o);
+                }
+                case White -> {
+                    return new Color(g, g, g, o);
+                }
+                case Red -> {
+                    return new Color(g, r, b, o);
+                }
+                case Blue -> {
+                    return new Color(r, b, g, o);
+                }
+                default -> {
+                    return color;
+                }
+            }
+        }
+    }
 
     static {
         try {
-            ImageMap.put(Direction.UP, new Image("/image/tankUp.png"));
-            ImageMap.put(Direction.DOWN, new Image("/image/tankDown.png"));
-            ImageMap.put(Direction.LEFT, new Image("/image/tankLeft.png"));
-            ImageMap.put(Direction.RIGHT, new Image("/image/tankRight.png"));
+            loadImages(Direction.UP);
+            loadImages(Direction.DOWN);
+            loadImages(Direction.LEFT);
+            loadImages(Direction.RIGHT);
+
         }
         catch(Exception e) {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
     }
-}
 
-class TankColor {
-    double r,g,b,o;
+    private static void loadImages(Direction dir) {
+        Image[] images = new Image[Config.MaxPlayerNumber];
+        Image sourceImage = new Image("/image/tank/"+dir.toString()+".png");
+        for(int i=0; i<images.length; i++) {
+            images[i] = modifyImage(sourceImage, TankColor.values()[i]);
+        }
 
-    public TankColor(double r, double g, double b, double o) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.o = o;
+        ImageMap.put(dir, images);
     }
 
-    public Color setColor(String color){
-        switch (color) {
-            case "green", "origin" -> {
-                return new Color(r, g, b, o);
-            }
-            case "white" -> {
-                return new Color(g, g, g, o);
-            }
-            case "red" -> {
-                return new Color(g, r, b, o);
-            }
-            case "blue" -> {
-                return new Color(r, b, g, o);
-            }
-        }
-        return null;
+    private static Image modifyImage(Image sourceImage, TankColor color) {
+        final int w = (int) sourceImage.getWidth();
+        final int h = (int) sourceImage.getHeight();
+        final WritableImage outputImage = new WritableImage(w, h);
+        final PixelWriter writer = outputImage.getPixelWriter();
+        final PixelReader reader = sourceImage.getPixelReader();
+
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                writer.setColor(x, y, color.modify(reader.getColor(x, y)));
+        return outputImage;
     }
 }
