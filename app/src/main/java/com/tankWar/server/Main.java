@@ -295,6 +295,7 @@ public class Main {
                         User user = users.get(curSocket);
                         room.addOnlineUser(curSocket, user);
                         // 成功进入房间
+                        sendRooms();
                         send("select room|success");
                         // 发送欢迎消息
                         sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
