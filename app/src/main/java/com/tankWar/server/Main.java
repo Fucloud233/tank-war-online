@@ -210,7 +210,7 @@ public class Main {
 
             // 向客户端发送信息(登陆成功 + 欢迎语录 + 所有用户姓名)
             send("login|succeed" + "|" + nickName);
-            sendToLobby("talk|>>>欢迎 " + nickName + " 进来与我们一起交谈!");
+            sendToLobby("talk|>>> 欢迎 " + nickName + " 进来与我们一起交谈!");
             sendAllUser();
             sendRooms();
 
@@ -298,7 +298,7 @@ public class Main {
                         sendRooms();
                         send("select room|success");
                         // 发送欢迎消息
-                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
+                        sendToRoom(room, "roomTalk|>>> 欢迎 " + user.getNickName() + " 加入房间");
                         // 用户进入房间，大厅里的房间人数会变
                         sendAllUsersToRoom(room);
                     }
@@ -327,7 +327,7 @@ public class Main {
                         send("select room|success");
                         //用户进入房间，大厅里的房间人数会变
                         sendRooms();
-                        sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
+                        sendToRoom(room, "roomTalk|>>> 欢迎 " + user.getNickName() + " 加入房间");
                     }
                     break;
                 }
@@ -469,7 +469,7 @@ public class Main {
             sendRooms();
 
             // 修改游戏房间内用户状态
-            changeOtherNoready(user);
+            gameStartNotice(user);
 
             // 把游戏开始信息发送给房间内所有用户
             sendToRoom(room, "begin game|succeed");
@@ -480,12 +480,8 @@ public class Main {
             return null;
         }
 
-        void changeOtherNoready(User user){
-            for(User users : user.getRoom().getAllUsers()){
-                if(users==user) continue;
-                sendToRoom(user.getRoom(),"roomTalk|" + users.getNickName() + " 已取消准备");
-//                users.setStatus(UserStatus.NoReady);
-            }
+        void gameStartNotice(User user){
+            sendToRoom(user.getRoom(),"roomTalk|>>> 游戏开始");
             //重新刷新房间内的列表
             Room room=user.getRoom();
             sendAllUsersToRoom(room);
@@ -526,7 +522,10 @@ public class Main {
         void processGameOver() {
             User user = users.get(curSocket);
             Room room = user.getRoom();
+//            user.setStatus(UserStatus.NoReady);
             room.endGame();
+            sendAllUsersToRoom(room);
+            sendToRoom(user.getRoom(),"roomTalk|" + user.getNickName() + " 退出游戏回到房间");
             // 刷新大厅中这个房间的状态
             sendRooms();
         }
