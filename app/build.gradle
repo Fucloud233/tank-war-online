@@ -11,11 +11,16 @@ plugins {
     id 'application'
     // 导入javafx插件
     id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'org.beryx.jlink' version '2.25.0'
 }
+
+sourceCompatibility = JavaVersion.VERSION_18
+targetCompatibility = JavaVersion.VERSION_18
 
 repositories {
     // 优先在本地仓库中查找文件
     mavenLocal()
+    // 使用中央仓库
     // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
@@ -26,8 +31,6 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
-
-    implementation 'org.javatuples:javatuples:1.2'
 
     // 导入mysql
     runtimeOnly 'mysql:mysql-connector-java:8.0.32'
@@ -51,8 +54,7 @@ java {
 application {
     // Define the main class for the application.
     mainClass = 'com.tankWar.lobby.LoginWindow'
-
-//    mainClass = 'com.tankWar.game.Main'\
+    mainModule.set("com.tankWar.lobby")
 }
 
 // 导入javafx
@@ -63,6 +65,12 @@ javafx {
 
 tasks.withType(JavaCompile){
     options.encoding="UTF-8"
+}
+
+jlink {
+    launcher {
+        name = 'client'  // 指定您的应用程序名称
+    }
 }
 
 // 设置尝试将多个文件复制到同一目的地时使用的策略

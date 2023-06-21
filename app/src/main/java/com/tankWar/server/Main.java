@@ -674,5 +674,11 @@ public class Main {
 
         return null;
     }
+
+    // 主函数
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.start();
+    }
 }
 

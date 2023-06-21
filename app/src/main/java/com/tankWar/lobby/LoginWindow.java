@@ -1,6 +1,7 @@
 package com.tankWar.lobby;
 
 import com.tankWar.communication.Communicate;
+import com.tankWar.server.Config;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -87,7 +88,7 @@ public class LoginWindow extends Application {
         /* 设置设置按钮 */
         // 参考代码: https://www.jianshu.com/p/a9df3e863c70
         Button settingButton = new Button();
-        ImageView settingImg = new ImageView(new Image("/icon/setting.png"));
+        ImageView settingImg = new ImageView(new Image(getClass().getResource("/icon/setting.png").toURI().toString()));
         settingImg.setFitWidth(20);
         settingImg.setFitHeight(20);
 
@@ -286,6 +287,14 @@ public class LoginWindow extends Application {
     }
 
 
+    public LoginWindow() {
+        this.address = Config.ip;
+        this.port = Config.port;
+
+        // 连接服务器
+        connectServer();
+    }
+
     public LoginWindow(String address) {
         this.address = address;
         this.port = 8080;
@@ -324,6 +333,6 @@ public class LoginWindow extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        Application.launch(args);
     }
 }
