@@ -295,6 +295,7 @@ public class Main {
                         User user = users.get(curSocket);
                         room.addOnlineUser(curSocket, user);
                         // 成功进入房间
+                        sendRooms();
                         send("select room|success");
                         // 发送欢迎消息
                         sendToRoom(room, "roomTalk|>>>欢迎 " + user.getNickName() + " 加入房间");
@@ -461,6 +462,9 @@ public class Main {
                 return "begin game|failed";
             }
 
+            // 开始游戏 并发送初始化信息
+            room.startGame();
+
             // 刷新大厅中这个房间的状态
             sendRooms();
 
@@ -470,8 +474,6 @@ public class Main {
             // 把游戏开始信息发送给房间内所有用户
             sendToRoom(room, "begin game|succeed");
 
-            // 开始游戏 并发送初始化信息
-            room.startGame();
             new GameHandler(curSocket, room).sendInitMsg();
             infoGameStart(room.getRoomName());
 
@@ -482,7 +484,7 @@ public class Main {
             for(User users : user.getRoom().getAllUsers()){
                 if(users==user) continue;
                 sendToRoom(user.getRoom(),"roomTalk|" + users.getNickName() + " 已取消准备");
-                users.setStatus(UserStatus.NoReady);
+//                users.setStatus(UserStatus.NoReady);
             }
             //重新刷新房间内的列表
             Room room=user.getRoom();

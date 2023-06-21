@@ -546,7 +546,7 @@ public class Client extends Stage {
             this.owner = new SimpleStringProperty(owner);
             this.enterNum = new SimpleStringProperty(players);
             this.userNum = new SimpleStringProperty(limit);
-            this.status = new SimpleStringProperty(status);
+            this.status = new SimpleStringProperty(Boolean.parseBoolean(status) ? "游戏中" : "等待中");
         }
 
         public String getId() {
