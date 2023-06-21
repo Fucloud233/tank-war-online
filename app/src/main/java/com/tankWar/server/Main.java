@@ -464,6 +464,9 @@ public class Main {
             // 刷新大厅中这个房间的状态
             sendRooms();
 
+            // 修改游戏房间内用户状态
+            changeOtherNoready(user);
+
             // 把游戏开始信息发送给房间内所有用户
             sendToRoom(room, "begin game|succeed");
 
@@ -473,6 +476,17 @@ public class Main {
             infoGameStart(room.getRoomName());
 
             return null;
+        }
+
+        void changeOtherNoready(User user){
+            for(User users : user.getRoom().getAllUsers()){
+                if(users==user) continue;
+                sendToRoom(user.getRoom(),"roomTalk|" + users.getNickName() + " 已取消准备");
+                users.setStatus(UserStatus.NoReady);
+            }
+            //重新刷新房间内的列表
+            Room room=user.getRoom();
+            sendAllUsersToRoom(room);
         }
 
         // 退出房间

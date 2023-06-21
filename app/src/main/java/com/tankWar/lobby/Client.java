@@ -399,6 +399,7 @@ public class Client extends Stage {
                                 gameWaitWindow.newAddTalkTo(i, name, i==0 ? "房主" : status);
 
                             }
+
                         });
 
                         case "lobby" -> {
@@ -503,9 +504,10 @@ public class Client extends Stage {
 //                gameStatus="play";
 //                out.close();
                 gameStart = true;
-                Platform.runLater(() -> gameWaitWindow.AddTxt("\n" + "所有人已取消准备"));
+//                Platform.runLater(() -> gameWaitWindow.AddTxt("\n" + "所有人已取消准备"));
                 // 设置房间窗口状态为正在游戏
-                this.gameWaitWindow.changeStatus("play");
+//                this.gameWaitWindow.changeStatus("play");
+                this.gameWaitWindow.changeStatus();
                 primaryStage.hide();
 //                System.out.println("[info] clientStatus: "+gameStatus);
             }
@@ -515,7 +517,7 @@ public class Client extends Stage {
 //                this.gameStart = false;
 
                 // 设置房间窗口状态为准备开始
-                this.gameWaitWindow.changeStatus("ready");
+//                this.gameWaitWindow.changeStatus("ready");
 //                gamePane.closeCamePane();
                 gameStart = false;
                 // 发送游戏结束信息给服务端

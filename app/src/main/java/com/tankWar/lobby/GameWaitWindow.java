@@ -371,6 +371,7 @@ public class GameWaitWindow {
 
     //开始游戏  或 进行准备的事件
     public void beginGameAction() throws IOException {
+
         //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
         if (isRoomOwner) {
             int playerCount = listOnline.getItems().size() - 1;
@@ -385,18 +386,18 @@ public class GameWaitWindow {
         }
         //普通用户点击准备按钮，按钮切换为已经准备 ，并且在列表中也进行切换
         else if (PlayGameBtn.getText().equals("准备")) {
+            // 非房主用户 切换按钮和对应的状态 准备-已准备
+            this.PlayGameBtn.setText("取消准备");
             //发送一个准备的消息 并传送这个能标识这个用户的键
             Communicate.send(socket, "isReady|" + name);
             System.out.println("[info] name: "+name);
-            // 非房主用户 切换按钮和对应的状态 准备-已准备
-            PlayGameBtn.setText("取消准备");
         }
         //用户取消准备
         else if(PlayGameBtn.getText().equals("取消准备")){
+            // 非房主用户 切换按钮和对应的状态 已准备-准备
+            this.PlayGameBtn.setText("准备");
             //发送一个取消准备的消息 并传送这个能标识这个用户的键
             Communicate.send(socket, "cancelReady|" + name);
-            // 非房主用户 切换按钮和对应的状态 已准备-准备
-            PlayGameBtn.setText("准备");
         }
     }
 
@@ -407,21 +408,12 @@ public class GameWaitWindow {
     }
 
     // 开始游戏后，设置按钮不可触发，设置取消准备，以确保房主先出来不能开始游戏
-    public void changeStatus(String status)  {
-        switch (status) {
-            case "play" -> {
-//                this.exitRoomBtn.setDisable(true);
-                if (!isRoomOwner) {
-                    this.PlayGameBtn.setText("准备");
-                    // Add your code to start the game here
-                    // For example:
-                    System.out.println("[info] Game started!");
-                }
-            }
-            case "ready" -> {
-//                this.exitRoomBtn.setDisable(false);
-//                this.PlayGameBtn.setDisable(false);
-            }
+    public void changeStatus()  {
+        //如果房主点击开始游戏  需要检查所有用户的状态是否已经准备
+        if (!isRoomOwner) {
+            // 非房主用户 切换按钮和对应的状态 已准备-准备
+            this.PlayGameBtn.setText("准备");
         }
+
     }
 }
