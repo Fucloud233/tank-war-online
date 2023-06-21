@@ -13,7 +13,7 @@ public class Room {
     int maxUserNum;
     boolean havePassword;
 
-    // Room状态
+    // Room的状态
     boolean status = false;
     Game game = null;
 
