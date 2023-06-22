@@ -3,6 +3,7 @@ package com.tankWar.communication;
 import com.tankWar.server.Config;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 // 定义客户端与服务端通信的接口
 public class Communicate {
@@ -17,11 +18,11 @@ public class Communicate {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
             // 2. 计算长度并生成输出文本
-            int size = text.getBytes().length;
+            int size = text.getBytes(StandardCharsets.UTF_8).length;
             String outputText = toText(size) + text;
 
             // 3. 输出字节
-            out.write(outputText.getBytes());
+            out.write(outputText.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,7 +42,7 @@ public class Communicate {
                 return null;
 
             // 2. 读取消息体内的内容
-            int size = toNum(new String(headerBytes));
+            int size = toNum(new String(headerBytes, StandardCharsets.UTF_8));
             int curLen = 0;
             byte[] bodyBytes = new byte[size];
 
@@ -53,7 +54,7 @@ public class Communicate {
             }
 
             // 3. 返回消息
-            return new String(bodyBytes);
+            return new String(bodyBytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

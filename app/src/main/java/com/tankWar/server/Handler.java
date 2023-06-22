@@ -3,6 +3,7 @@ package com.tankWar.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 
 public abstract class Handler {
     static final int HeaderLen = Config.getHeaderLength();
@@ -26,7 +27,7 @@ public abstract class Handler {
             headerBuffer.get(headerBytes, 0, HeaderLen);
 
             // 2. 读取消息体消息
-            int size = toNum(new String(headerBytes));
+            int size = toNum(new String(headerBytes, StandardCharsets.UTF_8));
             headerBuffer = ByteBuffer.allocate(size);
 
             int restSize = size;
@@ -40,7 +41,7 @@ public abstract class Handler {
             headerBuffer.rewind();
             headerBuffer.get(bodyBytes, 0, size);
 
-            return new String(bodyBytes);
+            return new String(bodyBytes, StandardCharsets.UTF_8);
     }
 
     void send(SocketChannel socket, String text) {
@@ -48,13 +49,13 @@ public abstract class Handler {
             // 1. 获得消息长度
             // [important] 注意这里要用字节长度 不能用字符长度
             // Java中一个汉字1字符, 2字节
-            int size = text.getBytes().length;
+            int size = text.getBytes(StandardCharsets.UTF_8).length;
 //            System.out.println("len: " +size + " " + text);
 
             // 2. 将消息长度插入头部
             String outputText = toText(size) + text;
             // 3. 发送消息
-            socket.write(ByteBuffer.wrap(outputText.getBytes()));
+            socket.write(ByteBuffer.wrap(outputText.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             e.printStackTrace();
         }
