@@ -78,18 +78,14 @@ public class LoginWindow extends Application {
         funcButton.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 14));
         funcButton.setMinSize(70, 30);
         //点击登录按钮后触发
-        funcButton.setOnAction(e -> {
-            funcButtonEvent();
-        });
+        funcButton.setOnAction(e -> funcButtonEvent() );
 
         //切换状态按钮
         changeStatusButton = new Button("注册");
         changeStatusButton.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 14));
         changeStatusButton.setMinSize(70, 30);
         //点击注册按钮后触发
-        changeStatusButton.setOnAction(e -> {
-            switchStatus();
-        });
+        changeStatusButton.setOnAction(e -> switchStatus() );
 
         //加个坦克大战的标题
         Label titleLabel = new Label("坦克大战");
@@ -354,47 +350,54 @@ public class LoginWindow extends Application {
 
     // 建立初始化连接
     void initConnect() {
-        ConnectingAlert alert = new ConnectingAlert();
-//        alert.getButtonTypes()
-        alert.setOnCloseRequest(e-> {
-            alert.close();
-            if(alert.isExit())
-                primaryStage.close();
-        });
-
-        alert.show();
-
-        connectTask.setOnFailed(e->{
-            alert.close();
-            System.out.println("[debug] Server connect fail");
-
-            ConnectFailAlert connectFailAlert = new ConnectFailAlert();
-            connectFailAlert.showAndWait();
-
-            boolean isReconnect = connectFailAlert.isReconnect();
-            if(!isReconnect) {
-                this.primaryStage.close();
-                return;
-            }
-
-            // 用户选择重新连接后 重新连接
-            alert.reshow();
-            Thread thread = new Thread(connectTask);
-            thread.start();
-        });
-
-        Thread thread = new Thread(connectTask);
-        thread.start();
+        // 开启连接线程
+        new Thread(new ConnectTask()).start();
     }
 
     // 使用多线程连接 防止页面卡死
-    Task<Void> connectTask = new Task<>() {
+    class ConnectTask extends Task<Void> {
+        // 连接中弹窗 (使用静态对象 保证重新连接后仍然操控的是相同的弹窗)
+        static ConnectingAlert alert = new ConnectingAlert();
+
+        public ConnectTask() {
+            alert.setOnCloseRequest(e-> {
+                alert.close();
+                if(alert.isExit())
+                    primaryStage.close();
+            });
+
+            alert.show();
+
+            // 当连接失败时
+            this.setOnFailed(e->{
+                alert.close();
+//                System.out.println("[debug] Server connect fail");
+
+                // 提示连接失败
+                ConnectFailAlert connectFailAlert = new ConnectFailAlert();
+                connectFailAlert.showAndWait();
+
+                boolean isReconnect = connectFailAlert.isReconnect();
+                // 用户不选择重新连接 退出客户端
+                if(!isReconnect) {
+                    primaryStage.close();
+                    return;
+                }
+
+                // 用户选择重新连接后 重新连接
+                alert.reshow();
+                new Thread(new ConnectTask()).start();
+            });
+        }
+
         @Override
         protected Void call() throws Exception {
             socket = new Socket(address, port);
+            // 连接成功后关闭窗口
+            Platform.runLater(()->alert.close());
             return null;
         }
-    };
+    }
 
     public static void main(String[] args) {
         launch(args);
@@ -440,8 +443,7 @@ class ConnectingAlert extends Alert {
         this.getButtonTypes().clear();
         this.getButtonTypes().addAll(exitType);
 
-        Thread t = new Thread(waitingTask);
-        t.start();
+        new Thread(new WaitingTask()).start();
     }
 
     // 返回是否是手动关闭
@@ -452,8 +454,7 @@ class ConnectingAlert extends Alert {
     // 重新显示
     public void reshow() {
         this.show();
-        Thread t = new Thread(waitingTask);
-        t.start();
+        new Thread(new WaitingTask()).start();
     }
 
     // 用于显示动态效果
@@ -474,13 +475,13 @@ class ConnectingAlert extends Alert {
         }
     }
 
-    Task<Void> waitingTask = new Task<>() {
+    class WaitingTask extends Task<Void>{
         @Override
         protected Void call(){
             setText();
             return null;
         }
-    };
+    }
 }
 
 // 封装连接失败的弹窗
