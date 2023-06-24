@@ -39,6 +39,9 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.15.2'
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.15.2'
+
+    // 使用ini管理外部配置文件
+    implementation group: 'org.ini4j', name: 'ini4j', version: '0.5.4'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
