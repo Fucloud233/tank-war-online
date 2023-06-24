@@ -12,8 +12,8 @@ public class ClientTest1 extends Application {
     }
 
     @Override public void start(Stage primaryStage) throws Exception {
-        LoginWindow client = new LoginWindow(Config.ip);
+        LoginWindow client = new LoginWindow();
         client.start(primaryStage);
-        client.login("1");
+//        client.login("1");
     }
 }

@@ -1,7 +1,9 @@
 package com.tankWar.lobby;
 
 import com.tankWar.communication.Communicate;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.concurrent.Task;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -21,6 +23,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import org.ini4j.Ini;
+import org.ini4j.Profile;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.StringTokenizer;
@@ -31,7 +36,11 @@ public class LoginWindow extends Application {
     String address;
     int port;
 
+    // 当前状态 (使用boolean记录)
+    boolean isLogin = true;
+
     // 登陆界面的UI
+    Stage primaryStage;
     TextField txtAcount;
     PasswordField txtPassword;
     Button funcButton; //登录按钮
@@ -39,8 +48,6 @@ public class LoginWindow extends Application {
     TextField txtNickName;
     Button changeStatusButton;
     VBox mainVBox;
-    Stage primaryStage;
-    String curStatus = "login";
     VBox inputVbox;
     Label nickLbl;
 
@@ -84,6 +91,51 @@ public class LoginWindow extends Application {
             switchStatus();
         });
 
+        //加个坦克大战的标题
+        Label titleLabel = new Label("坦克大战");
+        titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
+        titleLabel.setStyle("-fx-text-fill: #0e2a10;");
+        HBox titleBox = new HBox(titleLabel);
+        titleBox.setAlignment(Pos.CENTER);
+
+        // 信息输入框
+        inputVbox = new VBox(accountLbl, txtAcount, passLbl, txtPassword);
+        inputVbox.setAlignment(Pos.CENTER_LEFT);
+        inputVbox.setSpacing(8);
+
+        //放置登录和注册的按钮
+        HBox buttonBox = new HBox(30, funcButton, changeStatusButton);
+        buttonBox.setAlignment(Pos.CENTER);
+
+//        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
+        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
+        mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
+        mainVBox.setSpacing(10);
+        mainVBox.setPadding(new Insets(8, 20, 8, 20));
+
+        this.primaryStage = primaryStage;
+        // 禁用窗口大小调整
+        this.primaryStage.setWidth(LobbyConfig.LoginStageWidth);
+        this.primaryStage.setHeight(LobbyConfig.LoginStageHeight);
+        this.primaryStage.setResizable(false);
+        // 初始为登陆界面
+        this.primaryStage.setTitle("登录窗口");
+        this.primaryStage.setScene(new Scene(mainVBox));
+        this.primaryStage.show();
+
+        // 读取连接信息
+        LoginError error = readConfig(LobbyConfig.ConfigPath);
+        if(!error.checkSuccess()) {
+            error.show();
+            primaryStage.close();
+        }
+
+        // 初始化连接
+        initConnect();
+    }
+
+    // 不再使用设置页面 仅保留
+    void setSettingButton() {
         /* 设置设置按钮 */
         // 参考代码: https://www.jianshu.com/p/a9df3e863c70
         Button settingButton = new Button();
@@ -119,101 +171,61 @@ public class LoginWindow extends Application {
             // 重新设置地址和端口
             this.address = settingStage.getAddress();
             this.port = settingStage.getPort();
-            this.connectServer();
         });
-
-        //加个坦克大战的标题
-        Label titleLabel = new Label("坦克大战");
-        titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
-        titleLabel.setStyle("-fx-text-fill: #0e2a10;");
-        HBox titleBox = new HBox(titleLabel);
-        titleBox.setAlignment(Pos.CENTER);
-
-        // 信息输入框
-        inputVbox = new VBox(accountLbl, txtAcount, passLbl, txtPassword);
-        inputVbox.setAlignment(Pos.CENTER_LEFT);
-        inputVbox.setSpacing(8);
-
-        //放置登录和注册的按钮
-        HBox buttonBox = new HBox(30, funcButton, changeStatusButton);
-        buttonBox.setAlignment(Pos.CENTER);
-
-//        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
-        mainVBox = new VBox(settingButton, titleBox, inputVbox, buttonBox);
-        mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
-        mainVBox.setSpacing(10);
-        mainVBox.setPadding(new Insets(8, 20, 8, 20));
-        mainVBox.setPrefSize(LobbyConfig.Width, LobbyConfig.Height);
-
-        this.primaryStage = primaryStage;
-        // 禁用窗口大小调整
-        this.primaryStage.setResizable(false);
-        //初始为登陆界面
-        this.primaryStage.setTitle("登录窗口");
-        this.primaryStage.setScene(new Scene(mainVBox));
-        this.primaryStage.show();
     }
 
     void switchStatus() {
-        switch (curStatus) {
-            case "login" -> {
-                curStatus = "register";
-                primaryStage.setTitle("注册窗口");
-                inputVbox.getChildren().add(nickLbl);
-                inputVbox.getChildren().add(txtNickName);
-                changeStatusButton.setText("回到登录");
-                funcButton.setText("确认注册");
-                primaryStage.setHeight(365);
-            }
-            case "register" -> {
-                curStatus = "login";
-                primaryStage.setTitle("登录窗口");
-                inputVbox.getChildren().remove(txtNickName);
-                inputVbox.getChildren().remove(nickLbl);
-                changeStatusButton.setText("注册");
-                funcButton.setText("登录");
-                primaryStage.setHeight(310);
-            }
+        if(isLogin) {
+            primaryStage.setTitle("注册窗口");
+            inputVbox.getChildren().add(nickLbl);
+            inputVbox.getChildren().add(txtNickName);
+            changeStatusButton.setText("回到登录");
+            funcButton.setText("确认注册");
+            this.primaryStage.setHeight(LobbyConfig.LoginStageHeight + 50);
+        } else {
+            primaryStage.setTitle("登录窗口");
+            inputVbox.getChildren().remove(txtNickName);
+            inputVbox.getChildren().remove(nickLbl);
+            changeStatusButton.setText("注册");
+            funcButton.setText("登录");
+            this.primaryStage.setHeight(LobbyConfig.LoginStageHeight);
         }
+
+        // 反转状态
+        isLogin = !isLogin;
     }
 
+    // 确认按钮时间
     void funcButtonEvent() {
-        boolean infoCorrect = false;
-        //输入的信息全不为空
-        if (!txtAcount.getText().isEmpty() && !txtPassword.getText().isEmpty()) {
-            infoCorrect = true;
-
-            if(socket == null) {
-                connectServer();
-            }
-
-            if(!socket.isConnected()) {
-                showConnectFail();
-                return;
-            }
-
-            switch (curStatus) {
-                case "login" -> {
-                    //获取登陆的账号和密码//发送给服务器
-                    String strSend = "login|" + txtAcount.getText() + "|" + txtPassword.getText();
-                    Communicate.send(socket, strSend);
-                    //进行登录
-                    initLogin();
-                }
-                case "register" -> {
-                    if (!txtNickName.getText().isEmpty()) {
-                        //获取登陆的账号和密码//发送给服务器
-                        String strSend = "register|" + txtNickName.getText() + "|" + txtAcount.getText() + "|" + txtPassword.getText();
-                        Communicate.send(socket, strSend);
-                        initRegister();
-                    } else {
-                        infoCorrect = false;
-                    }
-                }
-            }
-        }
-        if (!infoCorrect) {
+        // 账号和密码不能为空 || 当登陆时 昵称不能为空
+        if (txtAcount.getText().isEmpty() || txtPassword.getText().isEmpty() ||
+                (!isLogin && txtNickName.getText().isEmpty() )) {
             new Alert(Alert.AlertType.WARNING, "请输入全部的信息").showAndWait();
+            return;
+        }
+
+        // 检验是否连接
+        if(socket==null || !socket.isConnected()) {
+            System.out.println("[debug] 未连接上服务器");
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setHeaderText("连接错误");
+            alert.setContentText("请在连接设置中重新连接");
+            alert.showAndWait();
+            primaryStage.close();
+            return;
+        }
+
+        if(isLogin) {
+            //获取登陆的账号和密码//发送给服务器
+            String strSend = "login|" + txtAcount.getText() + "|" + txtPassword.getText();
+            Communicate.send(socket, strSend);
+            //进行登录
+            initLogin();
+        } else {
+            //获取登陆的账号和密码//发送给服务器
+            String strSend = "register|" + txtNickName.getText() + "|" + txtAcount.getText() + "|" + txtPassword.getText();
+            Communicate.send(socket, strSend);
+            initRegister();
         }
     }
 
@@ -285,45 +297,205 @@ public class LoginWindow extends Application {
         alert.showAndWait();
     }
 
-
+    // 弃用
     public LoginWindow(String address) {
-        this.address = address;
-        this.port = 8080;
 
-        // 连接服务器
-        connectServer();
+    }
+
+    public LoginWindow() {
+
     }
 
     // [test] 用于自动登陆
     public void login(String account) {
-        // 当服务器后于客户端打开 重复连接
-        while(!socket.isConnected()) {
-            connectServer();
-        }
-
         // 进行登录
         String strSend = "login|" + account + "|" + "111111";
         Communicate.send(socket, strSend);
         initLogin();
     }
 
-    // 在客户端启动时 首先连接服务端
-    void connectServer() {
+    // 读取配置文件
+    LoginError readConfig(String path) {
+        // 读取配置文件
+        Ini ini;
         try {
-            //创建套接字
-            socket = new Socket(this.address, this.port);
+            ini = new Ini(new File(path));
         } catch (IOException e) {
-            // 如果连接失败 则需要重新配置
-            showConnectFail();
+            e.printStackTrace();
+            return LoginError.ConfigFileNotFound;
         }
+
+        // 读取连接配置信息
+        Profile.Section serverSection = ini.get("server");
+        if(serverSection == null) {
+            return LoginError.ConnectInfoNotFound;
+        }
+
+        // 检验关键字段是否存在
+        String ip = serverSection.get("ip"),
+                portText = serverSection.get("port");
+        if(ip == null && portText ==null) {
+            return LoginError.ConnectInfoNotFound;
+        }
+
+        // 检验配置信息是否符合格式
+        int port;
+        try {
+            port = Integer.parseInt(portText);
+        } catch (NumberFormatException e) {
+            return LoginError.ConnectInfoParseError;
+        }
+
+        // 保存读取到的信息
+        this.port = port;
+        this.address = ip;
+        return LoginError.Success;
     }
 
-    void showConnectFail() {
-        System.out.println("[error] 连接失败");
-        new Alert(Alert.AlertType.WARNING, "连接服务器失败，请检查连接配置。").showAndWait();
+    // 建立初始化连接
+    void initConnect() {
+        ConnectingAlert alert = new ConnectingAlert();
+//        alert.getButtonTypes()
+        alert.setOnCloseRequest(e-> {
+            alert.close();
+            if(alert.isExit())
+                primaryStage.close();
+        });
+
+        alert.show();
+
+        connectTask.setOnFailed(e->{
+            alert.close();
+            System.out.println("[debug] Server connect fail");
+
+            ConnectFailAlert connectFailAlert = new ConnectFailAlert();
+            connectFailAlert.showAndWait();
+
+            boolean isReconnect = connectFailAlert.isReconnect();
+            if(!isReconnect) {
+                this.primaryStage.close();
+                return;
+            }
+
+            // 用户选择重新连接后 重新连接
+            alert.reshow();
+            Thread thread = new Thread(connectTask);
+            thread.start();
+        });
+
+        Thread thread = new Thread(connectTask);
+        thread.start();
     }
+
+    // 使用多线程连接 防止页面卡死
+    Task<Void> connectTask = new Task<>() {
+        @Override
+        protected Void call() throws Exception {
+            socket = new Socket(address, port);
+            return null;
+        }
+    };
 
     public static void main(String[] args) {
         launch(args);
+    }
+}
+
+// 用来记录登陆时的错误
+enum LoginError {
+    Success("成功"),
+    ConfigFileNotFound("找不到配置文件"),
+    ConnectInfoNotFound("找不到连接配置信息"),
+    ConnectInfoParseError("连接配置解析异常");
+
+    final String text;
+    LoginError(String text) {
+        this.text = text;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public boolean checkSuccess() {
+        return this == Success;
+    }
+
+    public void show() {
+        Alert alert = new Alert(Alert.AlertType.ERROR, this.text);
+        alert.showAndWait();
+    }
+}
+
+// 封装用于显示正在登陆的弹窗
+class ConnectingAlert extends Alert {
+    ButtonType exitType = new ButtonType("退出");
+    String text = "正在连接";
+
+    int count = 0;
+
+    public ConnectingAlert(){
+        super(AlertType.INFORMATION, "连接服务器，请勿关闭该窗口");
+        this.setHeaderText(text);
+        this.getButtonTypes().clear();
+        this.getButtonTypes().addAll(exitType);
+
+        Thread t = new Thread(waitingTask);
+        t.start();
+    }
+
+    // 返回是否是手动关闭
+    public boolean isExit() {
+        return this.getResult() == exitType;
+    }
+
+    // 重新显示
+    public void reshow() {
+        this.show();
+        Thread t = new Thread(waitingTask);
+        t.start();
+    }
+
+    // 用于显示动态效果
+    void setText() {
+        while(this.isShowing()) {
+//            System.out.println("[debug] waiting");
+            // 添加延迟
+            try { Thread.sleep(500); }
+            catch(InterruptedException ignored){}
+
+            if(count == 3) {
+                Platform.runLater(()->this.setHeaderText(text));
+                count = 0;
+            } else {
+                Platform.runLater(()->this.setHeaderText(this.getHeaderText() + "."));
+                count++;
+            }
+        }
+    }
+
+    Task<Void> waitingTask = new Task<>() {
+        @Override
+        protected Void call(){
+            setText();
+            return null;
+        }
+    };
+}
+
+// 封装连接失败的弹窗
+class ConnectFailAlert extends Alert{
+    ButtonType closeType = new ButtonType("关闭"),
+        reconnectType = new ButtonType("重新连接");
+
+    public ConnectFailAlert(){
+        super(AlertType.ERROR, "连接服务器失败，请检查连接配置文件");
+        this.getButtonTypes().clear();
+        this.getButtonTypes().addAll(closeType, reconnectType);
+    }
+
+    // 提示连接错误
+    public boolean isReconnect() {
+        return this.getResult() == reconnectType;
     }
 }

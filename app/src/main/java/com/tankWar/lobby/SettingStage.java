@@ -3,12 +3,16 @@ package com.tankWar.lobby;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
+// 不再使用设置窗口
 
 public class SettingStage {
     Stage stage = new Stage();
@@ -42,14 +46,14 @@ public class SettingStage {
 
             address = inputAddress;
             port = inputPort;
+
+            new ConnectAlert().show();
             // 关闭窗口
-            stage.close();
+//            stage.close();
         });
 
         // 取消按钮
-        cancelButton.setOnAction((e)->{
-            stage.close();
-        });
+        cancelButton.setOnAction((e)->stage.close());
 
         HBox buttons = new HBox();
         buttons.setSpacing(10);
@@ -58,10 +62,11 @@ public class SettingStage {
 
         mainPane.setPadding(new Insets(10));
         mainPane.setSpacing(10);
-        mainPane.setPrefSize(LobbyConfig.Width, LobbyConfig.Height);
         mainPane.getChildren().addAll(addressLabel, addressInput, portLabel, portInput, buttons);
 
         Scene scene = new Scene(mainPane);
+        stage.setWidth(LobbyConfig.LoginStageWidth);
+        stage.setHeight(LobbyConfig.LoginStageHeight);
         stage.setResizable(false);
         stage.setTitle("设置");
         stage.setScene(scene);
@@ -79,5 +84,14 @@ public class SettingStage {
     // 获取端口
     public int getPort() {
         return port;
+    }
+}
+
+class ConnectAlert extends Alert {
+
+    public ConnectAlert() {
+        super(AlertType.INFORMATION);
+        this.setHeaderText("正在连接中");
+        this.initStyle(StageStyle.UNDECORATED);
     }
 }
