@@ -305,9 +305,8 @@ public class LoginWindow extends Application {
     // [test] 用于自动登陆
     public void login(String account) {
         // 进行登录
-        String strSend = "login|" + account + "|" + "111111";
-        Communicate.send(socket, strSend);
-        initLogin();
+        txtAcount.setText(account);
+        funcButtonEvent();
     }
 
     // 读取配置文件
