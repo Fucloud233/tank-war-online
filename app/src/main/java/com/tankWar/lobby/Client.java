@@ -15,7 +15,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.*;
 import java.net.Socket;
@@ -49,9 +48,7 @@ public class Client extends Stage {
 
     boolean gameStart = false;
     ///表格///
-    private TableView<RoomItem> tableView;
-    private ObservableList<RoomItem> roomList;
-
+    private RoomTableView tableView;
 
     public Client(String nickname, String account, Socket socket) {//因为加上了昵称，所以修改了下传参
         username = nickname;
@@ -99,81 +96,7 @@ public class Client extends Stage {
         container.setMinHeight(380); // 设置容器的固定高度
 
         // 创建表格视图和数据列表
-        tableView = new TableView<>();
-        roomList = FXCollections.observableArrayList();
-
-        // 创建表格列
-        TableColumn<RoomItem, String> idColumn = new TableColumn<>("ID");
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-
-        TableColumn<RoomItem, String> nameColumn = new TableColumn<>("房间名");
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-        TableColumn<RoomItem, String> accountColumn = new TableColumn<>("房间号");
-        accountColumn.setCellValueFactory(new PropertyValueFactory<>("account"));
-
-        TableColumn<RoomItem, String> ownerColumn = new TableColumn<>("房主");
-        ownerColumn.setCellValueFactory(new PropertyValueFactory<>("owner"));
-
-        TableColumn<RoomItem, String> playersColumn = new TableColumn<>("房间人数");
-        playersColumn.setCellValueFactory(new PropertyValueFactory<>("enterNum"));
-
-        TableColumn<RoomItem, String> limitColumn = new TableColumn<>("人数上限");
-        limitColumn.setCellValueFactory(new PropertyValueFactory<>("userNum"));
-
-        TableColumn<RoomItem, String> statusColumn = new TableColumn<>("房间状态");
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        // 设置列宽
-        idColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        nameColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        accountColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        ownerColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        playersColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        limitColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-        statusColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.14));
-
-        // 设置单元格工厂
-        Callback<TableColumn<RoomItem, String>, TableCell<RoomItem, String>> cellFactory =
-                column -> new TableCell<RoomItem, String>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item == null || empty) {
-                            setText(null);
-                        } else {
-                            setText(item);
-//                            setFont();
-                            setStyle("-fx-font-size: 18px;");  // 设置字体大小为18像素
-                        }
-                    }
-                };
-
-        idColumn.setCellFactory(cellFactory);
-        nameColumn.setCellFactory(cellFactory);
-        accountColumn.setCellFactory(cellFactory);
-        ownerColumn.setCellFactory(cellFactory);
-        playersColumn.setCellFactory(cellFactory);
-        limitColumn.setCellFactory(cellFactory);
-        statusColumn.setCellFactory(cellFactory);
-
-        // 设置行工厂，用于自定义行的外观和行为
-        tableView.setRowFactory(tv -> {
-            TableRow<RoomItem> row = new TableRow<>();
-            row.setPrefHeight(40);  // 设置行高，这里设置为40像素
-            return row;
-        });
-
-        // 将列添加到表格视图中
-        tableView.getColumns().addAll(idColumn, nameColumn, accountColumn,ownerColumn, playersColumn, limitColumn, statusColumn);
-
-        //绑定数据
-        tableView.setItems(roomList);
-
-
-        // 设置表格的选择模式为单选
-        tableView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-
+        tableView = new RoomTableView();
         // 监听表格选中项的变化
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
@@ -184,6 +107,7 @@ public class Client extends Stage {
                 System.out.println("Selected room account: " + roomId);
             }
         });
+
         //把表格加入vbox
         container.getChildren().add(tableView);
 
@@ -405,7 +329,7 @@ public class Client extends Stage {
                         case "lobby" -> {
                             if (primaryStage.isShowing()) {
                                 Platform.runLater(() -> {
-                                    roomList.clear();
+                                    tableView.clear();
                                     while (st.hasMoreTokens()) {
                                         String roomNum = st.nextToken();
                                         String Id = st.nextToken();
@@ -416,7 +340,7 @@ public class Client extends Stage {
                                         String status = st.nextToken();
                                         System.out.println('&'+roomNum+' '+Id+' '+roomName+' '+hostName+' '+enterNum+' '+userNum+' '+status);
                                         RoomItem roomItem = new RoomItem(Id,roomName,roomNum,hostName,enterNum,userNum,status);
-                                        roomList.add(roomItem);
+                                        tableView.addItem(roomItem);
                                     }
 
                                 });
@@ -531,18 +455,32 @@ public class Client extends Stage {
     }
 
     public static class RoomItem{
-        StringProperty id;
-        StringProperty name;
-        StringProperty account;
-        StringProperty owner;
-        StringProperty enterNum;
-        StringProperty userNum;
-        StringProperty status;
+        StringProperty id, account, enterNum, userNum;
+        StringProperty name, owner, status;
+        enum RoomItemType {
+            id("ID"),
+            name("房间名"),
+            account("房间号"),
+            owner("房主"),
+            enterNum("房间人数"),
+            userNum("人数上限"),
+            status("状态");
+
+            final String text;
+
+            RoomItemType(String text) {
+                this.text = text;
+            }
+
+            public String getText() {
+                return text;
+            }
+        }
 
         public RoomItem(String id, String name, String account,String owner, String players, String limit, String status) {
             this.id = new SimpleStringProperty(id);
             this.name = new SimpleStringProperty(name);
-            this.account=new SimpleStringProperty(account);
+            this.account = new SimpleStringProperty(account);
             this.owner = new SimpleStringProperty(owner);
             this.enterNum = new SimpleStringProperty(players);
             this.userNum = new SimpleStringProperty(limit);
@@ -603,4 +541,54 @@ public class Client extends Stage {
     }
 }
 
+
+class RoomTableView extends TableView<Client.RoomItem>{
+    ObservableList<Client.RoomItem> roomList = FXCollections.observableArrayList();
+
+    public RoomTableView() {
+        this.init();
+    }
+
+    void init() {
+        for(Client.RoomItem.RoomItemType type: Client.RoomItem.RoomItemType.values()) {
+            TableColumn<Client.RoomItem, String> column = new TableColumn<>(type.getText());
+            // 设置单元格值工厂
+            column.setCellValueFactory(new PropertyValueFactory<>(type.toString()));
+
+            // 设置单元格工厂
+            column.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(item==null||empty ? null : item);
+                    setAlignment(Pos.CENTER_RIGHT);
+                }
+            });
+            // 将列添加到表格视图中
+            this.getColumns().add(column);
+        }
+
+        // 设置行工厂，用于自定义行的外观和行为
+        this.setRowFactory(tv -> {
+            TableRow<Client.RoomItem> row = new TableRow<>();
+            row.setPrefHeight(30);  // 设置行高，这里设置为40像素
+            return row;
+        });
+
+        // 绑定数据
+        this.setItems(roomList);
+        // 设置表格的选择模式为单选
+        this.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+    }
+
+    // 清楚表格数据
+    public void clear() {
+        this.roomList.clear();
+    }
+
+    // 添加表格项
+    public void addItem(Client.RoomItem item) {
+        this.roomList.add(item);
+    }
+}
 
