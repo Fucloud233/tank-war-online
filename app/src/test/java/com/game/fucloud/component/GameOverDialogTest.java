@@ -20,7 +20,9 @@ public class GameOverDialogTest extends Application  {
 
         // 用户名称
         String[] names = new String[]{
-                "Tom", "Jack", "Alex"
+                "Tom"
+                , "Jack"
+                , "Alex"
         };
 
 //        int[] scores = new int[]{
@@ -28,7 +30,9 @@ public class GameOverDialogTest extends Application  {
 //        };
 
         int[] scores = new int[]{
-                1, 2, 2
+                1
+                , 2
+                , 2
         };
 
         OverDialog dialog = new OverDialog(names, scores);

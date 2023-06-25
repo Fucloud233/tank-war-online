@@ -13,8 +13,7 @@ import java.net.URL;
 import java.util.Vector;
 
 public class OverDialog {
-    final static double Width = 200, Height = 300;
-
+    double Width = 200, Height = 100;
 
     // 积分榜
     Stage primayStage = new Stage();
@@ -31,14 +30,17 @@ public class OverDialog {
     public OverDialog(String[] playerNames, int[] scores) {
         this.playerNames = playerNames;
         this.scores = scores;
+        // 实现窗口的动态变化
+        this.Height += (playerNames.length-1) * 25;
 
         this.init();
 
         // 设置窗口
         Scene scene = new Scene(mainPane);
 
-        primayStage.setTitle("游戏结束!");
+        primayStage.setTitle(null);
         primayStage.setScene(scene);
+        primayStage.setResizable(false);
     }
 
     void init() {
@@ -74,7 +76,7 @@ public class OverDialog {
         mainPane.getChildren().addAll(scoreTable, winnerLabel, retRoomBtn);
         mainPane.setAlignment(Pos.TOP_LEFT);
         mainPane.setSpacing(20);
-        mainPane.setPadding(new Insets(Height*0.1, Width*0.1, Height*0.1, Width*0.1 ));
+        mainPane.setPadding(new Insets(20));
     }
 
     // 根据scores对playerNames排序
