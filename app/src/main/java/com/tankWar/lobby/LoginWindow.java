@@ -304,9 +304,12 @@ public class LoginWindow extends Application {
 
     // [test] 用于自动登陆
     public void login(String account) {
-        // 进行登录
+        try {Thread.sleep(500);} catch(InterruptedException ignored){}
+
         txtAcount.setText(account);
-        funcButtonEvent();
+        // 进行登录
+        if (socket != null && socket.isConnected())
+            funcButtonEvent();
     }
 
     // 读取配置文件
