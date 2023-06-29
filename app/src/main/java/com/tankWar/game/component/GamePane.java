@@ -125,6 +125,9 @@ public class GamePane extends HBox {
     void initAction() {
         // 按下事件监听
         this.setOnKeyPressed(e -> {
+            if(!myTank.isAlive())
+                return;
+
             // 将按下的按键加入按键集合
             KeyCode code = e.getCode();
             // 若为方向键，则假如方向处理列表
