@@ -29,6 +29,7 @@ import org.ini4j.Profile;
 import java.io.*;
 import java.net.Socket;
 import java.util.StringTokenizer;
+import java.util.concurrent.FutureTask;
 
 public class LoginWindow extends Application {
     // 连接相关的
@@ -51,8 +52,8 @@ public class LoginWindow extends Application {
     VBox inputVbox;
     Label nickLbl;
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
+    // 构造函数中初始化所有组件
+    public LoginWindow() {
         // 账号输入框
         Label accountLbl = new Label("账号：");
         accountLbl.setFont(Font.font("Microsoft YaHei", FontWeight.NORMAL, 16));
@@ -87,13 +88,6 @@ public class LoginWindow extends Application {
         //点击注册按钮后触发
         changeStatusButton.setOnAction(e -> switchStatus() );
 
-        //加个坦克大战的标题
-        Label titleLabel = new Label("坦克大战");
-        titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
-        titleLabel.setStyle("-fx-text-fill: #0e2a10;");
-        HBox titleBox = new HBox(titleLabel);
-        titleBox.setAlignment(Pos.CENTER);
-
         // 信息输入框
         inputVbox = new VBox(accountLbl, txtAcount, passLbl, txtPassword);
         inputVbox.setAlignment(Pos.CENTER_LEFT);
@@ -103,12 +97,22 @@ public class LoginWindow extends Application {
         HBox buttonBox = new HBox(30, funcButton, changeStatusButton);
         buttonBox.setAlignment(Pos.CENTER);
 
+        //加个坦克大战的标题
+        Label titleLabel = new Label("坦克大战");
+        titleLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 30));
+        titleLabel.setStyle("-fx-text-fill: #0e2a10;");
+        HBox titleBox = new HBox(titleLabel);
+        titleBox.setAlignment(Pos.CENTER);
+
 //        mainVBox = new VBox(titleBox, inputVbox, buttonBox);
         mainVBox = new VBox(titleBox, inputVbox, buttonBox);
         mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom right, #4D774E, #9C8B56, #614D79);");
         mainVBox.setSpacing(10);
         mainVBox.setPadding(new Insets(8, 20, 8, 20));
+    }
 
+    @Override
+    public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
         // 禁用窗口大小调整
         this.primaryStage.setWidth(LobbyConfig.LoginStageWidth);
@@ -120,14 +124,65 @@ public class LoginWindow extends Application {
         this.primaryStage.show();
 
         // 读取连接信息
-        LoginError error = readConfig(LobbyConfig.ConfigPath);
-        if(!error.checkSuccess()) {
+        try {
+            readConfig(LobbyConfig.ConfigPath);
+        } catch(LoginError error) {
             error.show();
             primaryStage.close();
         }
 
-        // 初始化连接
-        initConnect();
+        // 初始化连接（使用多线程连接，防止页面卡死）
+       new Thread(new Task<Void>() {
+           final ConnectingAlert alert = new ConnectingAlert();
+           {
+               alert.setOnCloseRequest(e -> {
+                   alert.close();
+                   if (alert.isExit())
+                       primaryStage.close();
+               });
+               alert.show();
+           }
+
+            @Override
+            protected Void call() throws IOException {
+                while (true) {
+                    socket = new Socket(address, port);
+                    // 向服务器发送确认连接信息
+                    Communicate.send(socket, "connect");
+                    String resp = Communicate.receive(socket);
+                    // 连接成功后关闭窗口
+                    if (resp != null && resp.equals("ok")) {
+                        Platform.runLater(alert::close);
+                        return null;
+                    }
+
+                    final FutureTask<Boolean> wait = new FutureTask<Boolean>(() -> {
+                        // 提示连接失败
+                        // System.out.println("[debug] Server connect fail");
+                        ConnectFailAlert connectFailAlert = new ConnectFailAlert();
+                        connectFailAlert.showAndWait();
+
+                        // 用户不选择重新连接 退出客户端
+                        if (!connectFailAlert.isReconnect()) {
+                            connectFailAlert.close();
+                            primaryStage.close();
+                            return false;
+                        }
+
+                        // 用户选择重新连接后 重新连接
+                        connectFailAlert.close();
+                        alert.reshow();
+                        return true;
+                    });
+
+                    try {
+                        Platform.runLater(wait);
+                        // 当用户确认退出时，则中断循环
+                        if(wait.get()) return null;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }).start();
     }
 
     // 不再使用设置页面 仅保留
@@ -293,15 +348,6 @@ public class LoginWindow extends Application {
         alert.showAndWait();
     }
 
-    // 弃用
-    public LoginWindow(String address) {
-
-    }
-
-    public LoginWindow() {
-
-    }
-
     // [test] 用于自动登陆
     public void login(String account) {
         try {Thread.sleep(500);} catch(InterruptedException ignored){}
@@ -313,91 +359,32 @@ public class LoginWindow extends Application {
     }
 
     // 读取配置文件
-    LoginError readConfig(String path) {
+    void readConfig(String path) throws LoginError {
         // 读取配置文件
-        Ini ini;
+        Ini ini = new Ini();
         try {
-            ini = new Ini(new File(path));
+            ini.load(new File(path));
+
+            // 读取连接配置信息
+            Profile.Section serverSection = ini.get("server");
+            if(serverSection == null) {
+                throw new LoginError("找不到连接配置信息");
+            }
+
+            // 检验关键字段是否存在
+            String ip = serverSection.get("ip"),
+                    portText = serverSection.get("port");
+            if(ip == null && portText ==null) {
+                throw new LoginError("找不到连接配置信息");
+            }
+
+            // 保存读取到的信息
+            this.port = Integer.parseInt(portText);
+            this.address = ip;
         } catch (IOException e) {
-            e.printStackTrace();
-            return LoginError.ConfigFileNotFound;
-        }
-
-        // 读取连接配置信息
-        Profile.Section serverSection = ini.get("server");
-        if(serverSection == null) {
-            return LoginError.ConnectInfoNotFound;
-        }
-
-        // 检验关键字段是否存在
-        String ip = serverSection.get("ip"),
-                portText = serverSection.get("port");
-        if(ip == null && portText ==null) {
-            return LoginError.ConnectInfoNotFound;
-        }
-
-        // 检验配置信息是否符合格式
-        int port;
-        try {
-            port = Integer.parseInt(portText);
+            throw new LoginError("找不到配置文件");
         } catch (NumberFormatException e) {
-            return LoginError.ConnectInfoParseError;
-        }
-
-        // 保存读取到的信息
-        this.port = port;
-        this.address = ip;
-        return LoginError.Success;
-    }
-
-    // 建立初始化连接
-    void initConnect() {
-        // 开启连接线程
-        new Thread(new ConnectTask()).start();
-    }
-
-    // 使用多线程连接 防止页面卡死
-    class ConnectTask extends Task<Void> {
-        // 连接中弹窗 (使用静态对象 保证重新连接后仍然操控的是相同的弹窗)
-        static ConnectingAlert alert = new ConnectingAlert();
-
-        public ConnectTask() {
-            alert.setOnCloseRequest(e-> {
-                alert.close();
-                if(alert.isExit())
-                    primaryStage.close();
-            });
-
-            alert.show();
-
-            // 当连接失败时
-            this.setOnFailed(e->{
-                alert.close();
-//                System.out.println("[debug] Server connect fail");
-
-                // 提示连接失败
-                ConnectFailAlert connectFailAlert = new ConnectFailAlert();
-                connectFailAlert.showAndWait();
-
-                boolean isReconnect = connectFailAlert.isReconnect();
-                // 用户不选择重新连接 退出客户端
-                if(!isReconnect) {
-                    primaryStage.close();
-                    return;
-                }
-
-                // 用户选择重新连接后 重新连接
-                alert.reshow();
-                new Thread(new ConnectTask()).start();
-            });
-        }
-
-        @Override
-        protected Void call() throws Exception {
-            socket = new Socket(address, port);
-            // 连接成功后关闭窗口
-            Platform.runLater(()->alert.close());
-            return null;
+            throw new LoginError("连接配置解析异常");
         }
     }
 
@@ -407,27 +394,14 @@ public class LoginWindow extends Application {
 }
 
 // 用来记录登陆时的错误
-enum LoginError {
-    Success("成功"),
-    ConfigFileNotFound("找不到配置文件"),
-    ConnectInfoNotFound("找不到连接配置信息"),
-    ConnectInfoParseError("连接配置解析异常");
+class LoginError extends Throwable {
 
-    final String text;
-    LoginError(String text) {
-        this.text = text;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public boolean checkSuccess() {
-        return this == Success;
+    LoginError(String message) {
+        super(message);
     }
 
     public void show() {
-        Alert alert = new Alert(Alert.AlertType.ERROR, this.text);
+        Alert alert = new Alert(Alert.AlertType.ERROR, this.getMessage());
         alert.showAndWait();
     }
 }
@@ -462,7 +436,6 @@ class ConnectingAlert extends Alert {
     // 用于显示动态效果
     void setText() {
         while(this.isShowing()) {
-//            System.out.println("[debug] waiting");
             // 添加延迟
             try { Thread.sleep(500); }
             catch(InterruptedException ignored){}
