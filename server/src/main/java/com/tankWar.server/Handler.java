@@ -5,6 +5,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 
+import com.tankWar.utils.Config;
+
 public abstract class Handler {
     static final int HeaderLen = Config.getHeaderLength();
 

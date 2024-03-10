@@ -1,7 +1,5 @@
 package com.tankWar.server;
 
-import javafx.util.Pair;
-
 import java.io.*;
 import java.net.*;
 import java.nio.channels.SelectionKey;
@@ -10,6 +8,8 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.Date;
+
+import com.tankWar.utils.Pair;
 
 import static com.tankWar.server.ServerPrompt.*;
 
@@ -31,6 +31,12 @@ public class Main {
 
     // 数据操作函数
     DBOperator operator;
+
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.start();
+    }
+
 
     public Main(int port){
         this.serverPort = port;

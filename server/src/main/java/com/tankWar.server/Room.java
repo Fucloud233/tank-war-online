@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
-import javafx.util.Pair;
+import com.tankWar.utils.Pair;
 
 public class Room {
     // Room信息 (房号使用房主账号标记)
@@ -89,7 +89,7 @@ public class Room {
     }
 
     // 根据用户名查找用户
-    public Pair<SocketChannel, User> getUser(String nickName) {
+    public Pair<SocketChannel, User>  getUser(String nickName) {
         for(Map.Entry<SocketChannel, User> pair: users.entrySet()) {
             User user = pair.getValue();
             if(user.getNickName().equals(nickName)) {

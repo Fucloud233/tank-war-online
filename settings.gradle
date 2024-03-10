@@ -13,4 +13,7 @@ plugins {
 }
 
 rootProject.name = 'TankWarOnline'
-include('app')
+include('app', 'server')
+
+
+

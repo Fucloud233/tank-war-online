@@ -1,6 +1,6 @@
 package com.tankWar.communication;
 
-import com.tankWar.server.Config;
+import com.tankWar.utils.Config;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
