@@ -144,16 +144,21 @@ public class LoginWindow extends Application {
            }
 
             @Override
-            protected Void call() throws IOException {
+            protected Void call() {
                 while (true) {
-                    socket = new Socket(address, port);
-                    // 向服务器发送确认连接信息
-                    Communicate.send(socket, "connect");
-                    String resp = Communicate.receive(socket);
-                    // 连接成功后关闭窗口
-                    if (resp != null && resp.equals("ok")) {
+                    try {
+                        socket = new Socket(address, port);
+                        // 向服务器发送确认连接信息
+                        Communicate.send(socket, "connect");
+                        String resp = Communicate.receive(socket);
+                        // 连接成功后关闭窗口
+                        if (resp != null && resp.equals("ok")) {
+                            return null;
+                        }
+                    } catch(Exception ignored) {}
+                    finally {
+                        // 无论怎么样 最后都需要把这个连接中的窗口关掉
                         Platform.runLater(alert::close);
-                        return null;
                     }
 
                     final FutureTask<Boolean> wait = new FutureTask<Boolean>(() -> {
@@ -178,7 +183,7 @@ public class LoginWindow extends Application {
                     try {
                         Platform.runLater(wait);
                         // 当用户确认退出时，则中断循环
-                        if(wait.get()) return null;
+                        if(!wait.get()) return null;
                     } catch (Exception ignored) {}
                 }
             }

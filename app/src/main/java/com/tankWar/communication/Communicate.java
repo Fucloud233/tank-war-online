@@ -56,7 +56,6 @@ public class Communicate {
             // 3. 返回消息
             return new String(bodyBytes, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
     }
