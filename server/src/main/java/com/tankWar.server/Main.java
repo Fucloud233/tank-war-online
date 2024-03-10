@@ -159,6 +159,9 @@ public class Main {
             String strKey = st.nextToken(), returnMsg = null;
             try {
                 switch (strKey) {
+                    /* 验证登录 */
+                    case "connect" -> returnMsg = "ok";
+
                     /* 登陆和注册 */
                     case "register" -> returnMsg = register(st);
                     case "login" -> returnMsg = login(st);
