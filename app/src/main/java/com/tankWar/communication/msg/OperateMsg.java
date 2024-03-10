@@ -1,6 +1,6 @@
 package com.tankWar.communication.msg;
 
-import com.tankWar.game.entity.Direction;
+import com.tankWar.entity.Direction;
 
 public abstract class OperateMsg extends Message{
     protected Direction dir = Direction.INVALID;

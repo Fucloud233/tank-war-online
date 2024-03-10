@@ -1,6 +1,6 @@
 package com.tankWar.communication.msg;
 
-import com.tankWar.game.entity.Direction;
+import com.tankWar.entity.Direction;
 
 public class ShootMsg extends OperateMsg {
     public ShootMsg() {

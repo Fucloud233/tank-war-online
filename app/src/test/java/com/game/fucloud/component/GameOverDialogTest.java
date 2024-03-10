@@ -1,12 +1,9 @@
 package com.game.fucloud.component;
 
-import com.tankWar.App;
 import com.tankWar.game.component.OverDialog;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import org.junit.Test;
-
-import java.net.URL;
 
 public class GameOverDialogTest extends Application  {
     @Test

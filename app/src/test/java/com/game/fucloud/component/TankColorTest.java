@@ -1,6 +1,5 @@
 package com.game.fucloud.component;
 
-import com.tankWar.App;
 import com.tankWar.game.Config;
 import com.tankWar.game.entity.Direction;
 import com.tankWar.game.entity.Tank;
@@ -8,12 +7,10 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -42,7 +39,7 @@ public class TankColorTest extends Application {
         GraphicsContext context = canvas.getGraphicsContext2D();
 
         Tank tank = new Tank(0, 0, 0, Direction.LEFT);
-        Image image = new Image("image/up.png");
+        Image image = new Image("client/src/main/resources/image/up.png");
 //        Image image = new Image("image/UP.png");
         image = modifyColor(image);
 
